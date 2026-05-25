@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>活动评选 - 用户投票</title>
+    <style>
+      /* 重置与基础样式 */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      /* 顶部 Banner 区域 */
+      .banner {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(135deg, #1677ff 0%, #0050b3 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+      }
+      .banner h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .banner p {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .status-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        backdrop-filter: blur(4px);
+      }
+
+      /* 统计数据区域 */
+      .stats-bar {
+        display: flex;
+        justify-content: space-around;
+        background: #fff;
+        padding: 15px 0;
+        margin: -20px 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        position: relative;
+        z-index: 10;
+      }
+      .stat-item {
+        text-align: center;
+        flex: 1;
+      }
+      .stat-item:not(:last-child) {
+        border-right: 1px solid #eee;
+      }
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #1677ff;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+
+      /* 搜索框 */
+      .search-box {
+        margin: 0 15px 20px;
+        position: relative;
+      }
+      .search-input {
+        width: 100%;
+        height: 44px;
+        border: 1px solid #ddd;
+        border-radius: 22px;
+        padding: 0 20px 0 40px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s;
+      }
+      .search-input:focus {
+        border-color: #1677ff;
+        box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+      }
+      .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+      }
+
+      /* 候选人列表 (瀑布流/网格布局) */
+      .candidate-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 0 15px 80px;
+      }
+      .candidate-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+      }
+      .card-img-wrap {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* 1:1 比例 */
+        background: #f0f0f0;
+      }
+      .card-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .rank-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        z-index: 2;
+      }
+      .card-info {
+        padding: 12px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .card-desc {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 12px;
+        flex: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .card-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+      }
+      .vote-count {
+        font-size: 14px;
+        color: #ff4d4f;
+        font-weight: bold;
+      }
+      .vote-btn {
+        background: #1677ff;
+        color: #fff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .vote-btn:active {
+        transform: scale(0.95);
+      }
+      .vote-btn.disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      /* 底部悬浮提示条 */
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #eee;
+        padding: 12px 15px;
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        z-index: 100;
+      }
+      .bottom-bar span {
+        color: #1677ff;
+        font-weight: bold;
+        margin: 0 4px;
+      }
+
+      /* Toast 提示 */
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+
+      /* 详情页样式 */
+      .detail-view {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f5f7fa;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-out;
+      }
+      .detail-view.show {
+        transform: translateX(0);
+      }
+      .detail-header {
+        height: 44px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        border-bottom: 1px solid #eee;
+        position: relative;
+      }
+      .detail-back {
+        color: #333;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 5px;
+      }
+      .detail-title {
+        flex: 1;
+        text-align: center;
+        font-weight: bold;
+        font-size: 16px;
+        margin-right: 26px; /* offset back btn */
+      }
+      .detail-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 80px;
+      }
+      .detail-hero-img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .detail-hero-video {
+        width: 100%;
+        height: auto;
+        display: block;
+        background: #000;
+      }
+      .detail-card {
+        background: #fff;
+        margin: -20px 15px 20px;
+        position: relative;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .detail-rank-tag {
+        background: #1677ff;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      .detail-name {
+        font-size: 18px;
+        font-weight: bold;
+        vertical-align: middle;
+      }
+      .detail-stats {
+        margin-top: 15px;
+        display: flex;
+        gap: 20px;
+        color: #666;
+        font-size: 14px;
+      }
+      .detail-stats span {
+        color: #ff4d4f;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .detail-content {
+        background: #fff;
+        padding: 20px 15px;
+        margin-bottom: 20px;
+      }
+      .detail-content h3 {
+        font-size: 16px;
+        margin-bottom: 15px;
+        padding-left: 10px;
+        border-left: 4px solid #1677ff;
+      }
+      .detail-text {
+        font-size: 14px;
+        color: #444;
+        line-height: 1.8;
+      }
+      .detail-text img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 10px 0;
+      }
+      .detail-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        padding: 12px 15px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .btn-large {
+        width: 100%;
+        height: 44px;
+        background: #1677ff;
+        color: #fff;
+        border: none;
+        border-radius: 22px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-large:active {
+        transform: scale(0.98);
+      }
+      .btn-large.disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 主列表页 -->
+    <div id="mainView">
+      <!-- 顶部活动信息 -->
+      <div class="banner">
+        <div class="status-badge">进行中</div>
+        <h1>2026年度优秀员工评选</h1>
+        <p>活动时间：2026.04.01 - 2026.04.15</p>
+      </div>
+
+      <!-- 数据统计 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-value">12</div>
+          <div class="stat-label">参与选手</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">8,642</div>
+          <div class="stat-label">累计投票</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1,208</div>
+          <div class="stat-label">访问次数</div>
+        </div>
+      </div>
+
+      <!-- 搜索 -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="输入编号或姓名搜索选手" />
+      </div>
+
+      <!-- 候选人列表 -->
+      <div class="candidate-grid" id="candidateList">
+        <!-- 卡片 1 -->
+        <div class="candidate-card" onclick="showDetail(1)">
+          <div class="card-img-wrap">
+            <div class="rank-badge">1号</div>
+            <img
+              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80"
+              alt="张三"
+              class="card-img"
+            />
+          </div>
+          <div class="card-info">
+            <div class="card-title">张三 - 销售部</div>
+            <div class="card-desc">连续三个月销售冠军，开拓华东市场业绩翻倍。</div>
+            <div class="card-bottom">
+              <div class="vote-count"><span id="votes-1">2450</span> 票</div>
+              <button
+                class="vote-btn"
+                onclick="
+                  event.stopPropagation()
+                  handleVote(1, this)
+                "
+              >
+                投TA一票
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 2 -->
+        <div class="candidate-card" onclick="showDetail(2)">
+          <div class="card-img-wrap">
+            <div class="rank-badge">2号</div>
+            <img
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80"
+              alt="李四"
+              class="card-img"
+            />
+          </div>
+          <div class="card-info">
+            <div class="card-title">李四 - 研发部</div>
+            <div class="card-desc">核心架构师，主导重构了商城底层系统，性能提升300%。</div>
+            <div class="card-bottom">
+              <div class="vote-count"><span id="votes-2">2130</span> 票</div>
+              <button
+                class="vote-btn"
+                onclick="
+                  event.stopPropagation()
+                  handleVote(2, this)
+                "
+              >
+                投TA一票
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 3 -->
+        <div class="candidate-card" onclick="showDetail(3)">
+          <div class="card-img-wrap">
+            <div class="rank-badge">3号</div>
+            <img
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80"
+              alt="王五"
+              class="card-img"
+            />
+          </div>
+          <div class="card-info">
+            <div class="card-title">王五 - 设计部</div>
+            <div class="card-desc">主导了品牌视觉升级，设计作品获多项行业大奖。</div>
+            <div class="card-bottom">
+              <div class="vote-count"><span id="votes-3">1890</span> 票</div>
+              <button
+                class="vote-btn"
+                onclick="
+                  event.stopPropagation()
+                  handleVote(3, this)
+                "
+              >
+                投TA一票
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片 4 -->
+        <div class="candidate-card" onclick="showDetail(4)">
+          <div class="card-img-wrap">
+            <div class="rank-badge">4号</div>
+            <img
+              src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80"
+              alt="赵六"
+              class="card-img"
+            />
+          </div>
+          <div class="card-info">
+            <div class="card-title">赵六 - 运营部</div>
+            <div class="card-desc">策划双十一大促活动，实现营收破亿的历史记录。</div>
+            <div class="card-bottom">
+              <div class="vote-count"><span id="votes-4">1650</span> 票</div>
+              <button
+                class="vote-btn"
+                onclick="
+                  event.stopPropagation()
+                  handleVote(4, this)
+                "
+              >
+                投TA一票
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部提示 -->
+      <div class="bottom-bar">今日您还剩 <span id="remainVotes">5</span> 票可用</div>
+    </div>
+    <!-- 结束 mainView -->
+
+    <!-- 详情页 -->
+    <div id="detailView" class="detail-view">
+      <div class="detail-header">
+        <span class="detail-back" onclick="hideDetail()">❮ 返回</span>
+        <div class="detail-title">选手详情</div>
+      </div>
+      <div class="detail-scroll">
+        <!-- 动态渲染封面或视频 -->
+        <div id="detailMediaContainer"></div>
+
+        <div class="detail-card">
+          <div>
+            <span id="detailRank" class="detail-rank-tag"></span>
+            <span id="detailName" class="detail-name"></span>
+          </div>
+          <div class="detail-stats">
+            <div>当前票数：<span id="detailVotesCount"></span> 票</div>
+          </div>
+        </div>
+        <div class="detail-content">
+          <h3>详细介绍</h3>
+          <div id="detailDescRich" class="detail-text"></div>
+          <div id="detailImagesContainer" class="detail-text" style="margin-top: 15px"></div>
+        </div>
+      </div>
+      <div class="detail-bottom">
+        <button id="detailVoteBtn" class="btn-large" onclick="handleDetailVote()">投TA一票</button>
+      </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div id="toast" class="toast">投票成功！</div>
+
+    <script>
+      // 候选人详细数据
+      const candidatesData = {
+        1: {
+          rank: '1号',
+          name: '张三 - 销售部',
+          img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80',
+          video: '',
+          desc: '<p>连续三个月销售冠军，开拓华东市场业绩翻倍。</p><p>张三在2025年度表现优异，不仅完成了全年的KPI，还带领团队攻克了多个大客户，是部门的核心骨干。</p>',
+          detailImages: [
+            'https://images.unsplash.com/photo-1556761175-5973dc0f32d7?w=800&q=80',
+            'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=80',
+          ],
+        },
+        2: {
+          rank: '2号',
+          name: '李四 - 研发部',
+          img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80',
+          video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+          desc: '<p>核心架构师，主导重构了商城底层系统，性能提升300%。</p><p>李四精通各类前后端技术栈，在双十一高并发场景下保障了系统0故障运行。上方是一段介绍视频。</p>',
+          detailImages: [],
+        },
+        3: {
+          rank: '3号',
+          name: '王五 - 设计部',
+          img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+          video: '',
+          desc: '<p>主导了品牌视觉升级，设计作品获多项行业大奖。</p><p>王五具备极高的审美和产品思维，他的设计让产品的转化率提升了15%。</p>',
+          detailImages: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80'],
+        },
+        4: {
+          rank: '4号',
+          name: '赵六 - 运营部',
+          img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&q=80',
+          video: '',
+          desc: '<p>策划双十一大促活动，实现营收破亿的历史记录。</p><p>赵六对用户增长和留存有着独到的见解，是本次大促成功的关键推手。</p>',
+          detailImages: [],
+        },
+      }
+
+      let currentDetailId = null
+
+      // 模拟用户投票数据状态
+      let remainVotes = 5
+
+      function handleVote(candidateId, btnElement) {
+        if (remainVotes <= 0) {
+          showToast('今日票数已用完，明天再来吧！')
+          return
+        }
+
+        // 扣减票数
+        remainVotes--
+        document.getElementById('remainVotes').innerText = remainVotes
+
+        // 增加选手票数 (带简单动画)
+        const voteSpan = document.getElementById('votes-' + candidateId)
+        let currentVotes = parseInt(voteSpan.innerText)
+        voteSpan.innerText = currentVotes + 1
+
+        // 按钮动效与状态
+        btnElement.innerText = '已投票'
+        btnElement.style.background = '#52C41A'
+
+        showToast('投票成功！')
+
+        // 模拟恢复按钮状态，以便可以重复投 (根据后台规则而定)
+        setTimeout(() => {
+          btnElement.innerText = '投TA一票'
+          btnElement.style.background = '#1677FF'
+        }, 1500)
+
+        if (remainVotes === 0) {
+          document.querySelectorAll('.vote-btn').forEach((btn) => {
+            btn.classList.add('disabled')
+          })
+        }
+      }
+
+      // 简易 Toast 提示
+      let toastTimeout
+      function showToast(msg) {
+        const toast = document.getElementById('toast')
+        toast.innerText = msg
+        toast.classList.add('show')
+
+        clearTimeout(toastTimeout)
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove('show')
+        }, 2000)
+      }
+
+      // 详情页逻辑
+      function hideDetail() {
+        document.getElementById('detailView').classList.remove('show')
+        currentDetailId = null
+      }
+
+      function showDetail(id) {
+        currentDetailId = id
+        const data = candidatesData[id]
+        const currentVotes = document.getElementById('votes-' + id).innerText
+
+        document.getElementById('detailRank').innerText = data.rank
+        document.getElementById('detailName').innerText = data.name
+        document.getElementById('detailVotesCount').innerText = currentVotes
+        document.getElementById('detailDescRich').innerHTML = data.desc
+
+        // 动态渲染顶部媒体（如果有视频优先显示视频，否则显示封面图）
+        const mediaContainer = document.getElementById('detailMediaContainer')
+        if (data.video) {
+          mediaContainer.innerHTML = `<video src="${data.video}" class="detail-hero-video" controls autoplay muted playsinline></video>`
+        } else {
+          mediaContainer.innerHTML = `<img src="${data.img}" class="detail-hero-img">`
+        }
+
+        // 动态渲染多张详情图
+        const imagesContainer = document.getElementById('detailImagesContainer')
+        imagesContainer.innerHTML = ''
+        if (data.detailImages && data.detailImages.length > 0) {
+          data.detailImages.forEach((imgUrl) => {
+            const imgEl = document.createElement('img')
+            imgEl.src = imgUrl
+            imagesContainer.appendChild(imgEl)
+          })
+        }
+
+        // 更新按钮状态
+        const btn = document.getElementById('detailVoteBtn')
+        if (remainVotes <= 0) {
+          btn.classList.add('disabled')
+          btn.innerText = '今日票数已用完'
+        } else {
+          btn.classList.remove('disabled')
+          btn.innerText = '投TA一票'
+          btn.style.background = '#1677FF'
+        }
+
+        document.getElementById('detailView').classList.add('show')
+      }
+
+      function handleDetailVote() {
+        if (remainVotes <= 0) {
+          showToast('今日票数已用完，明天再来吧！')
+          return
+        }
+
+        const id = currentDetailId
+        // 找到列表页对应的按钮并触发原有的 handleVote 逻辑
+        const listBtn = document
+          .querySelectorAll('.candidate-card')
+          [id - 1].querySelector('.vote-btn')
+
+        handleVote(id, listBtn)
+
+        // 同步更新详情页的票数
+        const currentVotes = document.getElementById('votes-' + id).innerText
+        document.getElementById('detailVotesCount').innerText = currentVotes
+
+        // 详情页按钮的动效
+        const detailBtn = document.getElementById('detailVoteBtn')
+        detailBtn.innerText = '已投票'
+        detailBtn.style.background = '#52C41A'
+
+        setTimeout(() => {
+          if (remainVotes > 0) {
+            detailBtn.innerText = '投TA一票'
+            detailBtn.style.background = '#1677FF'
+          } else {
+            detailBtn.classList.add('disabled')
+            detailBtn.innerText = '今日票数已用完'
+          }
+        }, 1500)
+      }
+    </script>
+  </body>
+</html>
