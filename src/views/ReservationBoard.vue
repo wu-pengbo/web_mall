@@ -126,8 +126,20 @@ const getCapacity = (timeSlot: string, resourceId: number) => {
 const selectedCell = ref<any>(null)
 const isDrawerVisible = ref(false)
 
-// 衍生流水数据
-const orderList = computed(() => {
+// 衍生统计数据
+const todayOrderCount = computed(() => {
+  let count = 0
+  Object.entries(ordersMap.value).forEach(([key, ordersRaw]) => {
+    if (key.startsWith(currentDate.value)) {
+      const orders = Array.isArray(ordersRaw) ? ordersRaw : [ordersRaw]
+      count += orders.length
+    }
+  })
+  return count
+})
+
+// 基础的全部订单数据提取
+const baseOrderList = computed(() => {
   const list: any[] = []
   Object.entries(ordersMap.value).forEach(([key, orders]) => {
     const [date, timeSlot, resourceIdStr] = key.split('_')
@@ -135,9 +147,8 @@ const orderList = computed(() => {
     const resourceObj = projectConfig.value.subResources.find((r) => r.id === resourceId)
     const resource = resourceObj ? resourceObj.name : '未知资源'
 
-    if (!orders) return // 过滤掉可能的空数据
+    if (!orders) return
 
-    // orders 可能是单个对象（为了兼容旧数据），也可能是数组
     const ordersArray = Array.isArray(orders) ? orders : [orders]
 
     ordersArray.forEach((order) => {
@@ -152,11 +163,79 @@ const orderList = computed(() => {
       })
     })
   })
+  return list
+})
 
-  return list.sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date) // 倒序
-    return b.timeSlot.localeCompare(a.timeSlot)
-  })
+// 每日流水视图的数据（仅当前日期）
+const orderList = computed(() => {
+  return baseOrderList.value
+    .filter((order) => order.date === currentDate.value)
+    .sort((a, b) => {
+      return a.timeSlot.localeCompare(b.timeSlot)
+    })
+})
+
+// --- 全量流水与筛选逻辑 ---
+const filterForm = ref({
+  startDate: '',
+  endDate: '',
+  status: '',
+  keyword: '',
+})
+
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10,
+})
+
+const handleSearch = () => {
+  pagination.value.currentPage = 1
+}
+
+const handleReset = () => {
+  filterForm.value = {
+    startDate: '',
+    endDate: '',
+    status: '',
+    keyword: '',
+  }
+  pagination.value.currentPage = 1
+}
+
+const filteredOrderList = computed(() => {
+  return baseOrderList.value
+    .filter((order) => {
+      // 1. 日期过滤
+      if (filterForm.value.startDate && order.date < filterForm.value.startDate) return false
+      if (filterForm.value.endDate && order.date > filterForm.value.endDate) return false
+
+      // 2. 状态过滤
+      if (filterForm.value.status && order.status !== filterForm.value.status) return false
+
+      // 3. 关键字过滤 (姓名/手机号)
+      if (filterForm.value.keyword) {
+        const kw = filterForm.value.keyword.toLowerCase()
+        if (!order.name.toLowerCase().includes(kw) && !order.phone.includes(kw)) {
+          return false
+        }
+      }
+      return true
+    })
+    .sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date) // 倒序
+      return b.timeSlot.localeCompare(a.timeSlot)
+    })
+})
+
+const totalPages = computed(
+  () => Math.ceil(filteredOrderList.value.length / pagination.value.pageSize) || 1,
+)
+
+// 当前页显示的数据
+const allOrderList = computed(() => {
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  return filteredOrderList.value.slice(start, end)
 })
 
 const handleCellClick = (timeSlot: string, resourceId: number) => {
@@ -424,10 +503,37 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
 
 <template>
   <div class="reservation-board">
-    <div class="page-header">
+    <div class="header-card">
       <div class="header-left">
-        <h2>预约工作台看板</h2>
+        <div class="title-wrapper">
+          <h2>预约工作台看板</h2>
+          <span class="sub-title">按日期、时段和场地快速查看预约占用情况</span>
+        </div>
+        <div class="stats-group">
+          <div class="stat-item">
+            <span class="stat-label">当前日期</span>
+            <span class="stat-value">{{ currentDate }}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">场地数量</span>
+            <span class="stat-value">{{ projectConfig.subResources.length }}个</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">时段数量</span>
+            <span class="stat-value">{{ projectConfig.timeSlots.length }}个</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">今日预约</span>
+            <span class="stat-value">{{ todayOrderCount }}单</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
         <div class="project-selector">
+          <span class="label">预约项目</span>
           <select class="form-select">
             <option>奥体中心羽毛球馆</option>
             <option>高级律师1v1咨询</option>
@@ -446,26 +552,31 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
             :class="{ active: currentView === 'list' }"
             @click="currentView = 'list'"
           >
-            预约流水
+            每日流水
+          </button>
+          <button
+            class="toggle-btn"
+            :class="{ active: currentView === 'all_list' }"
+            @click="currentView = 'all_list'"
+          >
+            所有流水
           </button>
         </div>
-      </div>
-      <div class="header-right">
-        <button class="btn btn-primary" style="margin-right: 16px" @click="openCreateModal">
-          + 新增预约
-        </button>
-        <div class="status-legend">
-          <span class="legend-item"><i class="dot free"></i>空闲</span>
-          <span class="legend-item"><i class="dot pending"></i>待审核</span>
-          <span class="legend-item"><i class="dot confirmed"></i>已预订</span>
-          <span class="legend-item"><i class="dot completed"></i>已核销</span>
-          <span class="legend-item"><i class="dot full"></i>已满</span>
+        <div class="action-group">
+          <button class="btn btn-primary" @click="openCreateModal">+ 新增预约</button>
+          <div class="status-legend">
+            <span class="legend-item"><i class="dot free"></i>空闲</span>
+            <span class="legend-item"><i class="dot pending"></i>待确认</span>
+            <span class="legend-item"><i class="dot confirmed"></i>已预订</span>
+            <span class="legend-item"><i class="dot completed"></i>已核销</span>
+            <span class="legend-item"><i class="dot full"></i>已满</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 日期切换 -->
-    <div class="date-tabs">
+    <!-- 日期切换 (仅在日历看板和每日流水视图显示) -->
+    <div class="date-tabs" v-if="currentView !== 'all_list'">
       <div
         v-for="tab in dateTabs"
         :key="tab.date"
@@ -541,8 +652,61 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
       </table>
     </div>
 
-    <!-- 预约流水列表 -->
-    <div class="list-container" v-if="currentView === 'list'">
+    <!-- 列表看板视图 (当日) -->
+    <div v-if="currentView === 'list'" class="list-view">
+      <div class="list-header">
+        <h3>{{ currentDate }} 预约流水</h3>
+        <span class="count-badge">共 {{ orderList.length }} 单</span>
+      </div>
+    </div>
+
+    <!-- 所有流水视图 -->
+    <div v-if="currentView === 'all_list'" class="all-list-view">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>预约日期</label>
+          <input
+            type="date"
+            class="form-input"
+            v-model="filterForm.startDate"
+            style="width: 140px"
+          />
+          <span>至</span>
+          <input type="date" class="form-input" v-model="filterForm.endDate" style="width: 140px" />
+        </div>
+        <div class="filter-group">
+          <label>订单状态</label>
+          <select class="form-select" v-model="filterForm.status" style="width: 120px">
+            <option value="">全部状态</option>
+            <option value="pending">待确认</option>
+            <option value="confirmed">已预订</option>
+            <option value="completed">已核销</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>客户信息</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="filterForm.keyword"
+            placeholder="姓名/手机号"
+            style="width: 180px"
+          />
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" style="height: 32px" @click="handleSearch">查询</button>
+          <button class="btn" style="height: 32px" @click="handleReset">重置</button>
+          <button class="btn" style="height: 32px; margin-left: auto">导出报表</button>
+        </div>
+      </div>
+      <div class="list-header" style="margin-top: 16px">
+        <h3>全量预约流水</h3>
+        <span class="count-badge">共 {{ filteredOrderList.length }} 单</span>
+      </div>
+    </div>
+
+    <!-- 预约流水列表 (共用) -->
+    <div class="list-container" v-if="currentView === 'list' || currentView === 'all_list'">
       <table class="list-table">
         <thead>
           <tr>
@@ -557,7 +721,10 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="order in orderList" :key="order.key">
+          <tr
+            v-for="order in currentView === 'all_list' ? allOrderList : orderList"
+            :key="order.key"
+          >
             <td>{{ order.date }}</td>
             <td>{{ order.timeSlot }}</td>
             <td>{{ order.resource }}</td>
@@ -583,11 +750,37 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
               <a class="action-link" @click="handleListAction(order)">查看详情</a>
             </td>
           </tr>
-          <tr v-if="orderList.length === 0">
+          <tr v-if="(currentView === 'all_list' ? allOrderList : orderList).length === 0">
             <td colspan="8" class="empty-text">暂无预约数据</td>
           </tr>
         </tbody>
       </table>
+
+      <!-- 分页组件 -->
+      <div class="pagination-bar" v-if="currentView === 'all_list' && filteredOrderList.length > 0">
+        <span class="page-info"
+          >共 {{ filteredOrderList.length }} 条记录，当前第 {{ pagination.currentPage }}/{{
+            totalPages
+          }}
+          页</span
+        >
+        <div class="page-actions">
+          <button
+            class="btn btn-default"
+            :disabled="pagination.currentPage === 1"
+            @click="pagination.currentPage--"
+          >
+            上一页
+          </button>
+          <button
+            class="btn btn-default"
+            :disabled="pagination.currentPage === totalPages"
+            @click="pagination.currentPage++"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 右侧详情抽屉 -->
@@ -823,23 +1016,85 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
   overflow: hidden;
 }
 
-.page-header {
+.header-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  flex: 1;
+  gap: 40px;
 }
 
-.header-left h2 {
+.title-wrapper {
+  border-left: 4px solid #1677ff;
+  padding-left: 12px;
+}
+
+.title-wrapper h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   color: #333;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.title-wrapper .sub-title {
+  font-size: 12px;
+  color: #999;
+}
+
+.stats-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stat-item .stat-label {
+  font-size: 13px;
+  color: #999;
+}
+
+.stat-item .stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 14px;
+  background-color: #e8e8e8;
+  margin: 0 4px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.project-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 0px;
 }
 
 .form-select {
@@ -854,44 +1109,50 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
 
 .view-toggle {
   display: flex;
-  background: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  overflow: hidden;
+  background: #f0f2f5;
+  padding: 2px;
+  border-radius: 6px;
+  margin-bottom: 0px;
+  height: 32px;
+  align-items: center;
 }
 
 .toggle-btn {
-  padding: 6px 16px;
+  padding: 4px 16px;
   background: transparent;
   border: none;
   font-size: 14px;
   cursor: pointer;
   color: #666;
   outline: none;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
-.toggle-btn:hover {
-  color: #1677ff;
-}
-
 .toggle-btn.active {
-  background: #e6f4ff;
+  background: #fff;
   color: #1677ff;
   font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-btn + .toggle-btn {
-  border-left: 1px solid #d9d9d9;
+.action-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
 }
+
+.action-group .btn-primary {
+  width: 100%;
+  height: 34px;
+}
+
+/* 移除不再使用的旧统计样式 */
 
 .status-legend {
   display: flex;
-  gap: 16px;
-  background: #fff;
-  padding: 8px 16px;
-  border-radius: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: 12px;
 }
 
 .legend-item {
@@ -903,13 +1164,13 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 .dot.free {
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
+  background-color: transparent;
+  border: 2px solid #d9d9d9;
 }
 .dot.pending {
   background-color: #faad14;
@@ -944,10 +1205,12 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
   transition: all 0.2s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: relative;
+  overflow: hidden;
 }
 
 .date-tab:hover:not(.non-business) {
-  border-color: #1677ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .date-tab.active {
@@ -956,23 +1219,26 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
   border-color: #1677ff;
 }
 
+.date-tab.active .date-value {
+  color: #fff;
+  opacity: 1;
+}
+
 .date-tab.non-business {
   background: #f5f5f5;
-  color: #999;
+  color: #ccc;
   cursor: not-allowed;
-  border: 1px dashed #ddd;
 }
 
 .closed-tag {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 0;
+  right: 0;
   background: #ff4d4f;
   color: #fff;
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.3);
+  border-bottom-left-radius: 8px;
 }
 
 .date-label {
@@ -1400,5 +1666,61 @@ const getCellStatusInfo = (timeSlot: string, resourceId: number) => {
 }
 .form-input:focus {
   border-color: #1677ff;
+}
+
+/* 高级筛选栏 */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  background: #fff;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  align-items: center;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-group label {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* 分页组件 */
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+}
+.page-info {
+  font-size: 14px;
+  color: #666;
+}
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+.page-actions .btn {
+  height: 32px;
+  padding: 0 12px;
+}
+.page-actions .btn:disabled {
+  background: #f5f5f5;
+  color: #b8b8b8;
+  border-color: #d9d9d9;
+  cursor: not-allowed;
 }
 </style>
