@@ -1,566 +1,1302 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>预约服务平台</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <style>
-    :root {
-      --primary-color: #1677ff;
-      --bg-color: #f5f7fa;
-      --text-main: #333;
-      --text-sub: #999;
-      --border-color: #eee;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); }
-    
-    .app-container { max-width: 600px; margin: 0 auto; background: var(--bg-color); min-height: 100vh; position: relative; padding-bottom: 60px; }
-    
-    /* 全局组件 */
-    .page-header { background: #fff; padding: 15px; text-align: center; position: relative; font-size: 16px; font-weight: bold; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
-    .back-icon { position: absolute; left: 15px; top: 15px; font-size: 18px; cursor: pointer; color: #666; }
-    
-    /* 底部导航栏 */
-    .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; height: 55px; display: flex; border-top: 1px solid var(--border-color); z-index: 900; max-width: 600px; margin: 0 auto; padding-bottom: env(safe-area-inset-bottom); }
-    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #999; cursor: pointer; }
-    .tab-item.active { color: var(--primary-color); }
-    .tab-icon { font-size: 22px; margin-bottom: 2px; }
-
-    /* --- 视图 1: 项目列表 --- */
-    .project-list { padding: 12px; }
-    .project-card { display: flex; padding: 15px; background: #fff; margin-bottom: 12px; border-radius: 12px; gap: 15px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .project-img { width: 80px; height: 80px; border-radius: 8px; background: #eee; object-fit: cover; }
-    .project-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-    .project-name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-    .project-desc { font-size: 12px; color: var(--text-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .project-tags { margin-top: 8px; }
-    .project-tags span { font-size: 10px; padding: 2px 6px; background: #f0f5ff; color: var(--primary-color); border-radius: 4px; margin-right: 6px; }
-
-    /* --- 视图 2: 预约选座 (复用之前的样式) --- */
-    .view-booking { background: #fff; min-height: 100vh; padding-bottom: 80px; }
-    .header-card { padding: 15px 20px; background: #fff; border-bottom: 8px solid var(--bg-color); }
-    .title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
-    .subtitle { font-size: 12px; color: var(--text-sub); }
-    
-    .date-scroll-container { padding: 15px 0; background: #fff; border-bottom: 1px solid var(--border-color); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-    .date-scroll-container::-webkit-scrollbar { display: none; }
-    .date-item { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 64px; margin: 0 6px; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; }
-    .date-item:first-child { margin-left: 15px; }
-    .date-item:last-child { margin-right: 15px; }
-    .date-item.active { background: #e6f4ff; border-color: var(--primary-color); color: var(--primary-color); }
-    .date-item.disabled { color: #ccc; background: #fafafa; pointer-events: none; }
-    .date-week { font-size: 11px; margin-bottom: 4px; }
-    .date-day { font-size: 15px; font-weight: bold; }
-    
-    .matrix-area { padding: 15px; background: #fff; }
-    .matrix-tip { font-size: 12px; color: var(--text-sub); margin-bottom: 15px; display: flex; justify-content: space-between; }
-    .legend { display: flex; gap: 10px; }
-    .legend span { display: flex; align-items: center; gap: 4px; font-size: 11px; }
-    .dot { width: 10px; height: 10px; border-radius: 2px; }
-    .dot.free { border: 1px solid var(--primary-color); }
-    .dot.locked { background: #f0f0f0; border: 1px solid #ddd; }
-    .dot.selected { background: var(--primary-color); }
-
-    .matrix-table { width: 100%; border-collapse: separate; border-spacing: 4px; }
-    .matrix-table th { font-size: 12px; color: var(--text-sub); font-weight: normal; padding-bottom: 8px; }
-    .time-label { font-size: 11px; color: var(--text-sub); text-align: right; padding-right: 8px; width: 50px; }
-    
-    .cell { height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; }
-    .cell.free { border: 1px solid var(--primary-color); color: var(--primary-color); background: #fff; }
-    .cell.locked { background: #f5f5f5; border: 1px solid #eee; color: #ccc; pointer-events: none; }
-    .cell.selected { background: var(--primary-color); border: 1px solid var(--primary-color); color: #fff; }
-    
-    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; min-height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-    .selected-info { flex: 1; margin-right: 10px; }
-    .price-wrap { color: var(--text-main); font-size: 15px; font-weight: bold; margin-bottom: 2px; }
-    .desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .submit-btn { background: var(--primary-color); color: #fff; border: none; height: 36px; padding: 0 24px; border-radius: 18px; font-size: 14px; font-weight: bold; opacity: 0.5; transition: opacity 0.2s; flex-shrink: 0; }
-    .submit-btn.active { opacity: 1; }
-
-    .modal-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999; }
-    .modal { background: #fff; width: 280px; border-radius: 12px; padding: 25px 20px; text-align: center; }
-    .success-icon { font-size: 40px; margin-bottom: 10px; }
-    .modal h3 { margin-bottom: 8px; font-size: 16px; }
-    .modal p { color: var(--text-sub); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
-    .modal-btn { background: var(--primary-color); color: #fff; border: none; width: 100%; height: 36px; border-radius: 18px; font-size: 14px; }
-
-    /* --- 视图 3: 我的预约 --- */
-    .order-list { padding: 12px; }
-    .order-card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px; font-size: 12px; color: #666; }
-    .order-status { font-weight: bold; }
-    .order-status.pending { color: #faad14; }
-    .order-status.confirmed { color: var(--primary-color); }
-    .order-status.completed { color: var(--text-sub); }
-    .order-body { display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
-    .order-title { font-size: 15px; font-weight: bold; color: var(--text-main); }
-    .order-detail-text { font-size: 13px; color: #666; }
-    .order-footer { margin-top: 12px; display: flex; justify-content: flex-end; gap: 10px; }
-    .order-btn { padding: 5px 14px; border-radius: 14px; font-size: 12px; border: 1px solid #ddd; background: #fff; color: #333; cursor: pointer; }
-    .order-btn.primary { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
-
-    /* --- 视图 4: 预约详情 --- */
-    .view-detail { padding: 15px; }
-    .qr-card { background: #fff; border-radius: 12px; padding: 30px 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 15px; }
-    .qr-title { font-size: 16px; font-weight: bold; margin-bottom: 6px; }
-    .qr-subtitle { font-size: 12px; color: var(--text-sub); margin-bottom: 20px; }
-    .qr-code-box { width: 160px; height: 160px; margin: 0 auto; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; }
-    .qr-code-box img { width: 100%; height: 100%; object-fit: contain; }
-    .qr-code-text { font-size: 15px; font-family: monospace; margin-top: 15px; letter-spacing: 1px; font-weight: bold; }
-    .qr-status-tag { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-top: 15px; }
-    .qr-status-tag.confirmed { background: #e6f4ff; color: var(--primary-color); }
-    .qr-status-tag.completed { background: #f5f5f5; color: #999; }
-    
-    .detail-info-card { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 15px; }
-    .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; line-height: 1.4; }
-    .info-row:last-child { margin-bottom: 0; }
-    .info-label { color: #666; white-space: nowrap; }
-    .info-value { font-weight: 500; text-align: right; color: #333; margin-left: 20px; }
-  </style>
-</head>
-<body>
-  <div id="app" class="app-container">
-    
-    <!-- ==================== 视图 1: 项目列表 ==================== -->
-    <div v-if="currentView === 'projectList'">
-      <div class="page-header">选择预约项目</div>
-      <div class="project-list">
-        <div class="project-card" v-for="p in projects" :key="p.id" @click="goToBooking(p)">
-          <img class="project-img" :src="p.cover" />
-          <div class="project-info">
-            <div>
-              <div class="project-name">{{ p.name }}</div>
-              <div class="project-desc">{{ p.desc }}</div>
-            </div>
-            <div class="project-tags">
-              <span v-for="t in p.tags" :key="t">{{ t }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 视图 2: 预约选座 ==================== -->
-    <div v-if="currentView === 'booking'" class="view-booking">
-      <div class="page-header">
-        <span class="back-icon" @click="currentView = 'projectList'">❮</span>
-        {{ activeProject?.name }}
-      </div>
-      <div class="header-card">
-        <div class="title">{{ activeProject?.name }}</div>
-        <div class="subtitle">营业时间：09:00 - 22:00 | 支持退改</div>
-      </div>
-
-      <div class="date-scroll-container">
-        <div 
-          class="date-item" 
-          v-for="day in days" 
-          :key="day.date"
-          :class="{ active: selectedDate === day.date, disabled: !day.isBusinessDay }"
-          @click="selectDate(day)"
-        >
-          <div class="date-week">{{ day.week }}</div>
-          <div class="date-day">{{ day.dayStr }}</div>
-          <div style="font-size: 10px; margin-top: 2px; color: #ff4d4f;" v-if="!day.isBusinessDay">休息</div>
-        </div>
-      </div>
-
-      <div class="matrix-area">
-        <div class="matrix-tip">
-          <span>请选择场地及时段</span>
-          <div class="legend">
-            <span><i class="dot free"></i>可选</span>
-            <span><i class="dot locked"></i>已订/休息</span>
-            <span><i class="dot selected"></i>已选</span>
-          </div>
-        </div>
-
-        <div v-if="!isCurrentDateBusinessDay" style="padding: 40px 0; text-align: center; color: #999;">
-          <div style="font-size: 32px; margin-bottom: 10px;">🏖️</div>
-          <div>该日期场馆休息，暂不开放预约</div>
-        </div>
-
-        <table class="matrix-table" v-else>
-          <thead>
-            <tr>
-              <th></th>
-              <th v-for="res in resources" :key="res.id">{{ res.name }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="slot in timeSlots" :key="slot">
-              <td class="time-label">{{ slot.split('-')[0] }}</td>
-              <td v-for="res in resources" :key="res.id">
-                <div 
-                  class="cell"
-                  :class="getCellClass(slot, res.id)"
-                  @click="toggleCell(slot, res.id)"
-                >
-                  {{ getCellText(slot, res.id) }}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="bottom-bar">
-        <div class="selected-info">
-          <template v-if="selectedCells.length > 0">
-            <div class="price-wrap">已选 {{ selectedCells.length }} 个场次</div>
-            <div class="desc">{{ selectedSummaryText }}</div>
-          </template>
-          <template v-else>
-            <div class="desc" style="font-size: 13px; margin-top: 0; color: #333;">请先在上方选择场次</div>
-          </template>
-        </div>
-        <button 
-          class="submit-btn" 
-          :class="{ active: selectedCells.length > 0 }"
-          @click="submitOrder"
-        >
-          确认预约
-        </button>
-      </div>
-
-      <!-- 成功弹窗 -->
-      <div class="modal-mask" v-if="showSuccessModal">
-        <div class="modal">
-          <div class="success-icon">✅</div>
-          <h3>预约提交成功</h3>
-          <p>您已成功预约 {{ selectedDate }} 的 {{ selectedCells.length }} 个场次。<br>请按时前往场馆核销入场。</p>
-          <button class="modal-btn" @click="handleSuccessConfirm">查看预约凭证</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 视图 3: 我的预约 ==================== -->
-    <div v-if="currentView === 'myReservations'">
-      <div class="page-header">我的预约</div>
-      <div class="order-list">
-        <div class="order-card" v-for="order in myOrders" :key="order.id" @click="goToDetail(order)">
-          <div class="order-header">
-            <span>订单号：{{ order.id }}</span>
-            <span class="order-status" :class="order.status">{{ getStatusText(order.status) }}</span>
-          </div>
-          <div class="order-body">
-            <div class="order-title">{{ order.projectName }}</div>
-            <div class="order-detail-text">预约日期：{{ order.date }}</div>
-            <div class="order-detail-text">预约场次：{{ order.slots.join('，') }}</div>
-          </div>
-          <div class="order-footer">
-            <button class="order-btn" v-if="order.status === 'confirmed'" @click.stop="cancelOrder(order)">取消预约</button>
-            <button class="order-btn primary" @click.stop="goToDetail(order)">查看凭证</button>
-          </div>
-        </div>
-        <div v-if="myOrders.length === 0" style="text-align: center; padding: 40px 0; color: #999;">
-          暂无预约记录
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 视图 4: 预约详情(带二维码) ==================== -->
-    <div v-if="currentView === 'reservationDetail'" class="view-detail">
-      <div class="page-header">
-        <span class="back-icon" @click="currentView = 'myReservations'">❮</span>
-        预约详情
-      </div>
-      
-      <div class="qr-card">
-        <div class="qr-title">{{ activeOrder?.projectName }}</div>
-        <div class="qr-subtitle">向工作人员出示二维码核销入场</div>
-        
-        <div class="qr-code-box" :style="{ opacity: activeOrder?.status === 'completed' || activeOrder?.status === 'cancelled' ? 0.3 : 1 }">
-          <!-- 模拟二维码图片 -->
-          <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + activeOrder?.id" alt="QR Code" />
-        </div>
-        
-        <div class="qr-code-text">{{ formatCode(activeOrder?.id) }}</div>
-        <div class="qr-status-tag" :class="activeOrder?.status">
-          {{ getStatusText(activeOrder?.status) }}
-        </div>
-      </div>
-
-      <div class="detail-info-card">
-        <div class="info-row">
-          <span class="info-label">预约日期</span>
-          <span class="info-value">{{ activeOrder?.date }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">预约场次</span>
-          <span class="info-value" style="text-align: right;">
-            <div v-for="(slot, idx) in activeOrder?.slots" :key="idx">{{ slot }}</div>
-          </span>
-        </div>
-        <div class="info-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee;">
-          <span class="info-label">订单编号</span>
-          <span class="info-value">{{ activeOrder?.id }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">下单时间</span>
-          <span class="info-value">{{ activeOrder?.createTime }}</span>
-        </div>
-      </div>
-
-      <div style="padding: 0 15px;" v-if="activeOrder?.status === 'confirmed'">
-        <button class="submit-btn" style="width: 100%; background: #fff; color: #666; border: 1px solid #ddd;" @click="cancelOrder(activeOrder)">
-          取消预约
-        </button>
-      </div>
-    </div>
-
-    <!-- ==================== 全局底部导航 ==================== -->
-    <div class="tab-bar" v-if="['projectList', 'myReservations'].includes(currentView)">
-      <div class="tab-item" :class="{active: currentView === 'projectList'}" @click="currentView = 'projectList'">
-        <div class="tab-icon">🏟️</div>
-        <div>预约大厅</div>
-      </div>
-      <div class="tab-item" :class="{active: currentView === 'myReservations'}" @click="currentView = 'myReservations'">
-        <div class="tab-icon">📄</div>
-        <div>我的预约</div>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    const { createApp, ref, computed } = Vue
-
-    createApp({
-      setup() {
-        // --- 路由与全局状态 ---
-        const currentView = ref('projectList') // projectList, booking, myReservations, reservationDetail
-        
-        const projects = ref([
-          { 
-            id: 'p1', 
-            name: '奥体中心羽毛球馆', 
-            desc: '专业塑胶场地，配套淋浴设施，距离地铁站200米', 
-            cover: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80', 
-            tags: ['体育场馆', '自动确认', '支持退改'] 
-          },
-          { 
-            id: 'p2', 
-            name: '高级律师1v1法律咨询', 
-            desc: '资深执业律师，为您解答婚姻、合同、劳务等法律纠纷', 
-            cover: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80', 
-            tags: ['专业服务', '需审核', '不支持退款'] 
-          }
-        ])
-
-        const myOrders = ref([
-          { 
-            id: 'R202605018899', 
-            projectId: 'p1', 
-            projectName: '奥体中心羽毛球馆', 
-            date: '2026-05-12', 
-            slots: ['19:00 VIP场', '20:00 VIP场'], 
-            status: 'confirmed',
-            createTime: '2026-05-08 10:23:45'
-          },
-          { 
-            id: 'R202604251122', 
-            projectId: 'p1', 
-            projectName: '奥体中心羽毛球馆', 
-            date: '2026-04-30', 
-            slots: ['14:00 1号场'], 
-            status: 'completed',
-            createTime: '2026-04-25 15:10:00'
-          }
-        ])
-
-        const activeProject = ref(null)
-        const activeOrder = ref(null)
-
-        // --- 视图跳转逻辑 ---
-        const goToBooking = (project) => {
-          activeProject.value = project
-          // 重置选座状态
-          selectedCells.value = []
-          selectedDate.value = days.value[0].date
-          currentView.value = 'booking'
-        }
-
-        const goToDetail = (order) => {
-          activeOrder.value = order
-          currentView.value = 'reservationDetail'
-        }
-
-        // --- Booking 选座核心逻辑 ---
-        const resources = ref([
-          { id: 1, name: '1号场' },
-          { id: 2, name: '2号场' },
-          { id: 3, name: '3号场' },
-          { id: 4, name: 'VIP场' }
-        ])
-        
-        const timeSlots = ref([
-          '14:00-15:00', '15:00-16:00', '16:00-17:00', 
-          '18:00-19:00', '19:00-20:00', '20:00-21:00'
-        ])
-
-        const lockedPool = ref(['2026-05-08_14:00-15:00_1', '2026-05-08_19:00-20:00_4'])
-        const days = ref([])
-        const selectedDate = ref('')
-        const selectedCells = ref([])
-        const showSuccessModal = ref(false)
-
-        const initDays = () => {
-          const today = new Date('2026-05-08') // mock 周五
-          const weekMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-          for (let i = 0; i < 14; i++) {
-            const d = new Date(today)
-            d.setDate(d.getDate() + i)
-            const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-            const dayOfWeek = d.getDay()
-            const isBusinessDay = (dayOfWeek !== 0 && dayOfWeek !== 6) // 周六、周日休息
-            
-            days.value.push({
-              date: dateStr,
-              dayStr: `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
-              week: i === 0 ? '今天' : weekMap[dayOfWeek],
-              isBusinessDay
-            })
-          }
-          selectedDate.value = days.value[0].date
-        }
-        initDays()
-
-        const isCurrentDateBusinessDay = computed(() => {
-          const day = days.value.find(d => d.date === selectedDate.value)
-          return day ? day.isBusinessDay : false
-        })
-
-        const selectDate = (day) => {
-          if (!day.isBusinessDay) return
-          selectedDate.value = day.date
-          selectedCells.value = []
-        }
-
-        const getCellStatus = (slot, resId) => {
-          const key = `${selectedDate.value}_${slot}_${resId}`
-          if (lockedPool.value.includes(key)) return 'locked'
-          if (selectedCells.value.includes(key)) return 'selected'
-          return 'free'
-        }
-
-        const getCellClass = (slot, resId) => getCellStatus(slot, resId)
-
-        const getCellText = (slot, resId) => {
-          const status = getCellStatus(slot, resId)
-          if (status === 'locked') return '已订'
-          if (status === 'selected') return '已选'
-          return '空闲'
-        }
-
-        const toggleCell = (slot, resId) => {
-          const key = `${selectedDate.value}_${slot}_${resId}`
-          if (lockedPool.value.includes(key)) return
-
-          const index = selectedCells.value.indexOf(key)
-          if (index > -1) {
-            selectedCells.value.splice(index, 1)
-          } else {
-            if (selectedCells.value.length >= 4) {
-              alert('单次最多只能预约4个场次')
-              return
-            }
-            selectedCells.value.push(key)
-          }
-        }
-
-        const selectedSummaryText = computed(() => {
-          if (selectedCells.value.length === 0) return ''
-          return selectedCells.value.map(key => {
-            const parts = key.split('_')
-            const slot = parts[1]
-            const resId = Number(parts[2])
-            const resName = resources.value.find(r => r.id === resId)?.name || ''
-            return `${slot.split('-')[0]} ${resName}`
-          }).join('，')
-        })
-
-        const submitOrder = () => {
-          if (selectedCells.value.length === 0) return
-          showSuccessModal.value = true
-        }
-
-        const handleSuccessConfirm = () => {
-          showSuccessModal.value = false
-          
-          // 将已选格子锁入池子
-          lockedPool.value.push(...selectedCells.value)
-          
-          // 生成一个新订单对象并插入“我的预约”列表顶部
-          const newOrder = {
-            id: 'R' + new Date().getTime(),
-            projectId: activeProject.value.id,
-            projectName: activeProject.value.name,
-            date: selectedDate.value,
-            slots: selectedCells.value.map(key => {
-              const parts = key.split('_')
-              const resName = resources.value.find(r => r.id === Number(parts[2]))?.name || ''
-              return `${parts[1]} ${resName}`
-            }),
-            status: 'confirmed', // 假设自动确认
-            createTime: new Date().toLocaleString().replace(/\//g, '-')
-          }
-          myOrders.value.unshift(newOrder)
-          selectedCells.value = []
-          
-          // 跳转到详情页
-          goToDetail(newOrder)
-        }
-
-        // --- 其他工具方法 ---
-        const getStatusText = (status) => {
-          const map = { pending: '待审核', confirmed: '待核销使用', completed: '已完成', cancelled: '已取消' }
-          return map[status] || status
-        }
-
-        const formatCode = (code) => {
-          if (!code) return ''
-          return code.replace(/(.{4})/g, '$1 ').trim()
-        }
-
-        const cancelOrder = (order) => {
-          if (confirm('确定要取消这个预约吗？')) {
-            order.status = 'cancelled'
-            alert('取消成功')
-            // 真实业务中还需要把 lockedPool 里对应的资源释放出来
-          }
-        }
-
-        return {
-          currentView,
-          projects,
-          myOrders,
-          activeProject,
-          activeOrder,
-          goToBooking,
-          goToDetail,
-          resources,
-          timeSlots,
-          days,
-          selectedDate,
-          selectedCells,
-          isCurrentDateBusinessDay,
-          selectDate,
-          getCellClass,
-          getCellText,
-          toggleCell,
-          selectedSummaryText,
-          submitOrder,
-          showSuccessModal,
-          handleSuccessConfirm,
-          getStatusText,
-          formatCode,
-          cancelOrder
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>预约服务平台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+      :root {
+        --primary-color: #1677ff;
+        --bg-color: #f5f7fa;
+        --text-main: #333;
+        --text-sub: #999;
+        --border-color: #eee;
       }
-    }).mount('#app')
-  </script>
-</body>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+      }
+
+      .app-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: var(--bg-color);
+        min-height: 100vh;
+        position: relative;
+        padding-bottom: 60px;
+      }
+
+      /* 全局组件 */
+      .page-header {
+        background: #fff;
+        padding: 15px;
+        text-align: center;
+        position: relative;
+        font-size: 16px;
+        font-weight: bold;
+        border-bottom: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .back-icon {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        font-size: 18px;
+        cursor: pointer;
+        color: #666;
+      }
+
+      /* 底部导航栏 */
+      .tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        height: 55px;
+        display: flex;
+        border-top: 1px solid var(--border-color);
+        z-index: 900;
+        max-width: 600px;
+        margin: 0 auto;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .tab-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #999;
+        cursor: pointer;
+      }
+      .tab-item.active {
+        color: var(--primary-color);
+      }
+      .tab-icon {
+        font-size: 22px;
+        margin-bottom: 2px;
+      }
+
+      /* --- 视图 1: 项目列表 --- */
+      .project-list {
+        padding: 12px;
+      }
+      .project-card {
+        display: flex;
+        padding: 15px;
+        background: #fff;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        gap: 15px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .project-img {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        background: #eee;
+        object-fit: cover;
+      }
+      .project-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .project-name {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .project-desc {
+        font-size: 12px;
+        color: var(--text-sub);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .project-tags {
+        margin-top: 8px;
+      }
+      .project-tags span {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: #f0f5ff;
+        color: var(--primary-color);
+        border-radius: 4px;
+        margin-right: 6px;
+      }
+
+      /* --- 视图 2: 预约选座 (复用之前的样式) --- */
+      .view-booking {
+        background: #fff;
+        min-height: 100vh;
+        padding-bottom: 80px;
+      }
+      .header-card {
+        padding: 15px 20px;
+        background: #fff;
+        border-bottom: 8px solid var(--bg-color);
+      }
+      .title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 6px;
+      }
+      .subtitle {
+        font-size: 12px;
+        color: var(--text-sub);
+      }
+
+      .date-scroll-container {
+        padding: 15px 0;
+        background: #fff;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+      .date-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+      .date-item {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 64px;
+        margin: 0 6px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+      }
+      .date-item:first-child {
+        margin-left: 15px;
+      }
+      .date-item:last-child {
+        margin-right: 15px;
+      }
+      .date-item.active {
+        background: #e6f4ff;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+      .date-item.disabled {
+        color: #ccc;
+        background: #fafafa;
+        pointer-events: none;
+      }
+      .date-week {
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+      .date-day {
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      .matrix-area {
+        padding: 15px;
+        background: #fff;
+      }
+      .matrix-tip {
+        font-size: 12px;
+        color: var(--text-sub);
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .legend {
+        display: flex;
+        gap: 10px;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+      }
+      .dot.free {
+        border: 1px solid var(--primary-color);
+      }
+      .dot.locked {
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+      }
+      .dot.selected {
+        background: var(--primary-color);
+      }
+
+      .matrix-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+      }
+      .matrix-table th {
+        font-size: 12px;
+        color: var(--text-sub);
+        font-weight: normal;
+        padding-bottom: 8px;
+      }
+      .time-label {
+        font-size: 11px;
+        color: var(--text-sub);
+        text-align: right;
+        padding-right: 8px;
+        width: 50px;
+      }
+
+      .cell {
+        height: 40px;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+      .cell.free {
+        border: 1px dashed #1677ff;
+        color: var(--primary-color);
+        background: #f9f9f9;
+      }
+      .cell.partial {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        background: #e6f4ff;
+      }
+      .cell.locked {
+        background: #fff2f0;
+        border: 1px solid #ffccc7;
+        color: #ff4d4f;
+        pointer-events: none;
+      }
+      .cell.selected {
+        background: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        color: #fff;
+      }
+      .cell.expired {
+        background: #f5f5f5;
+        border: 1px dashed #ddd;
+        color: #ccc;
+        pointer-events: none;
+      }
+      .cell-count {
+        font-size: 10px;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        max-width: 600px;
+        margin: 0 auto;
+        z-index: 100;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+      .selected-info {
+        flex: 1;
+        margin-right: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .price-wrap {
+        color: var(--text-main);
+        font-size: 15px;
+        font-weight: bold;
+      }
+      .arrow-up {
+        border: solid #666;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(-135deg);
+        margin-bottom: 2px;
+      }
+      .desc {
+        font-size: 11px;
+        color: var(--text-sub);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .submit-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        height: 36px;
+        padding: 0 24px;
+        border-radius: 18px;
+        font-size: 14px;
+        font-weight: bold;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+        flex-shrink: 0;
+      }
+      .submit-btn.active {
+        opacity: 1;
+      }
+
+      /* 底部已选明细抽屉 */
+      .drawer-mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 90;
+      }
+      .selected-drawer {
+        position: fixed;
+        bottom: 70px;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-radius: 16px 16px 0 0;
+        padding: 20px;
+        z-index: 95;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      }
+      .selected-drawer.show {
+        transform: translateY(0);
+      }
+      .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+      .drawer-title {
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .clear-btn {
+        font-size: 12px;
+        color: #999;
+        cursor: pointer;
+      }
+      .selected-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .selected-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px dashed #eee;
+      }
+      .selected-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .selected-item-date {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .selected-item-res {
+        font-size: 12px;
+        color: #666;
+      }
+      .delete-btn {
+        color: #ff4d4f;
+        font-size: 12px;
+        padding: 4px 8px;
+        background: #fff2f0;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .modal-mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+      }
+      .modal {
+        background: #fff;
+        width: 280px;
+        border-radius: 12px;
+        padding: 25px 20px;
+        text-align: center;
+      }
+      .success-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+      }
+      .modal h3 {
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+      .modal p {
+        color: var(--text-sub);
+        font-size: 13px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+      .modal-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        width: 100%;
+        height: 36px;
+        border-radius: 18px;
+        font-size: 14px;
+      }
+
+      /* --- 视图 3: 我的预约 --- */
+      .order-list {
+        padding: 12px;
+      }
+      .order-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #666;
+      }
+      .order-status {
+        font-weight: bold;
+      }
+      .order-status.pending {
+        color: #faad14;
+      }
+      .order-status.confirmed {
+        color: var(--primary-color);
+      }
+      .order-status.completed {
+        color: var(--text-sub);
+      }
+      .order-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .order-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: var(--text-main);
+      }
+      .order-detail-text {
+        font-size: 13px;
+        color: #666;
+      }
+      .order-footer {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .order-btn {
+        padding: 5px 14px;
+        border-radius: 14px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #333;
+        cursor: pointer;
+      }
+      .order-btn.primary {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+      }
+
+      /* --- 视图 4: 预约详情 --- */
+      .view-detail {
+        padding: 15px;
+      }
+      .qr-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 30px 15px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        margin-bottom: 15px;
+      }
+      .qr-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 6px;
+      }
+      .qr-subtitle {
+        font-size: 12px;
+        color: var(--text-sub);
+        margin-bottom: 20px;
+      }
+      .qr-code-box {
+        width: 160px;
+        height: 160px;
+        margin: 0 auto;
+        border: 1px solid var(--border-color);
+        padding: 10px;
+        border-radius: 8px;
+      }
+      .qr-code-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .qr-code-text {
+        font-size: 15px;
+        font-family: monospace;
+        margin-top: 15px;
+        letter-spacing: 1px;
+        font-weight: bold;
+      }
+      .qr-status-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 15px;
+      }
+      .qr-status-tag.confirmed {
+        background: #e6f4ff;
+        color: var(--primary-color);
+      }
+      .qr-status-tag.completed {
+        background: #f5f5f5;
+        color: #999;
+      }
+
+      .detail-info-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        margin-bottom: 15px;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .info-row:last-child {
+        margin-bottom: 0;
+      }
+      .info-label {
+        color: #666;
+        white-space: nowrap;
+      }
+      .info-value {
+        font-weight: 500;
+        text-align: right;
+        color: #333;
+        margin-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="app-container">
+      <!-- ==================== 视图 1: 项目列表 ==================== -->
+      <div v-if="currentView === 'projectList'">
+        <div class="page-header">选择预约项目</div>
+        <div class="project-list">
+          <div class="project-card" v-for="p in projects" :key="p.id" @click="goToBooking(p)">
+            <img class="project-img" :src="p.cover" />
+            <div class="project-info">
+              <div>
+                <div class="project-name">{{ p.name }}</div>
+                <div class="project-desc">{{ p.desc }}</div>
+              </div>
+              <div class="project-tags">
+                <span v-for="t in p.tags" :key="t">{{ t }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 视图 2: 预约选座 ==================== -->
+      <div v-if="currentView === 'booking'" class="view-booking">
+        <div class="page-header">
+          <span class="back-icon" @click="currentView = 'projectList'">❮</span>
+          {{ activeProject?.name }}
+        </div>
+        <div class="header-card">
+          <div class="title">{{ activeProject?.name }}</div>
+          <div class="subtitle">营业时间：09:00 - 22:00 | 支持退改</div>
+        </div>
+
+        <div class="date-scroll-container">
+          <div
+            class="date-item"
+            v-for="day in days"
+            :key="day.date"
+            :class="{ active: selectedDate === day.date, disabled: !day.isBusinessDay }"
+            @click="selectDate(day)"
+          >
+            <div class="date-week">{{ day.week }}</div>
+            <div class="date-day">{{ day.dayStr }}</div>
+            <div style="font-size: 10px; margin-top: 2px; color: #ff4d4f" v-if="!day.isBusinessDay">
+              休息
+            </div>
+          </div>
+        </div>
+
+        <div class="matrix-area">
+          <div class="matrix-tip">
+            <span>请选择场地及时段</span>
+            <div class="legend">
+              <span><i class="dot free"></i>可选</span>
+              <span><i class="dot locked"></i>已订/休息</span>
+              <span><i class="dot selected"></i>已选</span>
+            </div>
+          </div>
+
+          <div
+            v-if="!isCurrentDateBusinessDay"
+            style="padding: 40px 0; text-align: center; color: #999"
+          >
+            <div style="font-size: 32px; margin-bottom: 10px">🏖️</div>
+            <div>该日期场馆休息，暂不开放预约</div>
+          </div>
+
+          <table class="matrix-table" v-else>
+            <thead>
+              <tr>
+                <th></th>
+                <th v-for="res in resources" :key="res.id">{{ res.name }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="slot in timeSlots" :key="slot">
+                <td class="time-label">{{ slot.split('-')[0] }}</td>
+                <td v-for="res in resources" :key="res.id">
+                  <div
+                    class="cell"
+                    :class="getCellClass(slot, res.id)"
+                    @click="toggleCell(slot, res.id)"
+                  >
+                    <div>{{ getCellText(slot, res.id) }}</div>
+                    <div class="cell-count" v-if="getCellClass(slot, res.id) !== 'selected'">
+                      {{ getCellCountText(slot, res.id) }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 底部上拉抽屉 -->
+        <div class="drawer-mask" v-if="showDrawer" @click="showDrawer = false"></div>
+        <div class="selected-drawer" :class="{ show: showDrawer }">
+          <div class="drawer-header">
+            <div class="drawer-title">已选场次 ({{ selectedCells.length }})</div>
+            <div class="clear-btn" @click="clearAllSelected">清空</div>
+          </div>
+          <div class="selected-list">
+            <div class="selected-item" v-for="cell in selectedCellsDetail" :key="cell.key">
+              <div class="selected-item-info">
+                <div class="selected-item-date">{{ cell.date }} {{ cell.slot }}</div>
+                <div class="selected-item-res">{{ cell.resName }}</div>
+              </div>
+              <div class="delete-btn" @click="removeCell(cell.key)">删除</div>
+            </div>
+            <div
+              v-if="selectedCells.length === 0"
+              style="text-align: center; padding: 30px 0; color: #999"
+            >
+              暂未选择任何场次
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-bar" style="z-index: 100">
+          <div class="selected-info" @click="toggleDrawer">
+            <template v-if="selectedCells.length > 0">
+              <div class="price-wrap">已选 {{ selectedCells.length }} 个场次</div>
+              <i
+                class="arrow-up"
+                :style="{ transform: showDrawer ? 'rotate(45deg)' : 'rotate(-135deg)', marginBottom: showDrawer ? '4px' : '0' }"
+              ></i>
+            </template>
+            <template v-else>
+              <div class="desc" style="font-size: 13px; margin-top: 0; color: #333">
+                请先在上方选择场次
+              </div>
+            </template>
+          </div>
+          <button
+            class="submit-btn"
+            :class="{ active: selectedCells.length > 0 }"
+            @click="submitOrder"
+          >
+            提交预约
+          </button>
+        </div>
+
+        <!-- 成功弹窗 -->
+        <div class="modal-mask" v-if="showSuccessModal">
+          <div class="modal">
+            <div class="success-icon">⏳</div>
+            <h3>预约已提交，待商家审核</h3>
+            <p>
+              您已成功提交 {{ selectedDate }} 的 {{ selectedCells.length }} 个场次。<br />商家审核通过后将生成入场凭证。
+            </p>
+            <button class="modal-btn" @click="handleSuccessConfirm">查看预约详情</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 视图 3: 我的预约 ==================== -->
+      <div v-if="currentView === 'myReservations'">
+        <div class="page-header">我的预约</div>
+        <div class="order-list">
+          <div
+            class="order-card"
+            v-for="order in myOrders"
+            :key="order.id"
+            @click="goToDetail(order)"
+          >
+            <div class="order-header">
+              <span>订单号：{{ order.id }}</span>
+              <span class="order-status" :class="order.status"
+                >{{ getStatusText(order.status) }}</span
+              >
+            </div>
+            <div class="order-body">
+              <div class="order-title">{{ order.projectName }}</div>
+              <div class="order-detail-text">预约日期：{{ order.date }}</div>
+              <div class="order-detail-text">预约场次：{{ order.slots.join('，') }}</div>
+            </div>
+            <div class="order-footer">
+              <button
+                class="order-btn"
+                v-if="order.status === 'confirmed'"
+                @click.stop="cancelOrder(order)"
+              >
+                取消预约
+              </button>
+              <button class="order-btn primary" @click.stop="goToDetail(order)">查看凭证</button>
+            </div>
+          </div>
+          <div
+            v-if="myOrders.length === 0"
+            style="text-align: center; padding: 40px 0; color: #999"
+          >
+            暂无预约记录
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 视图 4: 预约详情(带二维码) ==================== -->
+      <div v-if="currentView === 'reservationDetail'" class="view-detail">
+        <div class="page-header">
+          <span class="back-icon" @click="currentView = 'myReservations'">❮</span>
+          预约详情
+        </div>
+
+        <div class="qr-card">
+          <div class="qr-title">{{ activeOrder?.projectName }}</div>
+          <div class="qr-subtitle">向工作人员出示二维码核销入场</div>
+
+          <div
+            class="qr-code-box"
+            :style="{ opacity: activeOrder?.status === 'completed' || activeOrder?.status === 'cancelled' ? 0.3 : 1 }"
+          >
+            <!-- 模拟二维码图片 -->
+            <img
+              :src="'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + activeOrder?.id"
+              alt="QR Code"
+            />
+          </div>
+
+          <div class="qr-code-text">{{ formatCode(activeOrder?.id) }}</div>
+          <div class="qr-status-tag" :class="activeOrder?.status">
+            {{ getStatusText(activeOrder?.status) }}
+          </div>
+        </div>
+
+        <div class="detail-info-card">
+          <div class="info-row">
+            <span class="info-label">预约日期</span>
+            <span class="info-value">{{ activeOrder?.date }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">预约场次</span>
+            <span class="info-value" style="text-align: right">
+              <div v-for="(slot, idx) in activeOrder?.slots" :key="idx">{{ slot }}</div>
+            </span>
+          </div>
+          <div
+            class="info-row"
+            style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee"
+          >
+            <span class="info-label">订单编号</span>
+            <span class="info-value">{{ activeOrder?.id }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">下单时间</span>
+            <span class="info-value">{{ activeOrder?.createTime }}</span>
+          </div>
+        </div>
+
+        <div style="padding: 0 15px" v-if="activeOrder?.status === 'confirmed'">
+          <button
+            class="submit-btn"
+            style="width: 100%; background: #fff; color: #666; border: 1px solid #ddd"
+            @click="cancelOrder(activeOrder)"
+          >
+            取消预约
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== 全局底部导航 ==================== -->
+      <div class="tab-bar" v-if="['projectList', 'myReservations'].includes(currentView)">
+        <div
+          class="tab-item"
+          :class="{active: currentView === 'projectList'}"
+          @click="currentView = 'projectList'"
+        >
+          <div class="tab-icon">🏟️</div>
+          <div>预约大厅</div>
+        </div>
+        <div
+          class="tab-item"
+          :class="{active: currentView === 'myReservations'}"
+          @click="currentView = 'myReservations'"
+        >
+          <div class="tab-icon">📄</div>
+          <div>我的预约</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, computed } = Vue
+
+      createApp({
+        setup() {
+          // --- 路由与全局状态 ---
+          const currentView = ref('projectList') // projectList, booking, myReservations, reservationDetail
+
+          const projects = ref([
+            {
+              id: 'p1',
+              name: '奥体中心羽毛球馆',
+              desc: '专业塑胶场地，配套淋浴设施，距离地铁站200米',
+              cover:
+                'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+              tags: ['体育场馆', '自动确认', '支持退改'],
+            },
+            {
+              id: 'p2',
+              name: '高级律师1v1法律咨询',
+              desc: '资深执业律师，为您解答婚姻、合同、劳务等法律纠纷',
+              cover:
+                'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+              tags: ['专业服务', '需审核', '不支持退款'],
+            },
+          ])
+
+          const myOrders = ref([
+            {
+              id: 'R202605018899',
+              projectId: 'p1',
+              projectName: '奥体中心羽毛球馆',
+              date: '2026-05-12',
+              slots: ['19:00 VIP场', '20:00 VIP场'],
+              status: 'confirmed',
+              createTime: '2026-05-08 10:23:45',
+            },
+            {
+              id: 'R202604251122',
+              projectId: 'p1',
+              projectName: '奥体中心羽毛球馆',
+              date: '2026-04-30',
+              slots: ['14:00 1号场'],
+              status: 'completed',
+              createTime: '2026-04-25 15:10:00',
+            },
+          ])
+
+          const activeProject = ref(null)
+          const activeOrder = ref(null)
+
+          // --- 视图跳转逻辑 ---
+          const goToBooking = (project) => {
+            activeProject.value = project
+            // 重置选座状态
+            selectedCells.value = []
+            selectedDate.value = days.value[0].date
+            currentView.value = 'booking'
+          }
+
+          const goToDetail = (order) => {
+            activeOrder.value = order
+            currentView.value = 'reservationDetail'
+          }
+
+          // --- Booking 选座核心逻辑 ---
+          const resources = ref([
+            { id: 1, name: '1号场' },
+            { id: 2, name: '2号场' },
+            { id: 3, name: '3号场' },
+            { id: 4, name: 'VIP场' },
+          ])
+
+          const timeSlots = ref([
+            '14:00-15:00',
+            '15:00-16:00',
+            '16:00-17:00',
+            '18:00-19:00',
+            '19:00-20:00',
+            '20:00-21:00',
+          ])
+
+          // 模拟后台的多容量订单数据结构 (不再只是简单的 lockedPool 字符串数组)
+          // 格式: { '日期_时段_资源ID': { count: 已占用数量, max: 最大容量 } }
+          const capacityMap = ref({
+            '2026-05-08_14:00-15:00_1': { count: 4, max: 4 }, // 已满
+            '2026-05-08_14:00-15:00_2': { count: 2, max: 4 }, // 部分占用
+            '2026-05-08_19:00-20:00_4': { count: 4, max: 4 }, // 已满
+          })
+
+          // 默认单个格子的最大容量
+          const DEFAULT_CAPACITY = 4
+
+          const days = ref([])
+          const selectedDate = ref('')
+          const selectedCells = ref([])
+          const showSuccessModal = ref(false)
+          const showDrawer = ref(false)
+
+          const toggleDrawer = () => {
+            if (selectedCells.value.length > 0) {
+              showDrawer.value = !showDrawer.value
+            }
+          }
+
+          const clearAllSelected = () => {
+            selectedCells.value = []
+            showDrawer.value = false
+          }
+
+          const removeCell = (key) => {
+            const index = selectedCells.value.indexOf(key)
+            if (index > -1) {
+              selectedCells.value.splice(index, 1)
+            }
+            if (selectedCells.value.length === 0) {
+              showDrawer.value = false
+            }
+          }
+
+          const selectedCellsDetail = computed(() => {
+            return selectedCells.value.map((key) => {
+              const parts = key.split('_')
+              const date = parts[0]
+              const slot = parts[1]
+              const resId = Number(parts[2])
+              const resName = resources.value.find((r) => r.id === resId)?.name || ''
+              return { key, date, slot, resName }
+            })
+          })
+
+          const initDays = () => {
+            const today = new Date('2026-05-08') // mock 周五
+            const weekMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+            for (let i = 0; i < 14; i++) {
+              const d = new Date(today)
+              d.setDate(d.getDate() + i)
+              const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+              const dayOfWeek = d.getDay()
+              const isBusinessDay = dayOfWeek !== 0 && dayOfWeek !== 6 // 周六、周日休息
+
+              days.value.push({
+                date: dateStr,
+                dayStr: `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+                week: i === 0 ? '今天' : weekMap[dayOfWeek],
+                isBusinessDay,
+                isToday: i === 0,
+              })
+            }
+            selectedDate.value = days.value[0].date
+          }
+          initDays()
+
+          const isCurrentDateBusinessDay = computed(() => {
+            const day = days.value.find((d) => d.date === selectedDate.value)
+            return day ? day.isBusinessDay : false
+          })
+
+          // 判断该时段是否已过期
+          const isSlotExpired = (slot) => {
+            const day = days.value.find((d) => d.date === selectedDate.value)
+            if (!day || !day.isToday) return false // 不是今天，不过期（过去的日期理论上选不到）
+
+            // 获取时段的开始时间
+            const startTimeStr = slot.split('-')[0]
+
+            // Mock 当前时间为 2026-05-08 15:30 (即 14:00 和 15:00 开始的场次算过期)
+            const mockCurrentHour = 15
+            const mockCurrentMinute = 30
+
+            const [startHour, startMinute] = startTimeStr.split(':').map(Number)
+
+            // 如果开始时间早于或等于当前时间，则视为过期
+            if (startHour < mockCurrentHour) return true
+            if (startHour === mockCurrentHour && startMinute <= mockCurrentMinute) return true
+
+            return false
+          }
+
+          const selectDate = (day) => {
+            if (!day.isBusinessDay) return
+            selectedDate.value = day.date
+            selectedCells.value = []
+            showDrawer.value = false
+          }
+
+          // 获取该格子的实时容量状态
+          const getCellCapacity = (slot, resId) => {
+            const key = `${selectedDate.value}_${slot}_${resId}`
+            const cellData = capacityMap.value[key] || { count: 0, max: DEFAULT_CAPACITY }
+
+            // 计算当前用户是否在这个格子里选了
+            const isSelected = selectedCells.value.includes(key)
+            // 用户的选择会临时占用1个容量
+            const currentCount = cellData.count + (isSelected ? 1 : 0)
+
+            return {
+              count: currentCount,
+              max: cellData.max,
+              isFull: currentCount >= cellData.max && !isSelected, // 如果没选且已满，则是真满
+              isSelected,
+            }
+          }
+
+          const getCellStatus = (slot, resId) => {
+            if (isSlotExpired(slot)) return 'expired'
+            const cap = getCellCapacity(slot, resId)
+            if (cap.isSelected) return 'selected'
+            if (cap.isFull) return 'locked'
+            if (cap.count > 0) return 'partial' // 部分占用
+            return 'free'
+          }
+
+          const getCellClass = (slot, resId) => getCellStatus(slot, resId)
+
+          const getCellText = (slot, resId) => {
+            const status = getCellStatus(slot, resId)
+            if (status === 'expired') return '已过期'
+            if (status === 'locked') return '已满'
+            if (status === 'selected') return '已选'
+            if (status === 'partial') return '可选'
+            return '空闲'
+          }
+
+          const getCellCountText = (slot, resId) => {
+            const status = getCellStatus(slot, resId)
+            if (status === 'expired') return ''
+            const cap = getCellCapacity(slot, resId)
+            if (cap.isFull) return '0 余位'
+            return `剩余 ${cap.max - cap.count} 位`
+          }
+
+          const toggleCell = (slot, resId) => {
+            const status = getCellStatus(slot, resId)
+            if (status === 'locked' || status === 'expired') return // 已满或已过期不可选
+
+            const key = `${selectedDate.value}_${slot}_${resId}`
+            const index = selectedCells.value.indexOf(key)
+
+            if (index > -1) {
+              // 取消选择
+              selectedCells.value.splice(index, 1)
+              if (selectedCells.value.length === 0) {
+                showDrawer.value = false
+              }
+            } else {
+              // 新增选择
+              if (selectedCells.value.length >= 4) {
+                alert('单次最多只能预约4个场次')
+                return
+              }
+              selectedCells.value.push(key)
+            }
+          }
+
+          const selectedSummaryText = computed(() => {
+            if (selectedCells.value.length === 0) return ''
+            return selectedCells.value
+              .map((key) => {
+                const parts = key.split('_')
+                const slot = parts[1]
+                const resId = Number(parts[2])
+                const resName = resources.value.find((r) => r.id === resId)?.name || ''
+                return `${slot.split('-')[0]} ${resName}`
+              })
+              .join('，')
+          })
+
+          const submitOrder = () => {
+            if (selectedCells.value.length === 0) return
+            showDrawer.value = false
+            showSuccessModal.value = true
+          }
+
+          const handleSuccessConfirm = () => {
+            showSuccessModal.value = false
+
+            // 将已选格子锁入容量池子 (每个选择+1)
+            selectedCells.value.forEach((key) => {
+              if (!capacityMap.value[key]) {
+                capacityMap.value[key] = { count: 0, max: DEFAULT_CAPACITY }
+              }
+              capacityMap.value[key].count += 1
+            })
+
+            // 生成一个新订单对象并插入“我的预约”列表顶部
+            const newOrder = {
+              id: 'R' + new Date().getTime(),
+              projectId: activeProject.value.id,
+              projectName: activeProject.value.name,
+              date: selectedDate.value,
+              slots: selectedCells.value.map((key) => {
+                const parts = key.split('_')
+                const resName = resources.value.find((r) => r.id === Number(parts[2]))?.name || ''
+                return `${parts[1]} ${resName}`
+              }),
+              status: 'pending', // 改为待审核状态
+              createTime: new Date().toLocaleString().replace(/\//g, '-'),
+            }
+            myOrders.value.unshift(newOrder)
+            selectedCells.value = []
+
+            // 跳转到详情页
+            goToDetail(newOrder)
+          }
+
+          // --- 其他工具方法 ---
+          const getStatusText = (status) => {
+            const map = {
+              pending: '待审核',
+              confirmed: '待核销使用',
+              completed: '已完成',
+              cancelled: '已取消',
+            }
+            return map[status] || status
+          }
+
+          const formatCode = (code) => {
+            if (!code) return ''
+            return code.replace(/(.{4})/g, '$1 ').trim()
+          }
+
+          const cancelOrder = (order) => {
+            if (confirm('确定要取消这个预约吗？')) {
+              order.status = 'cancelled'
+              alert('取消成功')
+              // 真实业务中还需要把 lockedPool 里对应的资源释放出来
+            }
+          }
+
+          return {
+            currentView,
+            projects,
+            myOrders,
+            activeProject,
+            activeOrder,
+            goToBooking,
+            goToDetail,
+            resources,
+            timeSlots,
+            days,
+            selectedDate,
+            selectedCells,
+            isCurrentDateBusinessDay,
+            selectDate,
+            getCellClass,
+            getCellText,
+            getCellCountText,
+            toggleCell,
+            selectedSummaryText,
+            submitOrder,
+            showSuccessModal,
+            handleSuccessConfirm,
+            getStatusText,
+            formatCode,
+            cancelOrder,
+            showDrawer,
+            toggleDrawer,
+            clearAllSelected,
+            removeCell,
+            selectedCellsDetail,
+          }
+        },
+      }).mount('#app')
+    </script>
+  </body>
 </html>
