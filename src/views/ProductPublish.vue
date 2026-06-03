@@ -489,6 +489,14 @@ onUnmounted(() => {
               <option value="head2">总部加盟店</option>
             </select>
           </div>
+          <div class="form-item">
+            <label class="form-label">适用门店</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="checkbox" v-model="form.showAvailableStores" /> 商品详情页显示可用门店
+              </label>
+            </div>
+          </div>
           <div class="quick-set">
             <button class="quick-btn" @click="setQuickTime('now')">立即上架+1年有效期</button>
             <button class="quick-btn" @click="setQuickTime('future')">7天后上架+半年有效期</button>
@@ -786,22 +794,17 @@ onUnmounted(() => {
                 ><input type="radio" v-model="form.paymentMethod" value="coupon_only" />
                 仅限用券兑换</label
               >
+              <label class="radio-label"
+                ><input type="radio" v-model="form.paymentMethod" value="points_only" />
+                仅限用积分兑换</label
+              >
             </div>
           </div>
-          <div class="form-item">
+          <div class="form-item" v-if="form.paymentMethod === 'pay'">
             <label class="form-label">积分抵扣</label>
             <div class="radio-group">
               <label class="radio-label"
                 ><input type="checkbox" v-model="form.supportPointsDeduction" /> 支持积分抵扣</label
-              >
-            </div>
-          </div>
-          <div class="form-item" v-if="form.supportPointsDeduction">
-            <label class="form-label">积分限制</label>
-            <div class="radio-group">
-              <label class="radio-label"
-                ><input type="checkbox" v-model="form.requireFullPoints" />
-                积分不足时不允许支付</label
               >
             </div>
           </div>
@@ -817,7 +820,7 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="module-content" v-show="!collapsed.fulfill">
-          <!-- 1. 全局配置：履约方式与适用门店 -->
+          <!-- 1. 全局配置：履约方式 -->
           <div class="form-item">
             <label class="form-label required">商品履约方式</label>
             <div class="radio-group" style="flex-wrap: wrap">
@@ -838,15 +841,6 @@ onUnmounted(() => {
                 ><input type="radio" v-model="form.productType" value="virtual" />
                 虚拟凭证/服务</label
               >
-            </div>
-          </div>
-
-          <div class="form-item">
-            <label class="form-label">适用门店</label>
-            <div class="radio-group">
-              <label class="radio-label">
-                <input type="checkbox" v-model="form.showAvailableStores" /> 商品详情页显示可用门店
-              </label>
             </div>
           </div>
 
@@ -914,16 +908,9 @@ onUnmounted(() => {
               </div>
             </template>
 
-            <!-- 商家自配专属设置 -->
+            <!-- 商家自配专属设置 (已移除支付时机) -->
             <template v-if="form.productType === 'merchant'">
-              <div class="form-item">
-                <label class="form-label required">支付时机</label>
-                <div class="radio-group">
-                  <label class="radio-label" style="color: #666">
-                    <input type="radio" checked disabled /> 货到付款 (后支付)
-                  </label>
-                </div>
-              </div>
+              <div style="color: #999; font-size: 13px">商家配送模式已默认启用货到付款。</div>
             </template>
 
             <!-- 虚拟商品专属设置 -->
@@ -944,30 +931,6 @@ onUnmounted(() => {
 
               <!-- 只有在"需要核销"时，才显示预约及其他限制配置 -->
               <template v-if="form.requireWriteOff">
-                <div class="form-item" style="margin-top: 16px">
-                  <label class="form-label">预约设置</label>
-                  <div class="radio-group">
-                    <label class="radio-label">
-                      <input type="checkbox" v-model="form.requireReservation" /> 需要提前预约
-                    </label>
-                  </div>
-                </div>
-
-                <div class="form-item" v-if="form.requireReservation">
-                  <label class="form-label required">关联预约项目</label>
-                  <div style="display: flex; align-items: center; gap: 8px">
-                    <select class="form-select" v-model="form.reservationProjectId">
-                      <option value="">请选择要关联的预约项目</option>
-                      <option v-for="p in reservationProjects" :key="p.id" :value="p.id">
-                        {{ p.name }}
-                      </option>
-                    </select>
-                    <span style="color: #999; font-size: 12px; margin-left: 10px"
-                      >选中后，可在下方规格明细(SKU)中挂载具体资源场地</span
-                    >
-                  </div>
-                </div>
-
                 <div class="form-item">
                   <label class="form-label required">有效期限</label>
                   <div style="display: flex; align-items: center; gap: 8px">
@@ -982,7 +945,7 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <div class="form-item">
+                <div class="form-item" v-if="false">
                   <label class="form-label required">转赠设置</label>
                   <div class="radio-group">
                     <label class="radio-label"
@@ -1027,6 +990,33 @@ onUnmounted(() => {
                       />
                       次
                     </div>
+                  </div>
+                </div>
+
+                <div
+                  class="form-item"
+                  style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #eee"
+                >
+                  <label class="form-label">预约设置</label>
+                  <div class="radio-group">
+                    <label class="radio-label">
+                      <input type="checkbox" v-model="form.requireReservation" /> 需要提前预约
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-item" v-if="form.requireReservation">
+                  <label class="form-label required">关联预约项目</label>
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <select class="form-select" v-model="form.reservationProjectId">
+                      <option value="">请选择要关联的预约项目</option>
+                      <option v-for="p in reservationProjects" :key="p.id" :value="p.id">
+                        {{ p.name }}
+                      </option>
+                    </select>
+                    <span style="color: #999; font-size: 12px; margin-left: 10px"
+                      >选中后，可在下方规格明细(SKU)中挂载具体资源场地</span
+                    >
                   </div>
                 </div>
               </template>
