@@ -97,6 +97,72 @@ const cancelEditConfig = () => {
   editingConfig.value = false
 }
 
+// ==================== 积分配置-修改记录 ====================
+interface ConfigSnapshot {
+  name: string
+  code: string
+  exchangeRate: number
+  validityType: string
+  dynamicDays: number
+  yearlyClearDate: string
+}
+
+interface ConfigHistoryRecord {
+  id: number
+  operator: string
+  operateTime: string
+  snapshot: ConfigSnapshot
+}
+
+const configHistoryList = ref<ConfigHistoryRecord[]>([
+  {
+    id: 1,
+    operator: '张三',
+    operateTime: '2026-06-10 14:30',
+    snapshot: {
+      name: '平台通用积分',
+      code: 'PTS-20260604-001',
+      exchangeRate: 100,
+      validityType: 'dynamic',
+      dynamicDays: 365,
+      yearlyClearDate: '12-31',
+    },
+  },
+  {
+    id: 2,
+    operator: '李四',
+    operateTime: '2026-06-09 10:00',
+    snapshot: {
+      name: '平台积分',
+      code: 'PTS-20260604-001',
+      exchangeRate: 100,
+      validityType: 'forever',
+      dynamicDays: 365,
+      yearlyClearDate: '12-31',
+    },
+  },
+  {
+    id: 3,
+    operator: '王五',
+    operateTime: '2026-06-07 16:45',
+    snapshot: {
+      name: '平台积分',
+      code: 'PTS-20260603-001',
+      exchangeRate: 200,
+      validityType: 'forever',
+      dynamicDays: 365,
+      yearlyClearDate: '12-31',
+    },
+  },
+])
+
+const configHistoryExpandedId = ref<number | null>(null)
+const configHistorySectionOpen = ref(false)
+
+const toggleConfigHistory = (id: number) => {
+  configHistoryExpandedId.value = configHistoryExpandedId.value === id ? null : id
+}
+
 // ==================== 模块2：积分批次 ====================
 const batchFilter = reactive({
   merchantName: '',
@@ -1781,6 +1847,82 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               </template>
             </div>
           </div>
+
+          <!-- 修改记录 -->
+          <div class="history-section">
+            <div
+              class="history-header"
+              @click="configHistorySectionOpen = !configHistorySectionOpen"
+            >
+              <span class="history-toggle">{{ configHistorySectionOpen ? '▼' : '▶' }}</span>
+              <span class="history-title">修改记录</span>
+              <span class="history-count">共 {{ configHistoryList.length }} 条</span>
+            </div>
+            <div v-show="configHistorySectionOpen" class="history-body">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px">序号</th>
+                    <th style="width: 100px">修改人</th>
+                    <th style="width: 160px">修改时间</th>
+                    <th style="width: 80px">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="(record, index) in configHistoryList" :key="record.id">
+                    <tr>
+                      <td>{{ index + 1 }}</td>
+                      <td>{{ record.operator }}</td>
+                      <td>{{ record.operateTime }}</td>
+                      <td>
+                        <a class="action-link primary" @click="toggleConfigHistory(record.id)">
+                          {{ configHistoryExpandedId === record.id ? '收起' : '展开' }}
+                        </a>
+                      </td>
+                    </tr>
+                    <tr v-show="configHistoryExpandedId === record.id" class="snapshot-row">
+                      <td colspan="4" style="padding: 0">
+                        <div class="snapshot-detail">
+                          <div class="snapshot-header">完整配置快照（只读）</div>
+                          <div class="snapshot-grid">
+                            <div class="snapshot-field">
+                              <span class="snapshot-label">积分名称</span>
+                              <span class="snapshot-value">{{ record.snapshot.name }}</span>
+                            </div>
+                            <div class="snapshot-field">
+                              <span class="snapshot-label">编码</span>
+                              <span class="snapshot-value">{{ record.snapshot.code }}</span>
+                            </div>
+                            <div class="snapshot-field">
+                              <span class="snapshot-label">价值比例</span>
+                              <span class="snapshot-value"
+                                >{{ record.snapshot.exchangeRate }}:1</span
+                              >
+                            </div>
+                            <div class="snapshot-field">
+                              <span class="snapshot-label">有效期策略</span>
+                              <span class="snapshot-value">
+                                {{
+                                  record.snapshot.validityType === 'forever'
+                                    ? '永久有效'
+                                    : record.snapshot.validityType === 'dynamic'
+                                      ? '动态有效期（' + record.snapshot.dynamicDays + '天）'
+                                      : '自然年清零（每年' + record.snapshot.yearlyClearDate + '）'
+                                }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-if="configHistoryList.length === 0">
+                    <td colspan="4" class="empty-text">暂无修改记录</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2524,7 +2666,8 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <span
                   v-if="financeTarget?.payStatus === 'paid'"
                   style="font-size: 12px; color: #52c41a; margin-left: 4px"
-                  >（不可逆）</span>
+                  >（不可逆）</span
+                >
               </div>
             </div>
 
@@ -2857,7 +3000,11 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                     style="margin-left: 8px"
                     >争议</a
                   >
-                  <span v-if="item.status === 'paid' || item.status === 'disputed'" class="text-muted">-</span>
+                  <span
+                    v-if="item.status === 'paid' || item.status === 'disputed'"
+                    class="text-muted"
+                    >-</span
+                  >
                 </td>
               </tr>
               <tr v-if="settlementList.length === 0">
@@ -3205,7 +3352,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   height: calc(100vh - 60px);
   background: #f5f7fa;
 
-/* 积分过期时间视觉警示 */
+  /* 积分过期时间视觉警示 */
 }
 .sidebar {
   width: 220px;
@@ -3225,8 +3372,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   padding: 8px 0;
 }
 .menu-group-title {
-
-/* 批次悬浮提示 */
+  /* 批次悬浮提示 */
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
@@ -3270,7 +3416,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   padding: 20px;
 }
 .content-panel {
-
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -3296,7 +3441,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   padding: 20px 24px;
 }
 .config-form {
-
   max-width: 600px;
 }
 .form-item {
@@ -3345,7 +3489,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   font-size: 14px;
   color: #333;
   cursor: pointer;
-
 }
 .radio-disabled {
   color: #999;
@@ -3502,7 +3645,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .row-expire-danger {
   background-color: #fff2f0;
-
 }
 .batch-tip {
   cursor: help;
@@ -3761,6 +3903,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   border: 1px solid #e8e8e8;
   border-radius: 6px;
   overflow: hidden;
+  margin-top: 24px;
 }
 .history-header {
   padding: 12px 16px;
@@ -3780,5 +3923,57 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .history-body {
   padding: 0;
+}
+.history-toggle {
+  font-size: 10px;
+  color: #999;
+  flex-shrink: 0;
+}
+.history-title {
+  font-weight: 500;
+  color: #333;
+}
+.history-count {
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
+}
+.snapshot-row td {
+  border-bottom: none;
+  background: #fcfcff;
+}
+.snapshot-row .snapshot-detail {
+  border-bottom: 1px solid #e8e8e8;
+  background: #fcfcff;
+}
+.snapshot-header {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #f5f5ff;
+}
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #e8e8e8;
+}
+.snapshot-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #fff;
+}
+.snapshot-label {
+  font-size: 12px;
+  color: #999;
+}
+.snapshot-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
 }
 </style>
