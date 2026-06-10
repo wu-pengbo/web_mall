@@ -127,21 +127,6 @@ const toggleAdvanced = () => {
   showAdvanced.value = !showAdvanced.value
 }
 
-// 模拟快捷设置时间
-const setQuickTime = (type: 'now' | 'future') => {
-  const now = new Date()
-  if (type === 'now') {
-    form.onSaleTime = now.toISOString().slice(0, 16)
-    now.setFullYear(now.getFullYear() + 1)
-    form.offSaleTime = now.toISOString().slice(0, 16)
-  } else {
-    now.setDate(now.getDate() + 7)
-    form.onSaleTime = now.toISOString().slice(0, 16)
-    now.setMonth(now.getMonth() + 6)
-    form.offSaleTime = now.toISOString().slice(0, 16)
-  }
-}
-
 const resetCode = () => {
   form.productCode = `yx${new Date()
     .toISOString()
@@ -207,7 +192,6 @@ const removeSubImg = (index: number) => {
 }
 
 // --- 商品属性 ---
-const tags = ['新品', '热卖', '推荐']
 const selectedTag = ref('新品')
 
 // --- 商品规格 (SKU) ---
@@ -497,10 +481,6 @@ onUnmounted(() => {
               </label>
             </div>
           </div>
-          <div class="quick-set">
-            <button class="quick-btn" @click="setQuickTime('now')">立即上架+1年有效期</button>
-            <button class="quick-btn" @click="setQuickTime('future')">7天后上架+半年有效期</button>
-          </div>
           <div class="form-item">
             <label class="form-label required">上架时间</label>
             <input type="datetime-local" class="form-input" v-model="form.onSaleTime" />
@@ -533,13 +513,6 @@ onUnmounted(() => {
           <div class="form-item">
             <label class="form-label">虚拟销量</label>
             <input type="number" class="form-input" v-model="form.virtualSales" />
-            <button
-              class="btn btn-primary"
-              style="width: auto; height: 24px; font-size: 12px; margin-left: 10px"
-              @click="form.virtualSales = 120"
-            >
-              快速填充
-            </button>
             <span style="margin-left: 10px; color: #999999; font-size: 12px"
               >建议填写100-500，提升商品转化</span
             >

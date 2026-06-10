@@ -13,6 +13,7 @@ import VotePublish from '../views/VotePublish.vue'
 import VoteOptionManage from '../views/VoteOptionManage.vue'
 import VoteResult from '../views/VoteResult.vue'
 import OrderManage from '../views/OrderManage.vue'
+import PointsManagement from '../views/PointsManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +86,11 @@ const router = createRouter({
           path: 'order',
           name: 'order-manage',
           component: OrderManage,
+        },
+        {
+          path: 'points',
+          name: 'points-management',
+          component: PointsManagement,
         },
       ],
     },

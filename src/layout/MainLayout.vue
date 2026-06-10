@@ -12,12 +12,12 @@ const menus = [
   { path: '/reservation/board', name: '工作台日历', icon: '📅' },
   { path: '/vote', name: '投票管理', icon: '📊' },
   { path: '/order', name: '订单管理', icon: '📋' },
+  { path: '/points', name: '积分管理', icon: '💰' },
   { path: '/user', name: '用户管理', icon: '👥' },
   { path: '/setting', name: '系统设置', icon: '⚙️' },
 ]
 
 const goMenu = (path: string) => {
-  // 只实现已有的页面跳转，未实现的给出提示
   if (
     path === '/' ||
     path === '/product' ||
@@ -25,7 +25,8 @@ const goMenu = (path: string) => {
     path === '/reservation' ||
     path === '/reservation/board' ||
     path === '/vote' ||
-    path === '/order'
+    path === '/order' ||
+    path === '/points'
   ) {
     router.push(path)
   } else {
@@ -52,7 +53,9 @@ const goMenu = (path: string) => {
               route.path === menu.path ||
               (menu.path === '/product' && route.path.startsWith('/publish')) ||
               (menu.path === '/freight' && route.path.startsWith('/freight')) ||
-              (menu.path === '/reservation' && route.path.startsWith('/reservation') && !route.path.startsWith('/reservation/board')) ||
+              (menu.path === '/reservation' &&
+                route.path.startsWith('/reservation') &&
+                !route.path.startsWith('/reservation/board')) ||
               (menu.path === '/reservation/board' && route.path.startsWith('/reservation/board')) ||
               (menu.path === '/vote' && route.path.startsWith('/vote')) ||
               (menu.path === '/order' && route.path.startsWith('/order')),
