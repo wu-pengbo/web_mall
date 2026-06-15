@@ -8,6 +8,7 @@ const menuList = [
     label: '配置管理',
     children: [
       { key: 'wallet_config', label: '钱包设置' },
+      { key: 'wallet_recharge_plan', label: '充值方案' },
     ],
   },
   {
@@ -111,12 +112,20 @@ interface WithdrawRecord {
   partialRefundReason?: string
 }
 
+// 子流水（FIFO 核销明细）
+interface BucketLog {
+  bucketNo: string      // 桶编号（对应充值批次单号）
+  bucketTime: string    // 充值时间（越早排越前 = FIFO）
+  deductAmount: number  // 本次从这个桶扣了多少
+  remainAmount: number  // 扣后这个桶还剩多少
+}
+
 interface WalletTransaction {
   id: string
   transactionNo: string
   uid: string
   phone: string
-  type: 'recharge' | 'consume' | 'refund' | 'freeze' | 'unfreeze' | 'adjust'
+  type: 'recharge' | 'refund' | 'consume' | 'withdraw'
   amount: number
   balance: number
   relatedNo: string
@@ -124,6 +133,40 @@ interface WalletTransaction {
   operator: string
   time: string
   remark: string
+  bucketLogs?: BucketLog[]  // 仅 consume / withdraw 有
+}
+
+// ==================== 充值方案接口定义 ====================
+interface RechargePreset {
+  id: string
+  amount: number
+  sort: number
+}
+
+interface RechargeActivity {
+  id: string
+  name: string
+  type: 'bonus' | 'discount'
+  conditionAmount: number
+  bonusAmount?: number
+  discountPercent?: number
+  startTime: string
+  endTime: string
+  perUserLimit: number
+  dailyLimit: number
+  enabled: boolean
+}
+
+interface RechargePlan {
+  id: string
+  name: string
+  enabled: boolean
+  activeTime: string
+  presets: RechargePreset[]
+  allowCustom: boolean
+  customMin: number
+  customMax: number
+  activities: RechargeActivity[]
 }
 
 // ==================== Mock 商户列表 ====================
@@ -219,13 +262,255 @@ const toggleConfigHistory = (id: number) => {
   configHistoryExpandedId.value = configHistoryExpandedId.value === id ? null : id
 }
 
+// ==================== 模块1.5：充值方案 ====================
+const rechargePlans = ref<RechargePlan[]>([
+  {
+    id: '1',
+    name: '默认充值方案',
+    enabled: true,
+    activeTime: '2026-06-01 10:00:00',
+    presets: [
+      { id: 'p1', amount: 50, sort: 1 },
+      { id: 'p2', amount: 100, sort: 2 },
+      { id: 'p3', amount: 200, sort: 3 },
+      { id: 'p4', amount: 500, sort: 4 },
+      { id: 'p5', amount: 1000, sort: 5 },
+    ],
+    allowCustom: true,
+    customMin: 1,
+    customMax: 50000,
+    activities: [
+      { id: 'a1', name: '充100送10', type: 'bonus', conditionAmount: 100, bonusAmount: 10, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
+      { id: 'a2', name: '充500送50', type: 'bonus', conditionAmount: 500, bonusAmount: 50, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
+      { id: 'a3', name: '充1000打95折', type: 'discount', conditionAmount: 1000, discountPercent: 95, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
+    ],
+  },
+  {
+    id: '2',
+    name: '五一充值活动',
+    enabled: false,
+    activeTime: '',
+    presets: [
+      { id: 'p6', amount: 100, sort: 1 },
+      { id: 'p7', amount: 300, sort: 2 },
+      { id: 'p8', amount: 500, sort: 3 },
+    ],
+    allowCustom: false,
+    customMin: 1,
+    customMax: 50000,
+    activities: [
+      { id: 'a4', name: '充300送40', type: 'bonus', conditionAmount: 300, bonusAmount: 40, startTime: '2026-05-01 00:00:00', endTime: '2026-05-05 23:59:59', perUserLimit: 1, dailyLimit: 100, enabled: true },
+      { id: 'a5', name: '充500打9折', type: 'discount', conditionAmount: 500, discountPercent: 90, startTime: '2026-05-01 00:00:00', endTime: '2026-05-05 23:59:59', perUserLimit: 1, dailyLimit: 50, enabled: true },
+    ],
+  },
+])
+
+// 充值方案编辑状态
+const planEditModal = ref(false)
+const planEditMode = ref<'create' | 'edit'>('create')
+const planEditData = reactive<RechargePlan>({
+  id: '',
+  name: '',
+  enabled: false,
+  activeTime: '',
+  presets: [],
+  allowCustom: true,
+  customMin: 1,
+  customMax: 50000,
+  activities: [],
+})
+
+// 充值方案详情/活动编辑
+const planDetailModal = ref(false)
+const planDetailId = ref('')
+const activityEditModal = ref(false)
+const activityEditIndex = ref(-1) // -1 = 新增
+const activityEditData = reactive<RechargeActivity>({
+  id: '',
+  name: '',
+  type: 'bonus',
+  conditionAmount: 0,
+  bonusAmount: 0,
+  discountPercent: 100,
+  startTime: '',
+  endTime: '',
+  perUserLimit: 0,
+  dailyLimit: 0,
+  enabled: true,
+})
+
+const openPlanCreate = () => {
+  planEditMode.value = 'create'
+  Object.assign(planEditData, {
+    id: '',
+    name: '',
+    enabled: false,
+    activeTime: '',
+    presets: [{ id: 'new_1', amount: 100, sort: 1 }],
+    allowCustom: true,
+    customMin: 1,
+    customMax: 50000,
+    activities: [],
+  })
+  planEditModal.value = true
+}
+
+const openPlanEdit = (plan: RechargePlan) => {
+  planEditMode.value = 'edit'
+  Object.assign(planEditData, JSON.parse(JSON.stringify(plan)))
+  planEditModal.value = true
+}
+
+const savePlan = () => {
+  if (!planEditData.name.trim()) {
+    alert('请输入方案名称')
+    return
+  }
+  if (planEditData.presets.length === 0) {
+    alert('请至少添加一个预选金额')
+    return
+  }
+  if (planEditMode.value === 'create') {
+    const newId = String(Date.now())
+    rechargePlans.value.push({
+      ...JSON.parse(JSON.stringify(planEditData)),
+      id: newId,
+      enabled: false,
+      activeTime: '',
+    })
+    alert('充值方案已创建')
+  } else {
+    const idx = rechargePlans.value.findIndex(p => p.id === planEditData.id)
+    if (idx > -1) {
+      rechargePlans.value[idx] = JSON.parse(JSON.stringify(planEditData))
+    }
+    alert('充值方案已保存')
+  }
+  planEditModal.value = false
+}
+
+const togglePlanEnabled = (plan: RechargePlan) => {
+  if (plan.enabled) {
+    // 禁用
+    plan.enabled = false
+    plan.activeTime = ''
+  } else {
+    // 启用：先停用其他方案
+    rechargePlans.value.forEach(p => {
+      p.enabled = false
+      p.activeTime = ''
+    })
+    plan.enabled = true
+    plan.activeTime = new Date().toLocaleString('zh-CN', { hour12: false })
+  }
+}
+
+const deletePlan = (plan: RechargePlan) => {
+  if (plan.enabled) {
+    alert('生效中的方案不能删除，请先禁用')
+    return
+  }
+  if (!confirm(`确认删除方案「${plan.name}」？`)) return
+  rechargePlans.value = rechargePlans.value.filter(p => p.id !== plan.id)
+}
+
+// 预选金额操作
+const addPreset = () => {
+  const sort = planEditData.presets.length + 1
+  planEditData.presets.push({ id: 'new_' + Date.now(), amount: 0, sort })
+}
+
+const removePreset = (index: number) => {
+  planEditData.presets.splice(index, 1)
+  // 重新排序
+  planEditData.presets.forEach((p, i) => { p.sort = i + 1 })
+}
+
+const movePresetUp = (index: number) => {
+  if (index <= 0) return
+  const list = planEditData.presets
+  ;[list[index - 1], list[index]] = [list[index], list[index - 1]]
+  list.forEach((p, i) => { p.sort = i + 1 })
+}
+
+const movePresetDown = (index: number) => {
+  if (index >= planEditData.presets.length - 1) return
+  const list = planEditData.presets
+  ;[list[index], list[index + 1]] = [list[index + 1], list[index]]
+  list.forEach((p, i) => { p.sort = i + 1 })
+}
+
+// 充值活动操作
+const openActivityCreate = () => {
+  activityEditIndex.value = -1
+  Object.assign(activityEditData, {
+    id: 'act_' + Date.now(),
+    name: '',
+    type: 'bonus',
+    conditionAmount: 0,
+    bonusAmount: 0,
+    discountPercent: 100,
+    startTime: '',
+    endTime: '',
+    perUserLimit: 0,
+    dailyLimit: 0,
+    enabled: true,
+  })
+  activityEditModal.value = true
+}
+
+const openActivityEdit = (index: number) => {
+  activityEditIndex.value = index
+  Object.assign(activityEditData, JSON.parse(JSON.stringify(planEditData.activities[index])))
+  activityEditModal.value = true
+}
+
+const saveActivity = () => {
+  if (!activityEditData.name.trim()) {
+    alert('请输入活动名称')
+    return
+  }
+  if (activityEditData.conditionAmount <= 0) {
+    alert('触发条件金额必须大于0')
+    return
+  }
+  if (activityEditData.type === 'bonus' && (!activityEditData.bonusAmount || activityEditData.bonusAmount <= 0)) {
+    alert('赠送金额必须大于0')
+    return
+  }
+  if (activityEditData.type === 'discount' && (!activityEditData.discountPercent || activityEditData.discountPercent <= 0 || activityEditData.discountPercent >= 100)) {
+    alert('折扣比例须在1~99之间')
+    return
+  }
+  if (activityEditIndex.value === -1) {
+    planEditData.activities.push(JSON.parse(JSON.stringify(activityEditData)))
+  } else {
+    planEditData.activities[activityEditIndex.value] = JSON.parse(JSON.stringify(activityEditData))
+  }
+  activityEditModal.value = false
+}
+
+const removeActivity = (index: number) => {
+  planEditData.activities.splice(index, 1)
+}
+
+// 方案详情弹窗
+const planDetailData = computed(() => {
+  return rechargePlans.value.find(p => p.id === planDetailId.value)
+})
+
+const openPlanDetail = (plan: RechargePlan) => {
+  planDetailId.value = plan.id
+  planDetailModal.value = true
+}
+
 // ==================== 模块2：钱包概览 ====================
 const mockOverviewStats = [
   { label: '平台总余额', value: '¥1,286,532.80', change: '+5.2%', up: true },
   { label: '总充值金额', value: '¥3,580,000.00', change: '+12.3%', up: true },
   { label: '总消费金额', value: '¥2,150,000.00', change: '+8.7%', up: true },
   { label: '总退款金额', value: '¥143,467.20', change: '-2.1%', up: false },
-  { label: '待审核退款', value: '3 笔', change: '', up: true },
+  { label: '待审核提现', value: '3 笔', change: '', up: true },
   { label: '钱包用户数', value: '8,356 人', change: '+3.8%', up: true },
   { label: '冻结账户数', value: '23 个', change: '-1', up: false },
   { label: '今日充值', value: '¥45,230.00', change: '+15.6%', up: true },
@@ -281,6 +566,12 @@ const showUserFlow = (wallet: UserWallet) => {
   userFlowWallet.value = wallet
   userFlowTxs.value = mockTransactions.value.filter(tx => tx.uid === wallet.uid).slice(0, 20)
   userFlowModal.value = true
+}
+
+// 流水弹窗中展开的子流水
+const userFlowExpandedTxId = ref<string | null>(null)
+const toggleUserFlowBucket = (txId: string) => {
+  userFlowExpandedTxId.value = userFlowExpandedTxId.value === txId ? null : txId
 }
 
 const freezeModal = ref(false)
@@ -365,7 +656,7 @@ const mockWithdrawRecords = ref<WithdrawRecord[]>([
   { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '' },
   { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', partialRefundReason: '商品部分退货' },
   { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00' },
-  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '退款申请超出退货期限' },
+  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '提现申请超出规定期限' },
   { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00' },
 ])
 
@@ -390,17 +681,17 @@ const showWithdrawDetail = (item: WithdrawRecord) => {
 }
 
 const approveWithdraw = (item: WithdrawRecord) => {
-  if (!confirm(`确认审核通过退款单 ${item.withdrawNo}？\n退款金额：¥${item.amount.toFixed(2)}`)) return
+  if (!confirm(`确认审核通过提现单 ${item.withdrawNo}？\n提现金额：¥${item.amount.toFixed(2)}`)) return
   item.status = 'approved'
   item.operator = '当前用户'
-  alert(`退款单 ${item.withdrawNo} 已审核通过`)
+  alert(`提现单 ${item.withdrawNo} 已审核通过`)
 }
 
 const confirmRefund = (item: WithdrawRecord) => {
-  if (!confirm(`确认已完成原路退回？\n退款金额：¥${item.actualAmount.toFixed(2)}`)) return
+  if (!confirm(`确认已完成打款？\n到账金额：¥${item.actualAmount.toFixed(2)}`)) return
   item.status = 'refunded'
   item.completeTime = new Date().toLocaleString('zh-CN', { hour12: false })
-  alert(`退款单 ${item.withdrawNo} 已完成退款`)
+  alert(`提现单 ${item.withdrawNo} 已完成打款`)
 }
 
 const rejectWithdraw = (item: WithdrawRecord) => {
@@ -410,11 +701,11 @@ const rejectWithdraw = (item: WithdrawRecord) => {
   item.rejectReason = reason
   item.operator = '当前用户'
   item.completeTime = new Date().toLocaleString('zh-CN', { hour12: false })
-  alert(`退款单 ${item.withdrawNo} 已拒绝`)
+  alert(`提现单 ${item.withdrawNo} 已拒绝`)
 }
 
 const withdrawStatusLabel: Record<string, string> = {
-  pending: '待审核', approved: '审核通过待退款', refunded: '已退款', rejected: '已拒绝',
+  pending: '待审核', approved: '审核通过待打款', refunded: '已打款', rejected: '已拒绝',
 }
 const payMethodLabel: Record<string, string> = {
   wechat: '微信', alipay: '支付宝', bank: '银行卡',
@@ -422,16 +713,86 @@ const payMethodLabel: Record<string, string> = {
 
 // ==================== 模块6：交易流水 ====================
 const mockTransactions = ref<WalletTransaction[]>([
-  { id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234', type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001', merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值' },
-  { id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234', type: 'consume', amount: -89, balance: 2191.50, relatedNo: 'ORD-20260611-001', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费' },
-  { id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678', type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003', merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值' },
-  { id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', type: 'refund', amount: 200, balance: 1000, relatedNo: 'WDR-20260610-001', merchant: '系统', operator: '张三', time: '2026-06-10 14:30:00', remark: '原路退回' },
-  { id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', type: 'freeze', amount: -1500, balance: 3700, relatedNo: '', merchant: '系统', operator: '运营王五', time: '2026-06-09 10:00:00', remark: '疑似异常交易，冻结部分金额' },
-  { id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123', type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002', merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值' },
-  { id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678', type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002', merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费' },
-  { id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012', type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001', merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费' },
-  { id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345', type: 'recharge', amount: 2000, balance: 13500, relatedNo: 'RCH-20260605-001', merchant: '平台自营商户', operator: '系统', time: '2026-06-05 14:00:00', remark: '线上充值' },
-  { id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345', type: 'consume', amount: -500, balance: 11500, relatedNo: 'ORD-20260604-003', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-04 18:00:00', remark: '订单消费' },
+  {
+    id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234',
+    type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001',
+    merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值',
+  },
+  {
+    id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234',
+    type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001',
+    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 100, remainAmount: 400 },
+      { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 312 },
+    ],
+  },
+  {
+    id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678',
+    type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003',
+    merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值',
+  },
+  {
+    id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890',
+    type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005',
+    merchant: '系统', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
+  },
+  {
+    id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456',
+    type: 'withdraw', amount: -800, balance: 4400, relatedNo: 'WDR-20260609-001',
+    merchant: '系统', operator: '张三', time: '2026-06-09 10:00:00', remark: '用户提现',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 500, remainAmount: 0 },
+      { bucketNo: 'RCH-20260525-002', bucketTime: '2026-05-25 14:00:00', deductAmount: 300, remainAmount: 700 },
+    ],
+  },
+  {
+    id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123',
+    type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002',
+    merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值',
+  },
+  {
+    id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678',
+    type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002',
+    merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260601-002', bucketTime: '2026-06-01 14:00:00', deductAmount: 129, remainAmount: 871 },
+    ],
+  },
+  {
+    id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012',
+    type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001',
+    merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260605-003', bucketTime: '2026-06-05 11:00:00', deductAmount: 59, remainAmount: 41 },
+    ],
+  },
+  {
+    id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345',
+    type: 'recharge', amount: 2000, balance: 13500, relatedNo: 'RCH-20260605-001',
+    merchant: '平台自营商户', operator: '系统', time: '2026-06-05 14:00:00', remark: '线上充值',
+  },
+  {
+    id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345',
+    type: 'consume', amount: -500, balance: 11500, relatedNo: 'ORD-20260604-003',
+    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-04 18:00:00', remark: '订单消费',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260520-005', bucketTime: '2026-05-20 16:00:00', deductAmount: 500, remainAmount: 1500 },
+    ],
+  },
+  {
+    id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234',
+    type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002',
+    merchant: '系统', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
+  },
+  {
+    id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890',
+    type: 'withdraw', amount: -200, balance: 800, relatedNo: 'WDR-20260602-001',
+    merchant: '系统', operator: '系统', time: '2026-06-02 15:00:00', remark: '用户提现',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260515-001', bucketTime: '2026-05-15 10:00:00', deductAmount: 200, remainAmount: 0 },
+    ],
+  },
 ])
 
 const ledgerSearchForm = reactive({ keyword: '', type: '' })
@@ -445,6 +806,7 @@ const filteredLedger = computed(() => {
   })
 })
 
+// 流水详情弹窗
 const txDetailModal = ref(false)
 const txDetailItem = ref<WalletTransaction | null>(null)
 
@@ -453,8 +815,21 @@ const showTxDetail = (item: WalletTransaction) => {
   txDetailModal.value = true
 }
 
+// 交易列表中展开的子流水行 ID
+const expandedTxIds = ref<Set<string>>(new Set())
+
+const toggleBucketLogs = (txId: string) => {
+  if (expandedTxIds.value.has(txId)) {
+    expandedTxIds.value.delete(txId)
+  } else {
+    expandedTxIds.value.add(txId)
+  }
+  // 触发响应式更新
+  expandedTxIds.value = new Set(expandedTxIds.value)
+}
+
 const txTypeLabel: Record<string, string> = {
-  recharge: '充值', consume: '消费', refund: '退款', freeze: '冻结', unfreeze: '解冻', adjust: '调整',
+  recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现',
 }
 </script>
 
@@ -563,19 +938,19 @@ const txTypeLabel: Record<string, string> = {
                     <input type="checkbox" v-model="walletConfig.withdrawEnabled" :disabled="configSaved && !editingConfig" />
                     <span class="toggle-slider"></span>
                   </label>
-                  <span class="form-tip">{{ walletConfig.withdrawEnabled ? '已开启（原路退回）' : '已关闭' }}</span>
+                  <span class="form-tip">{{ walletConfig.withdrawEnabled ? '已开启' : '已关闭' }}</span>
                 </div>
               </div>
 
               <template v-if="walletConfig.withdrawEnabled">
                 <div class="form-item">
-                  <label class="form-label">退款审核</label>
+                  <label class="form-label">提现审核</label>
                   <div class="form-control-row">
                     <label class="toggle-switch">
                       <input type="checkbox" v-model="walletConfig.withdrawNeedReview" :disabled="configSaved && !editingConfig" />
                       <span class="toggle-slider"></span>
                     </label>
-                    <span class="form-tip">{{ walletConfig.withdrawNeedReview ? '需审核后退款' : '自动退款，无需审核' }}</span>
+                    <span class="form-tip">{{ walletConfig.withdrawNeedReview ? '需审核后打款' : '自动通过，无需审核' }}</span>
                   </div>
                 </div>
 
@@ -598,13 +973,13 @@ const txTypeLabel: Record<string, string> = {
                   <div class="form-control-row">
                     <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.feeValue" min="0" :step="walletConfig.feeType === 'percent' ? 0.01 : 0.1" :disabled="configSaved && !editingConfig" />
                     <span>{{ walletConfig.feeType === 'fixed' ? '元/笔' : '%' }}</span>
-                    <span class="form-tip" v-if="walletConfig.feeType === 'fixed'">（固定金额：每笔退款收取固定手续费）</span>
-                    <span class="form-tip" v-else>（按比例：按退款金额的百分比收取）</span>
+                    <span class="form-tip" v-if="walletConfig.feeType === 'fixed'">（固定金额：每笔提现收取固定手续费）</span>
+                    <span class="form-tip" v-else>（按比例：按提现金额的百分比收取）</span>
                   </div>
                 </div>
 
                 <div class="form-item">
-                  <label class="form-label required">最低退款金额</label>
+                  <label class="form-label required">最低提现金额</label>
                   <div class="form-control-row">
                     <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.minWithdraw" min="0.01" step="0.01" :disabled="configSaved && !editingConfig" />
                     <span>元</span>
@@ -612,7 +987,7 @@ const txTypeLabel: Record<string, string> = {
                 </div>
 
                 <div class="form-item">
-                  <label class="form-label required">最高退款金额</label>
+                  <label class="form-label required">最高提现金额</label>
                   <div class="form-control-row">
                     <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.maxWithdraw" min="1" step="0.01" :disabled="configSaved && !editingConfig" />
                     <span>元</span>
@@ -620,7 +995,7 @@ const txTypeLabel: Record<string, string> = {
                 </div>
 
                 <div class="form-item">
-                  <label class="form-label required">每日退款限额</label>
+                  <label class="form-label required">每日提现限额</label>
                   <div class="form-control-row">
                     <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.dailyWithdrawLimit" min="0" step="0.01" :disabled="configSaved && !editingConfig" />
                     <span>元（0 表示不限）</span>
@@ -628,7 +1003,7 @@ const txTypeLabel: Record<string, string> = {
                 </div>
 
                 <div class="form-item">
-                  <label class="form-label required">退款后最低余额</label>
+                  <label class="form-label required">提现后最低余额</label>
                   <div class="form-control-row">
                     <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.minBalanceAfterWithdraw" min="0" step="0.01" :disabled="configSaved && !editingConfig" />
                     <span>元</span>
@@ -709,6 +1084,65 @@ const txTypeLabel: Record<string, string> = {
               </table>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ===== 充值方案 ===== -->
+      <div v-if="activeMenu === 'wallet_recharge_plan'" class="content-panel">
+        <div class="panel-header">
+          <h2>充值方案</h2>
+          <button class="btn btn-primary" @click="openPlanCreate">+ 新增方案</button>
+        </div>
+        <div class="panel-body">
+          <div class="plan-tip" style="margin-bottom: 16px; padding: 10px 14px; background: #fff7e6; border-radius: 6px; color: #ad6800; font-size: 13px;">
+            同一时间仅有一个方案生效，启用新方案将自动停用当前生效方案。
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>方案名称</th>
+                <th>预选金额</th>
+                <th>活动数量</th>
+                <th>状态</th>
+                <th>生效时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="plan in rechargePlans" :key="plan.id">
+                <td><strong>{{ plan.name }}</strong></td>
+                <td>
+                  <span v-for="(p, i) in plan.presets" :key="p.id">
+                    {{ i > 0 ? ' / ' : '' }}¥{{ p.amount }}
+                  </span>
+                  <span v-if="plan.allowCustom" style="color: #999; margin-left: 4px">+ 自定义</span>
+                </td>
+                <td>
+                  <span v-if="plan.activities.length === 0" style="color: #999">无</span>
+                  <span v-else>{{ plan.activities.filter(a => a.enabled).length }}/{{ plan.activities.length }} 启用</span>
+                </td>
+                <td>
+                  <span class="status-tag" :class="plan.enabled ? 'refunded' : 'closed'">
+                    {{ plan.enabled ? '生效中' : '已禁用' }}
+                  </span>
+                </td>
+                <td>{{ plan.activeTime || '-' }}</td>
+                <td>
+                  <span class="action-link primary" @click="openPlanEdit(plan)">编辑</span>
+                  <span class="action-link primary" @click="openPlanDetail(plan)" style="margin-left: 8px">详情</span>
+                  <span
+                    :class="plan.enabled ? 'action-link danger' : 'action-link primary'"
+                    @click="togglePlanEnabled(plan)"
+                    style="margin-left: 8px"
+                  >{{ plan.enabled ? '禁用' : '启用' }}</span>
+                  <span v-if="!plan.enabled" class="action-link danger" @click="deletePlan(plan)" style="margin-left: 8px">删除</span>
+                </td>
+              </tr>
+              <tr v-if="rechargePlans.length === 0">
+                <td colspan="6" style="text-align: center; color: #999; padding: 40px">暂无充值方案，点击上方新增</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -932,20 +1366,20 @@ const txTypeLabel: Record<string, string> = {
       <div v-if="activeMenu === 'wallet_withdraw'" class="content-panel">
         <div class="panel-header">
           <h2>提现管理</h2>
-          <span class="panel-subtitle">原路退回（全额退款 / 部分退款）</span>
+          <span class="panel-subtitle">提现审核与打款</span>
         </div>
         <div class="panel-body">
           <div class="filter-bar">
             <div class="filter-item">
               <label>搜索</label>
-              <input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="退款单号 / UID / 关联订单号" style="width: 220px" />
+              <input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联订单号" style="width: 220px" />
             </div>
             <div class="filter-item">
-              <label>退款类型</label>
+              <label>提现类型</label>
               <select class="form-select" v-model="withdrawSearchForm.refundType" style="width: 120px">
                 <option value="">全部</option>
-                <option value="full">全额退款</option>
-                <option value="partial">部分退款</option>
+                <option value="full">全额提现</option>
+                <option value="partial">部分提现</option>
               </select>
             </div>
             <div class="filter-item">
@@ -953,8 +1387,8 @@ const txTypeLabel: Record<string, string> = {
               <select class="form-select" v-model="withdrawSearchForm.status" style="width: 140px">
                 <option value="">全部</option>
                 <option value="pending">待审核</option>
-                <option value="approved">审核通过待退款</option>
-                <option value="refunded">已退款</option>
+                <option value="approved">审核通过待打款</option>
+                <option value="refunded">已打款</option>
                 <option value="rejected">已拒绝</option>
               </select>
             </div>
@@ -967,12 +1401,12 @@ const txTypeLabel: Record<string, string> = {
           <table class="data-table">
             <thead>
               <tr>
-                <th>退款单号</th>
+                <th>提现单号</th>
                 <th>用户</th>
-                <th>退款金额</th>
-                <th>退款类型</th>
+                <th>提现金额</th>
+                <th>提现类型</th>
                 <th>关联订单</th>
-                <th>原支付方式</th>
+                <th>到账方式</th>
                 <th>状态</th>
                 <th>操作</th>
               </tr>
@@ -982,7 +1416,7 @@ const txTypeLabel: Record<string, string> = {
                 <td>{{ w.withdrawNo }}</td>
                 <td>{{ w.uid }}<br/><span class="sub-text">{{ w.phone }}</span></td>
                 <td class="price-text">¥{{ w.amount.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="w.refundType">{{ w.refundType === 'full' ? '全额退款' : '部分退款' }}</span></td>
+                <td><span class="status-tag" :class="w.refundType">{{ w.refundType === 'full' ? '全额提现' : '部分提现' }}</span></td>
                 <td>{{ w.relatedOrderNo }}</td>
                 <td>{{ payMethodLabel[w.originalPayMethod] }}</td>
                 <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
@@ -990,7 +1424,7 @@ const txTypeLabel: Record<string, string> = {
                   <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
                   <span v-if="w.status === 'pending'" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">审核</span>
                   <span v-if="w.status === 'pending'" class="action-link danger" @click="rejectWithdraw(w)" style="margin-left: 8px">拒绝</span>
-                  <span v-if="w.status === 'approved'" class="action-link primary" @click="confirmRefund(w)" style="margin-left: 8px">确认退款</span>
+                  <span v-if="w.status === 'approved'" class="action-link primary" @click="confirmRefund(w)" style="margin-left: 8px">确认打款</span>
                 </td>
               </tr>
             </tbody>
@@ -1025,9 +1459,7 @@ const txTypeLabel: Record<string, string> = {
                 <option value="recharge">充值</option>
                 <option value="consume">消费</option>
                 <option value="refund">退款</option>
-                <option value="freeze">冻结</option>
-                <option value="unfreeze">解冻</option>
-                <option value="adjust">调整</option>
+                <option value="withdraw">提现</option>
               </select>
             </div>
             <div class="filter-item">
@@ -1040,6 +1472,7 @@ const txTypeLabel: Record<string, string> = {
           <table class="data-table">
             <thead>
               <tr>
+                <th style="width: 40px"></th>
                 <th>流水号</th>
                 <th>用户</th>
                 <th>交易类型</th>
@@ -1051,16 +1484,53 @@ const txTypeLabel: Record<string, string> = {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tx in filteredLedger" :key="tx.id">
-                <td>{{ tx.transactionNo }}</td>
-                <td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td>
-                <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
-                <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
-                <td>¥{{ tx.balance.toFixed(2) }}</td>
-                <td>{{ tx.relatedNo || '-' }}</td>
-                <td class="time-text">{{ tx.time }}</td>
-                <td><span class="action-link primary" @click="showTxDetail(tx)">详情</span></td>
-              </tr>
+              <template v-for="tx in filteredLedger" :key="tx.id">
+                <!-- 主流水行 -->
+                <tr>
+                  <td>
+                    <span
+                      v-if="tx.bucketLogs && tx.bucketLogs.length"
+                      class="expand-btn"
+                      @click="toggleBucketLogs(tx.id)"
+                    >{{ expandedTxIds.has(tx.id) ? '▼' : '▶' }}</span>
+                  </td>
+                  <td>{{ tx.transactionNo }}</td>
+                  <td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td>
+                  <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
+                  <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+                  <td>¥{{ tx.balance.toFixed(2) }}</td>
+                  <td>{{ tx.relatedNo || '-' }}</td>
+                  <td class="time-text">{{ tx.time }}</td>
+                  <td><span class="action-link primary" @click="showTxDetail(tx)">详情</span></td>
+                </tr>
+                <!-- 子流水行 -->
+                <tr v-if="expandedTxIds.has(tx.id) && tx.bucketLogs" class="bucket-row">
+                  <td></td>
+                  <td colspan="8" style="padding: 0">
+                    <div class="bucket-panel">
+                      <div class="bucket-header">资金来源（先进先出）</div>
+                      <table class="bucket-table">
+                        <thead>
+                          <tr>
+                            <th>充值批次</th>
+                            <th>充值时间</th>
+                            <th>扣减金额</th>
+                            <th>批次剩余</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(bl, idx) in tx.bucketLogs" :key="idx">
+                            <td>{{ bl.bucketNo }}</td>
+                            <td class="time-text">{{ bl.bucketTime }}</td>
+                            <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
+                            <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
 
@@ -1076,9 +1546,271 @@ const txTypeLabel: Record<string, string> = {
       </div>
     </div>
 
+    <!-- ==================== 弹窗：充值方案编辑 ==================== -->
+    <div v-if="planEditModal" class="modal-overlay" @click.self="planEditModal = false">
+      <div class="modal-content" style="width: 720px; max-height: 85vh; overflow-y: auto">
+        <div class="modal-header">
+          <h3>{{ planEditMode === 'create' ? '新增充值方案' : '编辑充值方案' }}</h3>
+          <span class="modal-close" @click="planEditModal = false">&times;</span>
+        </div>
+        <div class="modal-body">
+          <!-- 基础信息 -->
+          <div style="margin-bottom: 24px">
+            <div class="form-section-title">基础信息</div>
+            <div class="form-item">
+              <label class="form-label required">方案名称</label>
+              <input type="text" class="form-input" v-model="planEditData.name" placeholder="如：默认充值方案" style="width: 320px" />
+            </div>
+          </div>
+
+          <!-- 预选金额 -->
+          <div style="margin-bottom: 24px">
+            <div class="form-section-title">预选金额</div>
+            <div v-for="(preset, index) in planEditData.presets" :key="preset.id"
+                 style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+              <span style="color: #999; width: 20px; text-align: center">{{ index + 1 }}</span>
+              <span style="color: #999">¥</span>
+              <input type="number" class="form-input" v-model.number="preset.amount" placeholder="金额" style="width: 120px" min="1" />
+              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px" @click="movePresetUp(index)" :disabled="index === 0">↑</button>
+              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1">↓</button>
+              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px; color: #ff4d4f" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1">删除</button>
+            </div>
+            <button class="btn btn-default" @click="addPreset" style="margin-top: 4px">+ 添加预选金额</button>
+
+            <div class="form-divider"></div>
+
+            <div class="form-item" style="margin-bottom: 12px">
+              <label class="form-label">允许自定义金额</label>
+              <label class="toggle-switch">
+                <input type="checkbox" v-model="planEditData.allowCustom" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <template v-if="planEditData.allowCustom">
+              <div style="display: flex; gap: 16px; margin-top: 8px">
+                <div class="form-item" style="margin-bottom: 0">
+                  <label class="form-label">最低金额（元）</label>
+                  <input type="number" class="form-input" v-model.number="planEditData.customMin" style="width: 120px" min="1" />
+                </div>
+                <div class="form-item" style="margin-bottom: 0">
+                  <label class="form-label">最高金额（元）</label>
+                  <input type="number" class="form-input" v-model.number="planEditData.customMax" style="width: 120px" min="1" />
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- 充值活动 -->
+          <div style="margin-bottom: 24px">
+            <div class="form-section-title" style="display: flex; justify-content: space-between; align-items: center">
+              <span>充值活动（可选）</span>
+              <button class="btn btn-primary" style="font-size: 12px; padding: 4px 12px" @click="openActivityCreate">+ 添加活动</button>
+            </div>
+            <div v-if="planEditData.activities.length === 0" style="text-align: center; color: #999; padding: 24px 0; background: #fafafa; border-radius: 6px; margin-top: 8px">
+              暂无充值活动，点击右上角添加
+            </div>
+            <table v-else class="data-table" style="margin-top: 8px">
+              <thead>
+                <tr>
+                  <th>活动名称</th>
+                  <th>类型</th>
+                  <th>触发条件</th>
+                  <th>优惠内容</th>
+                  <th>有效期</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(act, index) in planEditData.activities" :key="act.id">
+                  <td>{{ act.name }}</td>
+                  <td><span class="status-tag" :class="act.type === 'bonus' ? 'refunded' : 'paid'">{{ act.type === 'bonus' ? '赠送' : '折扣' }}</span></td>
+                  <td>充值满 ¥{{ act.conditionAmount }}</td>
+                  <td>
+                    <span v-if="act.type === 'bonus'">赠送 ¥{{ act.bonusAmount }}</span>
+                    <span v-else>{{ (act.discountPercent / 10).toFixed(1) }} 折</span>
+                  </td>
+                  <td>
+                    <span v-if="!act.startTime && !act.endTime">永久有效</span>
+                    <span v-else style="font-size: 12px">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
+                  </td>
+                  <td>
+                    <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
+                  </td>
+                  <td>
+                    <span class="action-link primary" @click="openActivityEdit(index)">编辑</span>
+                    <span class="action-link danger" @click="removeActivity(index)" style="margin-left: 8px">删除</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="planEditModal = false">取消</button>
+          <button class="btn btn-primary" @click="savePlan">保存方案</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 弹窗：充值活动编辑 ==================== -->
+    <div v-if="activityEditModal" class="modal-overlay" @click.self="activityEditModal = false">
+      <div class="modal-content activity-modal-content">
+        <div class="modal-header">
+          <h3>{{ activityEditIndex === -1 ? '添加充值活动' : '编辑充值活动' }}</h3>
+          <span class="modal-close" @click="activityEditModal = false">&times;</span>
+        </div>
+        <div class="modal-body activity-form-grid">
+          <!-- 活动名称 -->
+          <div class="form-item">
+            <label class="form-label required">活动名称</label>
+            <input type="text" class="form-input" v-model="activityEditData.name" placeholder="如：充100送10" style="width: 420px" />
+          </div>
+
+          <!-- 活动类型 | 触发条件（并排） -->
+          <div class="af-row">
+            <div class="af-col">
+              <label class="form-label required">活动类型</label>
+              <div style="display: flex; gap: 20px; align-items: center; padding-top: 6px">
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer"><input type="radio" v-model="activityEditData.type" value="bonus" /> 赠送</label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer"><input type="radio" v-model="activityEditData.type" value="discount" /> 折扣</label>
+              </div>
+            </div>
+            <div class="af-col">
+              <label class="form-label required">触发条件</label>
+              <div style="display: flex; align-items: center; gap: 8px; padding-top: 6px">
+                <span>充值满</span>
+                <input type="number" class="form-input" v-model.number="activityEditData.conditionAmount" style="width: 80px" min="1" />
+                <span>元</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 赠送金额 / 折扣比例（整行） -->
+          <div v-if="activityEditData.type === 'bonus'" class="form-item">
+            <label class="form-label required">赠送金额</label>
+            <div style="display: flex; align-items: center; gap: 10px; padding-top: 6px">
+              <span>赠送</span><input type="number" class="form-input" v-model.number="activityEditData.bonusAmount" style="width: 110px" min="1" />
+              <span>元<span class="af-hint">赠送金额将分笔入账，本金与赠送分开记录</span></span>
+            </div>
+          </div>
+          <div v-if="activityEditData.type === 'discount'" class="form-item">
+            <label class="form-label required">折扣比例</label>
+            <div style="display: flex; align-items: center; gap: 10px; padding-top: 6px">
+              <input type="number" class="form-input" v-model.number="activityEditData.discountPercent" style="width: 90px" min="1" max="99" />
+              <span>即 {{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }} 折，实付 = 充值金额 × {{ activityEditData.discountPercent || 0 }}%</span>
+            </div>
+          </div>
+
+          <!-- 活动时间（整行） -->
+          <div class="form-item">
+            <label class="form-label">活动时间</label>
+            <div class="af-time-row">
+              <input type="datetime-local" class="form-input" v-model="activityEditData.startTime" style="width: 190px; flex-shrink:0" />
+              <span class="af-sep">至</span>
+              <input type="datetime-local" class="form-input" v-model="activityEditData.endTime" style="width: 190px; flex-shrink:0" />
+              <span class="af-hint">留空 = 永久有效</span>
+            </div>
+          </div>
+
+          <!-- 每人限享 | 每日限量（并排） -->
+          <div class="af-row">
+            <div class="af-col">
+              <label class="form-label">每人限享次数</label>
+              <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
+                <input type="number" class="form-input" v-model.number="activityEditData.perUserLimit" style="width: 80px" min="0" />
+                <span>次（不限）</span>
+              </div>
+            </div>
+            <div class="af-col">
+              <label class="form-label">每日平台限量</label>
+              <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
+                <input type="number" class="form-input" v-model.number="activityEditData.dailyLimit" style="width: 80px" min="0" />
+                <span>次（不限）</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 是否启用（整行） -->
+          <div class="form-item">
+            <label class="form-label">是否启用</label>
+            <div style="padding-top: 4px">
+              <label class="toggle-switch"><input type="checkbox" v-model="activityEditData.enabled" /><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="activityEditModal = false">取消</button>
+          <button class="btn btn-primary" @click="saveActivity">保存活动</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 弹窗：充值方案详情 ==================== -->
+    <div v-if="planDetailModal" class="modal-overlay" @click.self="planDetailModal = false">
+      <div class="modal-content" style="width: 600px; max-height: 80vh; overflow-y: auto">
+        <div class="modal-header">
+          <h3>方案详情</h3>
+          <span class="modal-close" @click="planDetailModal = false">&times;</span>
+        </div>
+        <div class="modal-body" v-if="planDetailData">
+          <div class="detail-grid">
+            <div><label>方案名称</label><span>{{ planDetailData.name }}</span></div>
+            <div><label>状态</label><span class="status-tag" :class="planDetailData.enabled ? 'refunded' : 'closed'">{{ planDetailData.enabled ? '生效中' : '已禁用' }}</span></div>
+            <div><label>生效时间</label><span>{{ planDetailData.activeTime || '-' }}</span></div>
+            <div><label>自定义金额</label><span>{{ planDetailData.allowCustom ? `允许（¥${planDetailData.customMin} ~ ¥${planDetailData.customMax}）` : '不允许' }}</span></div>
+          </div>
+
+          <div class="form-section-title" style="margin-top: 20px">预选金额</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px">
+            <span v-for="p in planDetailData.presets" :key="p.id" style="padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; background: #fafafa">¥{{ p.amount }}</span>
+            <span v-if="planDetailData.allowCustom" style="padding: 6px 16px; border: 1px dashed #d9d9d9; border-radius: 6px; font-size: 14px; color: #999; background: #fafafa">自定义</span>
+          </div>
+
+          <div class="form-section-title" style="margin-top: 20px">充值活动</div>
+          <div v-if="planDetailData.activities.length === 0" style="text-align: center; color: #999; padding: 20px; background: #fafafa; border-radius: 6px; margin-top: 8px">
+            无充值活动
+          </div>
+          <table v-else class="data-table" style="margin-top: 8px">
+            <thead>
+              <tr>
+                <th>活动名称</th>
+                <th>类型</th>
+                <th>触发条件</th>
+                <th>优惠</th>
+                <th>有效期</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="act in planDetailData.activities" :key="act.id">
+                <td>{{ act.name }}</td>
+                <td>{{ act.type === 'bonus' ? '赠送' : '折扣' }}</td>
+                <td>充值满 ¥{{ act.conditionAmount }}</td>
+                <td>
+                  <span v-if="act.type === 'bonus'">赠送 ¥{{ act.bonusAmount }}</span>
+                  <span v-else>{{ (act.discountPercent / 10).toFixed(1) }} 折</span>
+                </td>
+                <td>
+                  <span v-if="!act.startTime && !act.endTime">永久</span>
+                  <span v-else style="font-size: 12px">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
+                </td>
+                <td>
+                  <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="planDetailModal = false">关闭</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== 弹窗：用户流水 ==================== -->
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
-      <div class="modal-content" style="width: 700px">
+      <div class="modal-content" style="width: 720px">
         <div class="modal-header">
           <h3>{{ userFlowWallet?.walletId }} 流水明细</h3>
           <span class="modal-close" @click="userFlowModal = false">&times;</span>
@@ -1093,6 +1825,7 @@ const txTypeLabel: Record<string, string> = {
           <table class="data-table" style="margin-top: 16px">
             <thead>
               <tr>
+                <th style="width: 30px"></th>
                 <th>流水号</th>
                 <th>类型</th>
                 <th>金额</th>
@@ -1101,13 +1834,48 @@ const txTypeLabel: Record<string, string> = {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tx in userFlowTxs" :key="tx.id">
-                <td>{{ tx.transactionNo }}</td>
-                <td>{{ txTypeLabel[tx.type] }}</td>
-                <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
-                <td>¥{{ tx.balance.toFixed(2) }}</td>
-                <td class="time-text">{{ tx.time }}</td>
-              </tr>
+              <template v-for="tx in userFlowTxs" :key="tx.id">
+                <tr>
+                  <td>
+                    <span
+                      v-if="tx.bucketLogs && tx.bucketLogs.length"
+                      class="expand-btn"
+                      @click="toggleUserFlowBucket(tx.id)"
+                    >{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span>
+                  </td>
+                  <td>{{ tx.transactionNo }}</td>
+                  <td>{{ txTypeLabel[tx.type] }}</td>
+                  <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+                  <td>¥{{ tx.balance.toFixed(2) }}</td>
+                  <td class="time-text">{{ tx.time }}</td>
+                </tr>
+                <tr v-if="userFlowExpandedTxId === tx.id && tx.bucketLogs" class="bucket-row">
+                  <td></td>
+                  <td colspan="5" style="padding: 0">
+                    <div class="bucket-panel">
+                      <div class="bucket-header">资金来源（先进先出）</div>
+                      <table class="bucket-table">
+                        <thead>
+                          <tr>
+                            <th>充值批次</th>
+                            <th>充值时间</th>
+                            <th>扣减金额</th>
+                            <th>批次剩余</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(bl, idx) in tx.bucketLogs" :key="idx">
+                            <td>{{ bl.bucketNo }}</td>
+                            <td class="time-text">{{ bl.bucketTime }}</td>
+                            <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
+                            <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -1164,29 +1932,29 @@ const txTypeLabel: Record<string, string> = {
       </div>
     </div>
 
-    <!-- ==================== 弹窗：退款详情 ==================== -->
+    <!-- ==================== 弹窗：提现详情 ==================== -->
     <div v-if="withdrawDetailModal" class="modal-overlay" @click.self="withdrawDetailModal = false">
       <div class="modal-content" style="width: 560px">
         <div class="modal-header">
-          <h3>退款详情</h3>
+          <h3>提现详情</h3>
           <span class="modal-close" @click="withdrawDetailModal = false">&times;</span>
         </div>
         <div class="modal-body" v-if="withdrawDetailItem">
           <div class="detail-grid">
-            <div><label>退款单号</label><span>{{ withdrawDetailItem.withdrawNo }}</span></div>
+            <div><label>提现单号</label><span>{{ withdrawDetailItem.withdrawNo }}</span></div>
             <div><label>用户</label><span>{{ withdrawDetailItem.uid }} / {{ withdrawDetailItem.phone }}</span></div>
-            <div><label>退款金额</label><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span></div>
+            <div><label>提现金额</label><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span></div>
             <div><label>手续费</label><span>{{ withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免' }}</span></div>
-            <div><label>实际退款</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
-            <div><label>退款类型</label><span>{{ withdrawDetailItem.refundType === 'full' ? '全额退款' : '部分退款' }}</span></div>
+            <div><label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
+            <div><label>提现类型</label><span>{{ withdrawDetailItem.refundType === 'full' ? '全额提现' : '部分提现' }}</span></div>
             <div><label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
-            <div><label>原支付方式</label><span>{{ payMethodLabel[withdrawDetailItem.originalPayMethod] }}</span></div>
+            <div><label>到账方式</label><span>{{ payMethodLabel[withdrawDetailItem.originalPayMethod] }}</span></div>
             <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
             <div><label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span></div>
             <div><label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span></div>
             <div><label>操作人</label><span>{{ withdrawDetailItem.operator || '-' }}</span></div>
             <div v-if="withdrawDetailItem.rejectReason"><label>拒绝原因</label><span>{{ withdrawDetailItem.rejectReason }}</span></div>
-            <div v-if="withdrawDetailItem.partialRefundReason"><label>部分退款原因</label><span>{{ withdrawDetailItem.partialRefundReason }}</span></div>
+            <div v-if="withdrawDetailItem.partialRefundReason"><label>部分提现原因</label><span>{{ withdrawDetailItem.partialRefundReason }}</span></div>
           </div>
         </div>
         <div class="modal-footer">
@@ -1197,7 +1965,7 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：交易流水详情 ==================== -->
     <div v-if="txDetailModal" class="modal-overlay" @click.self="txDetailModal = false">
-      <div class="modal-content" style="width: 520px">
+      <div class="modal-content" style="width: 560px">
         <div class="modal-header">
           <h3>交易详情</h3>
           <span class="modal-close" @click="txDetailModal = false">&times;</span>
@@ -1214,6 +1982,28 @@ const txTypeLabel: Record<string, string> = {
             <div><label>操作人</label><span>{{ txDetailItem.operator }}</span></div>
             <div><label>时间</label><span>{{ txDetailItem.time }}</span></div>
             <div><label>备注</label><span>{{ txDetailItem.remark || '-' }}</span></div>
+          </div>
+          <!-- 子流水详情 -->
+          <div v-if="txDetailItem.bucketLogs && txDetailItem.bucketLogs.length" style="margin-top: 20px">
+            <div class="form-section-title" style="margin-bottom: 12px">资金来源（先进先出）</div>
+            <table class="bucket-table">
+              <thead>
+                <tr>
+                  <th>充值批次</th>
+                  <th>充值时间</th>
+                  <th>扣减金额</th>
+                  <th>批次剩余</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(bl, idx) in txDetailItem.bucketLogs" :key="idx">
+                  <td>{{ bl.bucketNo }}</td>
+                  <td class="time-text">{{ bl.bucketTime }}</td>
+                  <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
+                  <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="modal-footer">
@@ -1352,6 +2142,58 @@ const txTypeLabel: Record<string, string> = {
   display: flex;
   align-items: flex-start;
   margin-bottom: 16px;
+}
+.activity-modal-content {
+  width: 680px;
+  max-height: none;
+}
+.activity-form-grid {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 24px;
+}
+.activity-form-grid .form-item { align-items: center; margin-bottom: 14px; }
+.af-row {
+  display: flex;
+  gap: 20px;
+}
+.af-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.af-hint {
+  color: #999; font-size: 12px; margin-left: 4px;
+}
+.af-time-row {
+  display: flex; align-items: center; gap: 8px; padding-top: 6px; flex-wrap: wrap;
+}
+.af-sep { color: #999; white-space: nowrap; }
+.activity-form-grid .af-full {
+  grid-column: 1 / -1;
+}
+.af-hint {
+  color: #999;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.af-time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+.af-time-row input {
+  width: 200px;
+  flex-shrink: 0;
+}
+.af-sep {
+  color: #999;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .form-label {
   width: 120px;
@@ -1596,6 +2438,57 @@ const txTypeLabel: Record<string, string> = {
   color: #999;
 }
 
+/* ==================== 展开按钮（子流水） ==================== */
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  color: #999;
+  font-size: 10px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+.expand-btn:hover {
+  color: #1677ff;
+  background-color: #f0f5ff;
+}
+
+/* ==================== 子流水面板 ==================== */
+.bucket-row td {
+  background-color: #fafbfc;
+}
+.bucket-panel {
+  padding: 12px 16px 16px 24px;
+}
+.bucket-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+.bucket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.bucket-table th {
+  background-color: #f5f7fa;
+  color: #888;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+.bucket-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f5f5f5;
+  color: #555;
+}
+
 /* ==================== 状态标签 ==================== */
 .status-tag {
   display: inline-block;
@@ -1654,6 +2547,7 @@ const txTypeLabel: Record<string, string> = {
   color: #722ed1;
   border: 1px solid #d3adf7;
 }
+/* 交易类型标签 */
 .status-tag.recharge {
   background-color: #e6f4ff;
   color: #1677ff;
@@ -1669,20 +2563,10 @@ const txTypeLabel: Record<string, string> = {
   color: #52c41a;
   border: 1px solid #b7eb8f;
 }
-.status-tag.freeze {
+.status-tag.withdraw {
   background-color: #fff1f0;
   color: #ff4d4f;
   border: 1px solid #ffa39e;
-}
-.status-tag.unfreeze {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-.status-tag.adjust {
-  background-color: #f5f5f5;
-  color: #666;
-  border: 1px solid #d9d9d9;
 }
 
 /* ==================== 金额颜色 ==================== */
