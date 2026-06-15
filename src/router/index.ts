@@ -14,6 +14,7 @@ import VoteOptionManage from '../views/VoteOptionManage.vue'
 import VoteResult from '../views/VoteResult.vue'
 import OrderManage from '../views/OrderManage.vue'
 import PointsManagement from '../views/PointsManagement.vue'
+import UserWallet from '../views/UserWallet.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -91,6 +92,11 @@ const router = createRouter({
           path: 'points',
           name: 'points-management',
           component: PointsManagement,
+        },
+        {
+          path: 'wallet',
+          name: 'user-wallet',
+          component: UserWallet,
         },
       ],
     },
