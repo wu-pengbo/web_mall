@@ -81,18 +81,18 @@ const goMenu = (path: string) => {
 .layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: #F0F2F5;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 .sidebar {
   width: 200px;
   background-color: #001529;
-  color: #ffffff;
+  color: #FFFFFF;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   z-index: 1000;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 }
 .logo {
   height: 80px;
@@ -101,45 +101,52 @@ const goMenu = (path: string) => {
   justify-content: center;
   align-items: center;
   background-color: #002140;
-  border-bottom: 1px solid #000c17;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .logo h2 {
   margin: 0;
-  font-size: 20px;
-  color: #fff;
+  font-size: 18px;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+  font-weight: 700;
 }
 .logo p {
   margin: 4px 0 0;
-  font-size: 12px;
-  color: #1890ff;
+  font-size: 11px;
+  color: #8C939D;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .menu-list {
-  padding-top: 16px;
+  padding-top: 12px;
 }
 .menu-item {
-  height: 48px;
-  line-height: 48px;
+  height: 44px;
+  line-height: 44px;
   padding: 0 24px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  color: #a6adb4;
+  color: #8C939D;
+  font-size: 14px;
 }
 .menu-icon {
   margin-right: 12px;
-  font-size: 16px;
+  font-size: 14px;
 }
 .menu-item:hover {
-  color: #fff;
+  color: #FFFFFF;
+  background-color: rgba(255,255,255,0.06);
 }
 .menu-item.active {
-  background-color: #1677ff;
-  color: #ffffff;
+  background-color: #4F6EF7;
+  color: #FFFFFF;
+  font-weight: 500;
 }
 .main-content {
   flex: 1;
-  margin-left: 200px; /* 避开固定侧边栏 */
+  margin-left: 200px;
   min-height: 100vh;
   position: relative;
 }

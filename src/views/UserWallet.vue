@@ -1094,7 +1094,7 @@ const txTypeLabel: Record<string, string> = {
           <button class="btn btn-primary" @click="openPlanCreate">+ 新增方案</button>
         </div>
         <div class="panel-body">
-          <div class="plan-tip" style="margin-bottom: 16px; padding: 10px 14px; background: #fff7e6; border-radius: 6px; color: #ad6800; font-size: 13px;">
+          <div class="plan-tip" style="margin-bottom: 16px; padding: 10px 14px; background: #FFF7E6; border-radius: 6px; color: #D46B08; font-size: 13px;">
             同一时间仅有一个方案生效，启用新方案将自动停用当前生效方案。
           </div>
           <table class="data-table">
@@ -1115,10 +1115,10 @@ const txTypeLabel: Record<string, string> = {
                   <span v-for="(p, i) in plan.presets" :key="p.id">
                     {{ i > 0 ? ' / ' : '' }}¥{{ p.amount }}
                   </span>
-                  <span v-if="plan.allowCustom" style="color: #999; margin-left: 4px">+ 自定义</span>
+                  <span v-if="plan.allowCustom" style="color: #86909C; margin-left: 4px">+ 自定义</span>
                 </td>
                 <td>
-                  <span v-if="plan.activities.length === 0" style="color: #999">无</span>
+                  <span v-if="plan.activities.length === 0" style="color: #86909C">无</span>
                   <span v-else>{{ plan.activities.filter(a => a.enabled).length }}/{{ plan.activities.length }} 启用</span>
                 </td>
                 <td>
@@ -1139,7 +1139,7 @@ const txTypeLabel: Record<string, string> = {
                 </td>
               </tr>
               <tr v-if="rechargePlans.length === 0">
-                <td colspan="6" style="text-align: center; color: #999; padding: 40px">暂无充值方案，点击上方新增</td>
+                <td colspan="6" style="text-align: center; color: #86909C; padding: 40px">暂无充值方案，点击上方新增</td>
               </tr>
             </tbody>
           </table>
@@ -1168,9 +1168,9 @@ const txTypeLabel: Record<string, string> = {
             <h3>近6个月趋势</h3>
             <div class="trend-chart">
               <div class="trend-legend">
-                <span class="legend-item"><i style="background: #1677ff"></i>充值</span>
-                <span class="legend-item"><i style="background: #52c41a"></i>消费</span>
-                <span class="legend-item"><i style="background: #faad14"></i>退款</span>
+                <span class="legend-item"><i style="background: #4F6EF7"></i>充值</span>
+                <span class="legend-item"><i style="background: #D46B08"></i>消费</span>
+                <span class="legend-item"><i style="background: #0E7B3A"></i>退款</span>
               </div>
               <div class="trend-bars">
                 <div v-for="d in trendData" :key="d.month" class="trend-group">
@@ -1548,32 +1548,33 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：充值方案编辑 ==================== -->
     <div v-if="planEditModal" class="modal-overlay" @click.self="planEditModal = false">
-      <div class="modal-content" style="width: 720px; max-height: 85vh; overflow-y: auto">
+      <div class="modal-content modal-lg">
         <div class="modal-header">
           <h3>{{ planEditMode === 'create' ? '新增充值方案' : '编辑充值方案' }}</h3>
-          <span class="modal-close" @click="planEditModal = false">&times;</span>
+          <span class="modal-close" @click="planEditModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body">
           <!-- 基础信息 -->
-          <div style="margin-bottom: 24px">
+          <div class="detail-section">
             <div class="form-section-title">基础信息</div>
             <div class="form-item">
               <label class="form-label required">方案名称</label>
-              <input type="text" class="form-input" v-model="planEditData.name" placeholder="如：默认充值方案" style="width: 320px" />
+              <input type="text" class="form-input form-input-lg" v-model="planEditData.name" placeholder="如：默认充值方案" />
             </div>
           </div>
 
           <!-- 预选金额 -->
-          <div style="margin-bottom: 24px">
+          <div class="detail-section">
             <div class="form-section-title">预选金额</div>
-            <div v-for="(preset, index) in planEditData.presets" :key="preset.id"
-                 style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
-              <span style="color: #999; width: 20px; text-align: center">{{ index + 1 }}</span>
-              <span style="color: #999">¥</span>
-              <input type="number" class="form-input" v-model.number="preset.amount" placeholder="金额" style="width: 120px" min="1" />
-              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px" @click="movePresetUp(index)" :disabled="index === 0">↑</button>
-              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1">↓</button>
-              <button class="btn btn-default" style="padding: 4px 8px; font-size: 12px; color: #ff4d4f" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1">删除</button>
+            <div v-for="(preset, index) in planEditData.presets" :key="preset.id" class="preset-row">
+              <span class="preset-index">{{ index + 1 }}</span>
+              <span class="preset-yen">¥</span>
+              <input type="number" class="form-input form-input-sm" v-model.number="preset.amount" placeholder="金额" min="1" />
+              <button class="btn btn-default btn-xs" @click="movePresetUp(index)" :disabled="index === 0">↑</button>
+              <button class="btn btn-default btn-xs" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1">↓</button>
+              <button class="btn btn-default btn-xs btn-text-danger" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1">删除</button>
             </div>
             <button class="btn btn-default" @click="addPreset" style="margin-top: 4px">+ 添加预选金额</button>
 
@@ -1587,28 +1588,26 @@ const txTypeLabel: Record<string, string> = {
               </label>
             </div>
             <template v-if="planEditData.allowCustom">
-              <div style="display: flex; gap: 16px; margin-top: 8px">
+              <div class="af-row" style="margin-top: 8px">
                 <div class="form-item" style="margin-bottom: 0">
                   <label class="form-label">最低金额（元）</label>
-                  <input type="number" class="form-input" v-model.number="planEditData.customMin" style="width: 120px" min="1" />
+                  <input type="number" class="form-input form-input-sm" v-model.number="planEditData.customMin" min="1" />
                 </div>
                 <div class="form-item" style="margin-bottom: 0">
                   <label class="form-label">最高金额（元）</label>
-                  <input type="number" class="form-input" v-model.number="planEditData.customMax" style="width: 120px" min="1" />
+                  <input type="number" class="form-input form-input-sm" v-model.number="planEditData.customMax" min="1" />
                 </div>
               </div>
             </template>
           </div>
 
           <!-- 充值活动 -->
-          <div style="margin-bottom: 24px">
+          <div class="detail-section">
             <div class="form-section-title" style="display: flex; justify-content: space-between; align-items: center">
               <span>充值活动（可选）</span>
-              <button class="btn btn-primary" style="font-size: 12px; padding: 4px 12px" @click="openActivityCreate">+ 添加活动</button>
+              <button class="btn btn-primary btn-xs" @click="openActivityCreate">+ 添加活动</button>
             </div>
-            <div v-if="planEditData.activities.length === 0" style="text-align: center; color: #999; padding: 24px 0; background: #fafafa; border-radius: 6px; margin-top: 8px">
-              暂无充值活动，点击右上角添加
-            </div>
+            <div v-if="planEditData.activities.length === 0" class="empty-block">暂无充值活动，点击右上角添加</div>
             <table v-else class="data-table" style="margin-top: 8px">
               <thead>
                 <tr>
@@ -1632,7 +1631,7 @@ const txTypeLabel: Record<string, string> = {
                   </td>
                   <td>
                     <span v-if="!act.startTime && !act.endTime">永久有效</span>
-                    <span v-else style="font-size: 12px">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
+                    <span v-else class="sub-text">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
                   </td>
                   <td>
                     <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
@@ -1658,84 +1657,117 @@ const txTypeLabel: Record<string, string> = {
       <div class="modal-content activity-modal-content">
         <div class="modal-header">
           <h3>{{ activityEditIndex === -1 ? '添加充值活动' : '编辑充值活动' }}</h3>
-          <span class="modal-close" @click="activityEditModal = false">&times;</span>
+          <span class="modal-close" @click="activityEditModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body activity-form-grid">
+          <!-- ====== 分组1：基本信息 ====== -->
+          <div class="af-group-title">基本信息</div>
+
           <!-- 活动名称 -->
           <div class="form-item">
             <label class="form-label required">活动名称</label>
-            <input type="text" class="form-input" v-model="activityEditData.name" placeholder="如：充100送10" style="width: 420px" />
+            <div class="af-field">
+              <input type="text" class="form-input form-input-xl" v-model="activityEditData.name" placeholder="如：充100送10" />
+            </div>
           </div>
 
-          <!-- 活动类型 | 触发条件（并排） -->
-          <div class="af-row">
-            <div class="af-col">
-              <label class="form-label required">活动类型</label>
-              <div style="display: flex; gap: 20px; align-items: center; padding-top: 6px">
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer"><input type="radio" v-model="activityEditData.type" value="bonus" /> 赠送</label>
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer"><input type="radio" v-model="activityEditData.type" value="discount" /> 折扣</label>
+          <!-- 活动类型 — Segmented Button -->
+          <div class="form-item">
+            <label class="form-label required">活动类型</label>
+            <div class="af-field">
+              <div class="segmented-control">
+                <button type="button" class="segmented-btn" :class="{ active: activityEditData.type === 'bonus' }" @click="activityEditData.type = 'bonus'">赠送</button>
+                <button type="button" class="segmented-btn" :class="{ active: activityEditData.type === 'discount' }" @click="activityEditData.type = 'discount'">折扣</button>
               </div>
             </div>
-            <div class="af-col">
-              <label class="form-label required">触发条件</label>
-              <div style="display: flex; align-items: center; gap: 8px; padding-top: 6px">
+          </div>
+
+          <!-- 触发条件 -->
+          <div class="form-item">
+            <label class="form-label required">触发条件</label>
+            <div class="af-field">
+              <div class="af-control-row">
                 <span>充值满</span>
-                <input type="number" class="form-input" v-model.number="activityEditData.conditionAmount" style="width: 80px" min="1" />
+                <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.conditionAmount" min="1" />
                 <span>元</span>
               </div>
             </div>
           </div>
 
-          <!-- 赠送金额 / 折扣比例（整行） -->
+          <!-- ====== 分组2：优惠规则 ====== -->
+          <div class="af-group-divider"></div>
+          <div class="af-group-title">优惠规则</div>
+
+          <!-- 赠送金额 -->
           <div v-if="activityEditData.type === 'bonus'" class="form-item">
             <label class="form-label required">赠送金额</label>
-            <div style="display: flex; align-items: center; gap: 10px; padding-top: 6px">
-              <span>赠送</span><input type="number" class="form-input" v-model.number="activityEditData.bonusAmount" style="width: 110px" min="1" />
-              <span>元<span class="af-hint">赠送金额将分笔入账，本金与赠送分开记录</span></span>
+            <div class="af-field">
+              <div class="af-control-row">
+                <span>赠送</span>
+                <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.bonusAmount" min="1" />
+                <span>元</span>
+              </div>
+              <div class="af-field-hint">赠送金额将分笔入账，本金与赠送分开记录</div>
             </div>
           </div>
+
+          <!-- 折扣比例 -->
           <div v-if="activityEditData.type === 'discount'" class="form-item">
             <label class="form-label required">折扣比例</label>
-            <div style="display: flex; align-items: center; gap: 10px; padding-top: 6px">
-              <input type="number" class="form-input" v-model.number="activityEditData.discountPercent" style="width: 90px" min="1" max="99" />
-              <span>即 {{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }} 折，实付 = 充值金额 × {{ activityEditData.discountPercent || 0 }}%</span>
+            <div class="af-field">
+              <div class="af-control-row">
+                <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.discountPercent" min="1" max="99" />
+                <span>即 {{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }} 折</span>
+              </div>
+              <div class="af-field-hint">实付 = 充值金额 × {{ activityEditData.discountPercent || 0 }}%</div>
             </div>
           </div>
 
-          <!-- 活动时间（整行） -->
+          <!-- 活动时间 -->
           <div class="form-item">
             <label class="form-label">活动时间</label>
-            <div class="af-time-row">
-              <input type="datetime-local" class="form-input" v-model="activityEditData.startTime" style="width: 190px; flex-shrink:0" />
-              <span class="af-sep">至</span>
-              <input type="datetime-local" class="form-input" v-model="activityEditData.endTime" style="width: 190px; flex-shrink:0" />
-              <span class="af-hint">留空 = 永久有效</span>
+            <div class="af-field">
+              <div class="af-time-row">
+                <input type="datetime-local" class="form-input form-input-md" v-model="activityEditData.startTime" placeholder="开始时间" />
+                <span class="af-sep">至</span>
+                <input type="datetime-local" class="form-input form-input-md" v-model="activityEditData.endTime" placeholder="结束时间" />
+              </div>
+              <div class="af-field-hint">留空表示永久有效</div>
             </div>
           </div>
 
-          <!-- 每人限享 | 每日限量（并排） -->
-          <div class="af-row">
-            <div class="af-col">
-              <label class="form-label">每人限享次数</label>
-              <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
-                <input type="number" class="form-input" v-model.number="activityEditData.perUserLimit" style="width: 80px" min="0" />
-                <span>次（不限）</span>
+          <!-- ====== 分组3：高级设置 ====== -->
+          <div class="af-group-divider"></div>
+          <div class="af-group-title">高级设置</div>
+
+          <!-- 每人限享 | 每日限量 -->
+          <div class="form-item">
+            <label class="form-label">使用限制</label>
+            <div class="af-field">
+              <div class="af-limit-row">
+                <div class="af-limit-item">
+                  <span>每人限享</span>
+                  <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.perUserLimit" min="0" />
+                  <span>次</span>
+                </div>
+                <div class="af-limit-item">
+                  <span>每日限量</span>
+                  <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.dailyLimit" min="0" />
+                  <span>次</span>
+                </div>
               </div>
-            </div>
-            <div class="af-col">
-              <label class="form-label">每日平台限量</label>
-              <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
-                <input type="number" class="form-input" v-model.number="activityEditData.dailyLimit" style="width: 80px" min="0" />
-                <span>次（不限）</span>
-              </div>
+              <div class="af-field-hint">0 表示不限制</div>
             </div>
           </div>
 
-          <!-- 是否启用（整行） -->
+          <!-- 是否启用 -->
           <div class="form-item">
             <label class="form-label">是否启用</label>
-            <div style="padding-top: 4px">
+            <div class="af-field">
               <label class="toggle-switch"><input type="checkbox" v-model="activityEditData.enabled" /><span class="toggle-slider"></span></label>
+              <span class="af-toggle-label">{{ activityEditData.enabled ? '启用' : '禁用' }}</span>
             </div>
           </div>
         </div>
@@ -1748,10 +1780,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：充值方案详情 ==================== -->
     <div v-if="planDetailModal" class="modal-overlay" @click.self="planDetailModal = false">
-      <div class="modal-content" style="width: 600px; max-height: 80vh; overflow-y: auto">
+      <div class="modal-content modal-md">
         <div class="modal-header">
           <h3>方案详情</h3>
-          <span class="modal-close" @click="planDetailModal = false">&times;</span>
+          <span class="modal-close" @click="planDetailModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body" v-if="planDetailData">
           <div class="detail-grid">
@@ -1761,46 +1795,48 @@ const txTypeLabel: Record<string, string> = {
             <div><label>自定义金额</label><span>{{ planDetailData.allowCustom ? `允许（¥${planDetailData.customMin} ~ ¥${planDetailData.customMax}）` : '不允许' }}</span></div>
           </div>
 
-          <div class="form-section-title" style="margin-top: 20px">预选金额</div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px">
-            <span v-for="p in planDetailData.presets" :key="p.id" style="padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; background: #fafafa">¥{{ p.amount }}</span>
-            <span v-if="planDetailData.allowCustom" style="padding: 6px 16px; border: 1px dashed #d9d9d9; border-radius: 6px; font-size: 14px; color: #999; background: #fafafa">自定义</span>
+          <div class="detail-section">
+            <div class="form-section-title">预选金额</div>
+            <div class="preset-list">
+              <span v-for="p in planDetailData.presets" :key="p.id" class="preset-tag">¥{{ p.amount }}</span>
+              <span v-if="planDetailData.allowCustom" class="preset-tag preset-tag-dashed">自定义</span>
+            </div>
           </div>
 
-          <div class="form-section-title" style="margin-top: 20px">充值活动</div>
-          <div v-if="planDetailData.activities.length === 0" style="text-align: center; color: #999; padding: 20px; background: #fafafa; border-radius: 6px; margin-top: 8px">
-            无充值活动
+          <div class="detail-section">
+            <div class="form-section-title">充值活动</div>
+            <div v-if="planDetailData.activities.length === 0" class="empty-block">无充值活动</div>
+            <table v-else class="data-table" style="margin-top: 8px">
+              <thead>
+                <tr>
+                  <th>活动名称</th>
+                  <th>类型</th>
+                  <th>触发条件</th>
+                  <th>优惠</th>
+                  <th>有效期</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="act in planDetailData.activities" :key="act.id">
+                  <td>{{ act.name }}</td>
+                  <td>{{ act.type === 'bonus' ? '赠送' : '折扣' }}</td>
+                  <td>充值满 ¥{{ act.conditionAmount }}</td>
+                  <td>
+                    <span v-if="act.type === 'bonus'">赠送 ¥{{ act.bonusAmount }}</span>
+                    <span v-else>{{ (act.discountPercent / 10).toFixed(1) }} 折</span>
+                  </td>
+                  <td>
+                    <span v-if="!act.startTime && !act.endTime">永久</span>
+                    <span v-else class="sub-text">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
+                  </td>
+                  <td>
+                    <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <table v-else class="data-table" style="margin-top: 8px">
-            <thead>
-              <tr>
-                <th>活动名称</th>
-                <th>类型</th>
-                <th>触发条件</th>
-                <th>优惠</th>
-                <th>有效期</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="act in planDetailData.activities" :key="act.id">
-                <td>{{ act.name }}</td>
-                <td>{{ act.type === 'bonus' ? '赠送' : '折扣' }}</td>
-                <td>充值满 ¥{{ act.conditionAmount }}</td>
-                <td>
-                  <span v-if="act.type === 'bonus'">赠送 ¥{{ act.bonusAmount }}</span>
-                  <span v-else>{{ (act.discountPercent / 10).toFixed(1) }} 折</span>
-                </td>
-                <td>
-                  <span v-if="!act.startTime && !act.endTime">永久</span>
-                  <span v-else style="font-size: 12px">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
-                </td>
-                <td>
-                  <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="planDetailModal = false">关闭</button>
@@ -1810,10 +1846,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：用户流水 ==================== -->
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
-      <div class="modal-content" style="width: 720px">
+      <div class="modal-content modal-lg">
         <div class="modal-header">
           <h3>{{ userFlowWallet?.walletId }} 流水明细</h3>
-          <span class="modal-close" @click="userFlowModal = false">&times;</span>
+          <span class="modal-close" @click="userFlowModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body">
           <div class="detail-grid" v-if="userFlowWallet">
@@ -1884,10 +1922,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：冻结钱包 ==================== -->
     <div v-if="freezeModal" class="modal-overlay" @click.self="freezeModal = false">
-      <div class="modal-content" style="width: 440px">
+      <div class="modal-content modal-sm">
         <div class="modal-header">
           <h3>冻结钱包</h3>
-          <span class="modal-close" @click="freezeModal = false">&times;</span>
+          <span class="modal-close" @click="freezeModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body">
           <div class="form-item" style="margin-bottom: 0">
@@ -1906,10 +1946,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：充值详情 ==================== -->
     <div v-if="rechargeDetailModal" class="modal-overlay" @click.self="rechargeDetailModal = false">
-      <div class="modal-content" style="width: 520px">
+      <div class="modal-content modal-md">
         <div class="modal-header">
           <h3>充值详情</h3>
-          <span class="modal-close" @click="rechargeDetailModal = false">&times;</span>
+          <span class="modal-close" @click="rechargeDetailModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body" v-if="rechargeDetailItem">
           <div class="detail-grid">
@@ -1934,10 +1976,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：提现详情 ==================== -->
     <div v-if="withdrawDetailModal" class="modal-overlay" @click.self="withdrawDetailModal = false">
-      <div class="modal-content" style="width: 560px">
+      <div class="modal-content modal-md">
         <div class="modal-header">
           <h3>提现详情</h3>
-          <span class="modal-close" @click="withdrawDetailModal = false">&times;</span>
+          <span class="modal-close" @click="withdrawDetailModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body" v-if="withdrawDetailItem">
           <div class="detail-grid">
@@ -1965,10 +2009,12 @@ const txTypeLabel: Record<string, string> = {
 
     <!-- ==================== 弹窗：交易流水详情 ==================== -->
     <div v-if="txDetailModal" class="modal-overlay" @click.self="txDetailModal = false">
-      <div class="modal-content" style="width: 560px">
+      <div class="modal-content modal-md">
         <div class="modal-header">
           <h3>交易详情</h3>
-          <span class="modal-close" @click="txDetailModal = false">&times;</span>
+          <span class="modal-close" @click="txDetailModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
         </div>
         <div class="modal-body" v-if="txDetailItem">
           <div class="detail-grid">
@@ -2015,20 +2061,24 @@ const txTypeLabel: Record<string, string> = {
 </template>
 
 <style scoped>
-/* ==================== 页面整体布局（对齐积分管理） ==================== */
+/* ==================== Design Tokens ==================== */
+/* Bright Modern — Ant Design / Element Pro style */
+
+/* ==================== 页面整体布局 ==================== */
 .wallet-management {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f7fa;
-  color: #333;
-  font-family: 'Microsoft YaHei', sans-serif;
+  background-color: #F0F2F5;
+  color: #1D2129;
+  font-family: 'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.6;
 }
 
 /* ==================== 左侧导航 ==================== */
 .sidebar {
-  width: 200px;
-  background-color: #fff;
-  border-right: 1px solid #e8e8e8;
+  width: 210px;
+  background-color: #FFFFFF;
+  border-right: 1px solid #E5E6EB;
   padding: 0;
   flex-shrink: 0;
 }
@@ -2036,26 +2086,29 @@ const txTypeLabel: Record<string, string> = {
   height: 56px;
   line-height: 56px;
   padding: 0 20px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  border-bottom: 1px solid #e8e8e8;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1D2129;
+  letter-spacing: -0.01em;
+  border-bottom: 1px solid #E5E6EB;
 }
 .menu-list {
   padding: 8px 0;
 }
 .menu-group-title {
   padding: 10px 20px;
-  font-size: 12px;
-  color: #999;
+  font-size: 11px;
+  color: #86909C;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   user-select: none;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .menu-group-title:hover {
-  color: #666;
+  color: #4E5969;
 }
 .expand-icon {
   font-size: 10px;
@@ -2068,18 +2121,18 @@ const txTypeLabel: Record<string, string> = {
   height: 40px;
   line-height: 40px;
   font-size: 14px;
-  color: #666;
+  color: #86909C;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 .menu-item:hover {
-  color: #1677ff;
-  background-color: #f0f5ff;
+  color: #1D2129;
+  background-color: #FAFAFA;
 }
 .menu-item.active {
-  color: #1677ff;
-  background-color: #e6f4ff;
-  font-weight: 500;
+  color: #4F6EF7;
+  background-color: #E8F3FF;
+  font-weight: 600;
   position: relative;
 }
 .menu-item.active::before {
@@ -2089,54 +2142,57 @@ const txTypeLabel: Record<string, string> = {
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: #1677ff;
+  background-color: #4F6EF7;
   border-radius: 0 3px 3px 0;
 }
 
 /* ==================== 右侧内容区 ==================== */
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 28px;
   overflow-y: auto;
 }
 .content-panel {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  border: 1px solid #E5E6EB;
 }
 .panel-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 18px 28px;
+  border-bottom: 1px solid #E5E6EB;
   display: flex;
   align-items: baseline;
   gap: 12px;
 }
 .panel-header h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1D2129;
+  letter-spacing: -0.01em;
 }
 .panel-subtitle {
   font-size: 13px;
-  color: #999;
+  color: #86909C;
 }
 .panel-body {
-  padding: 20px 24px;
+  padding: 24px 28px;
 }
 
-/* ==================== 配置表单（对齐积分管理） ==================== */
+/* ==================== 配置表单 ==================== */
 .config-form {
   max-width: 720px;
 }
 .form-section-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #1677ff;
-  padding: 12px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
+  padding: 16px 0 8px;
   margin-top: 4px;
-  border-bottom: 1px solid #e6f4ff;
-  margin-bottom: 16px;
+  border-bottom: 1px solid #E5E6EB;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 .form-item {
   display: flex;
@@ -2150,9 +2206,9 @@ const txTypeLabel: Record<string, string> = {
 .activity-form-grid {
   display: flex;
   flex-direction: column;
-  padding: 18px 24px;
+  padding: 18px 28px;
 }
-.activity-form-grid .form-item { align-items: center; margin-bottom: 14px; }
+.activity-form-grid .form-item { align-items: flex-start; margin-bottom: 14px; }
 .af-row {
   display: flex;
   gap: 20px;
@@ -2164,18 +2220,9 @@ const txTypeLabel: Record<string, string> = {
   flex-direction: column;
 }
 .af-hint {
-  color: #999; font-size: 12px; margin-left: 4px;
-}
-.af-time-row {
-  display: flex; align-items: center; gap: 8px; padding-top: 6px; flex-wrap: wrap;
-}
-.af-sep { color: #999; white-space: nowrap; }
-.activity-form-grid .af-full {
-  grid-column: 1 / -1;
-}
-.af-hint {
-  color: #999;
+  color: #86909C;
   font-size: 12px;
+  margin-left: 4px;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -2191,7 +2238,7 @@ const txTypeLabel: Record<string, string> = {
   flex-shrink: 0;
 }
 .af-sep {
-  color: #999;
+  color: #86909C;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -2201,12 +2248,12 @@ const txTypeLabel: Record<string, string> = {
   padding-right: 12px;
   line-height: 32px;
   font-size: 14px;
-  color: #333;
+  color: #4E5969;
   flex-shrink: 0;
 }
 .form-label.required::before {
   content: '*';
-  color: #ff4d4f;
+  color: #CF1322;
   margin-right: 4px;
 }
 .form-control-row {
@@ -2216,71 +2263,73 @@ const txTypeLabel: Record<string, string> = {
   flex: 1;
   line-height: 32px;
   font-size: 14px;
-  color: #666;
+  color: #86909C;
 }
 .form-input {
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid #E5E6EB;
   border-radius: 6px;
   padding: 0 12px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s ease;
   width: 200px;
+  font-family: inherit;
 }
 .form-input:focus {
-  border-color: #1677ff;
+  border-color: #4F6EF7;
 }
 .form-input:disabled {
-  background-color: #f5f5f5;
-  color: #999;
+  background-color: #F2F3F5;
+  color: #86909C;
   cursor: not-allowed;
 }
 .form-select {
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid #E5E6EB;
   border-radius: 6px;
   padding: 0 12px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s ease;
   width: 140px;
+  font-family: inherit;
 }
 .form-select:focus {
-  border-color: #1677ff;
+  border-color: #4F6EF7;
 }
 .form-select:disabled {
-  background-color: #f5f5f5;
-  color: #999;
+  background-color: #F2F3F5;
+  color: #86909C;
   cursor: not-allowed;
 }
 .form-textarea {
   width: 100%;
-  border: 1px solid #ddd;
+  border: 1px solid #E5E6EB;
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 14px;
   outline: none;
   resize: vertical;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s ease;
   font-family: inherit;
 }
 .form-textarea:focus {
-  border-color: #1677ff;
+  border-color: #4F6EF7;
 }
 .form-tip {
   font-size: 12px;
-  color: #999;
+  color: #86909C;
 }
 .form-divider {
   height: 1px;
-  background-color: #f0f0f0;
-  margin: 20px 0;
+  background-color: #E5E6EB;
+  margin: 24px 0;
 }
 .form-actions {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #E5E6EB;
   display: flex;
   gap: 8px;
 }
@@ -2297,7 +2346,7 @@ const txTypeLabel: Record<string, string> = {
   cursor: pointer;
 }
 .radio-label input[type="radio"] {
-  accent-color: #1677ff;
+  accent-color: #4F6EF7;
 }
 
 /* ==================== 开关组件 ==================== */
@@ -2320,8 +2369,8 @@ const txTypeLabel: Record<string, string> = {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: 0.3s;
+  background-color: #E5E6EB;
+  transition: 0.25s ease;
   border-radius: 22px;
 }
 .toggle-slider::before {
@@ -2332,17 +2381,17 @@ const txTypeLabel: Record<string, string> = {
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: 0.3s;
+  transition: 0.25s ease;
   border-radius: 50%;
 }
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #1677ff;
+  background-color: #4F6EF7;
 }
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(22px);
 }
 .toggle-switch input:disabled + .toggle-slider {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -2353,39 +2402,43 @@ const txTypeLabel: Record<string, string> = {
   border: none;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   padding: 0 16px;
   font-weight: 500;
+  font-family: inherit;
+}
+.btn:active {
+  transform: scale(0.98);
 }
 .btn-primary {
-  background-color: #1677ff;
-  color: #fff;
+  background-color: #4F6EF7;
+  color: #FFFFFF;
 }
 .btn-primary:hover {
-  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.2);
+  background-color: #6B8BF5;
 }
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 .btn-default {
-  background-color: #fff;
-  color: #333;
-  border: 1px solid #ddd;
+  background-color: #FFFFFF;
+  color: #4E5969;
+  border: 1px solid #E5E6EB;
 }
 .btn-default:hover {
-  border-color: #1677ff;
-  color: #1677ff;
-}
+  border-color: #4E5969;
+  color: #1D2129;}
 
 /* ==================== 筛选栏 ==================== */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E5E6EB;
 }
 .filter-item {
   display: flex;
@@ -2394,7 +2447,7 @@ const txTypeLabel: Record<string, string> = {
 }
 .filter-item label {
   font-size: 14px;
-  color: #666;
+  color: #86909C;
   white-space: nowrap;
 }
 
@@ -2406,36 +2459,44 @@ const txTypeLabel: Record<string, string> = {
 }
 .data-table th,
 .data-table td {
-  border-bottom: 1px solid #f0f0f0;
-  padding: 12px 8px;
+  border-bottom: 1px solid #E5E6EB;
+  padding: 14px 10px;
   text-align: left;
 }
 .data-table th {
-  background-color: #fafafa;
-  color: #666;
+  background-color: #FAFAFA;
+  color: #86909C;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.data-table tbody tr {
+  transition: background-color 0.15s ease;
 }
 .data-table tbody tr:hover {
-  background-color: #f5f7fa;
+  background-color: #FAFAFA;
 }
 .time-text {
-  color: #999;
+  color: #86909C;
   font-size: 13px;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .sub-text {
   font-size: 12px;
-  color: #999;
+  color: #86909C;
 }
 .price-text {
-  color: #ff4d4f;
-  font-weight: bold;
+  color: #CF1322;
+  font-weight: 600;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .empty-text {
   text-align: center;
-  padding: 60px 0;
-  color: #999;
+  padding: 64px 0;
+  color: #86909C;
+  font-size: 14px;
 }
 
 /* ==================== 展开按钮（子流水） ==================== */
@@ -2443,22 +2504,22 @@ const txTypeLabel: Record<string, string> = {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
-  color: #999;
+  color: #86909C;
   font-size: 10px;
-  border-radius: 3px;
-  transition: all 0.2s;
+  border-radius: 4px;
+  transition: all 0.15s ease;
 }
 .expand-btn:hover {
-  color: #1677ff;
-  background-color: #f0f5ff;
+  color: #4F6EF7;
+  background-color: #E8F3FF;
 }
 
 /* ==================== 子流水面板 ==================== */
 .bucket-row td {
-  background-color: #fafbfc;
+  background-color: #FAFAFA;
 }
 .bucket-panel {
   padding: 12px 16px 16px 24px;
@@ -2466,8 +2527,9 @@ const txTypeLabel: Record<string, string> = {
 .bucket-header {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: #86909C;
   margin-bottom: 8px;
+  letter-spacing: 0.03em;
 }
 .bucket-table {
   width: 100%;
@@ -2475,124 +2537,126 @@ const txTypeLabel: Record<string, string> = {
   font-size: 13px;
 }
 .bucket-table th {
-  background-color: #f5f7fa;
-  color: #888;
+  background-color: #F2F3F5;
+  color: #86909C;
   font-weight: 500;
   font-size: 12px;
   padding: 8px 10px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #E5E6EB;
 }
 .bucket-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #f5f5f5;
-  color: #555;
+  border-bottom: 1px solid #E5E6EB;
+  color: #4E5969;
 }
 
 /* ==================== 状态标签 ==================== */
 .status-tag {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: none;
 }
+/* 正常/启用/完成/成功 → Pale Blue */
 .status-tag.normal, .status-tag.on, .status-tag.completed, .status-tag.success {
-  background-color: #e6f4ff;
-  color: #1677ff;
-  border: 1px solid #91caff;
+  background-color: #E8F3FF;
+  color: #4F6EF7;
 }
+/* 冻结/停用/失败 → Pale Red */
 .status-tag.frozen, .status-tag.off, .status-tag.failed {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-  border: 1px solid #ffa39e;
+  background-color: #FFF1F0;
+  color: #CF1322;
 }
+/* 待处理/草稿 → Pale Yellow */
 .status-tag.pending, .status-tag.draft {
-  background-color: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+  background-color: #FFF7E6;
+  color: #D46B08;
 }
+/* 已支付 → Pale Green */
 .status-tag.paid {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background-color: #E8F8EE;
+  color: #0E7B3A;
 }
+/* 已关闭 → Neutral */
 .status-tag.closed {
-  background-color: #f5f5f5;
-  color: #999;
-  border: 1px solid #d9d9d9;
+  background-color: #F2F3F5;
+  color: #86909C;
 }
+/* 已审核 → Pale Blue */
 .status-tag.approved {
-  background-color: #f9f0ff;
-  color: #722ed1;
-  border: 1px solid #d3adf7;
+  background-color: #E8F3FF;
+  color: #4F6EF7;
 }
+/* 已退款 → Pale Green */
 .status-tag.refunded {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background-color: #E8F8EE;
+  color: #0E7B3A;
 }
+/* 已拒绝 → Pale Red */
 .status-tag.rejected {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-  border: 1px solid #ffa39e;
+  background-color: #FFF1F0;
+  color: #CF1322;
 }
+/* 全额 → Pale Blue */
 .status-tag.full {
-  background-color: #e6f4ff;
-  color: #1677ff;
-  border: 1px solid #91caff;
+  background-color: #E8F3FF;
+  color: #4F6EF7;
 }
+/* 部分 → Pale Yellow */
 .status-tag.partial {
-  background-color: #f9f0ff;
-  color: #722ed1;
-  border: 1px solid #d3adf7;
+  background-color: #FFF7E6;
+  color: #D46B08;
 }
 /* 交易类型标签 */
 .status-tag.recharge {
-  background-color: #e6f4ff;
-  color: #1677ff;
-  border: 1px solid #91caff;
+  background-color: #E8F3FF;
+  color: #4F6EF7;
 }
 .status-tag.consume {
-  background-color: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+  background-color: #FFF7E6;
+  color: #D46B08;
 }
 .status-tag.refund {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background-color: #E8F8EE;
+  color: #0E7B3A;
 }
 .status-tag.withdraw {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-  border: 1px solid #ffa39e;
+  background-color: #FFF1F0;
+  color: #CF1322;
 }
 
 /* ==================== 金额颜色 ==================== */
 .amount-positive {
-  color: #ff4d4f;
-  font-weight: bold;
+  color: #CF1322;
+  font-weight: 600;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .amount-negative {
-  color: #52c41a;
-  font-weight: bold;
+  color: #0E7B3A;
+  font-weight: 600;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 
 /* ==================== 操作链接 ==================== */
 .action-link {
-  color: #1677ff;
+  color: #4F6EF7;
   cursor: pointer;
   font-size: 13px;
+  transition: color 0.15s ease;
 }
 .action-link:hover {
+  color: #4F6EF7;
   text-decoration: underline;
 }
 .action-link.primary {
-  color: #1677ff;
+  color: #4F6EF7;
 }
 .action-link.danger {
-  color: #ff4d4f;
+  color: #CF1322;
 }
 
 /* ==================== 分页 ==================== */
@@ -2600,36 +2664,41 @@ const txTypeLabel: Record<string, string> = {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 24px;
   font-size: 14px;
-  color: #666;
+  color: #86909C;
 }
 .page-btns {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 .page-btn {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #ddd;
-  background-color: #fff;
-  border-radius: 4px;
+  border: 1px solid #E5E6EB;
+  background-color: #FFFFFF;
+  border-radius: 6px;
   cursor: pointer;
-  color: #333;
+  color: #4E5969;
   font-size: 13px;
+  transition: all 0.15s ease;
+  font-family: inherit;
 }
 .page-btn:hover:not(.disabled) {
-  border-color: #1677ff;
-  color: #1677ff;
+  border-color: #4F6EF7;
+  color: #4F6EF7;
+}
+.page-btn:active:not(.disabled) {
+  transform: scale(0.97);
 }
 .page-btn.active {
-  background-color: #1677ff;
-  color: #fff;
-  border-color: #1677ff;
+  background-color: #4F6EF7;
+  color: #FFFFFF;
+  border-color: #4F6EF7;
 }
 .page-btn.disabled {
-  color: #ccc;
-  background-color: #f5f5f5;
+  color: #E5E6EB;
+  background-color: #F2F3F5;
   cursor: not-allowed;
 }
 
@@ -2638,57 +2707,68 @@ const txTypeLabel: Record<string, string> = {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 .overview-card {
-  background-color: #fafafa;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #f0f0f0;
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  padding: 24px;
+  border: 1px solid #E5E6EB;
+  transition: box-shadow 0.2s ease;
+}
+.overview-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .stat-label {
-  font-size: 13px;
-  color: #999;
-  margin-bottom: 8px;
+  font-size: 12px;
+  color: #86909C;
+  margin-bottom: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 .stat-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1D2129;
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .stat-change {
   font-size: 12px;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .stat-change.up {
-  color: #ff4d4f;
+  color: #CF1322;
 }
 .stat-change.down {
-  color: #52c41a;
+  color: #0E7B3A;
 }
 
 /* ==================== 趋势图 ==================== */
 .trend-section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 .trend-section h3 {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
   margin: 0 0 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 .trend-chart {
-  background-color: #fafafa;
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid #f0f0f0;
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  padding: 24px;
+  border: 1px solid #E5E6EB;
 }
 .trend-legend {
   display: flex;
   gap: 24px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #666;
+  color: #86909C;
 }
 .legend-item {
   display: flex;
@@ -2697,8 +2777,8 @@ const txTypeLabel: Record<string, string> = {
 }
 .legend-item i {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 2px;
 }
 .trend-bars {
@@ -2723,36 +2803,39 @@ const txTypeLabel: Record<string, string> = {
 .bar {
   width: 20px;
   border-radius: 3px 3px 0 0;
-  transition: height 0.3s;
+  transition: height 0.3s ease;
 }
 .bar-recharge {
-  background-color: #1677ff;
+  background-color: #4F6EF7;
 }
 .bar-consume {
-  background-color: #52c41a;
+  background-color: #D46B08;
 }
 .bar-refund {
-  background-color: #faad14;
+  background-color: #0E7B3A;
 }
 .trend-label {
   margin-top: 8px;
   font-size: 12px;
-  color: #999;
+  color: #86909C;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 
 /* ==================== 最近交易 ==================== */
 .recent-section h3 {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
   margin: 0 0 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 /* ==================== 修改记录 ==================== */
 .history-section {
-  margin-top: 32px;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 16px;
+  margin-top: 36px;
+  border-top: 1px solid #E5E6EB;
+  padding-top: 20px;
 }
 .history-header {
   display: flex;
@@ -2764,31 +2847,34 @@ const txTypeLabel: Record<string, string> = {
 }
 .history-toggle {
   font-size: 12px;
-  color: #999;
+  color: #86909C;
 }
 .history-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
+  letter-spacing: 0.02em;
 }
 .history-count {
   font-size: 12px;
-  color: #999;
+  color: #86909C;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .history-body {
   margin-top: 8px;
 }
 .snapshot-row td {
-  background-color: #fafafa;
+  background-color: #FAFAFA;
 }
 .snapshot-detail {
   padding: 16px;
 }
 .snapshot-header {
-  font-size: 13px;
-  font-weight: bold;
-  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  color: #86909C;
   margin-bottom: 12px;
+  letter-spacing: 0.03em;
 }
 .snapshot-grid {
   display: grid;
@@ -2802,11 +2888,11 @@ const txTypeLabel: Record<string, string> = {
 }
 .snapshot-label {
   font-size: 12px;
-  color: #999;
+  color: #86909C;
 }
 .snapshot-value {
   font-size: 14px;
-  color: #333;
+  color: #4E5969;
 }
 
 /* ==================== 弹窗 ==================== */
@@ -2821,47 +2907,82 @@ const txTypeLabel: Record<string, string> = {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .modal-content {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  border: 1px solid #E5E6EB;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-sm { width: 440px; }
+.modal-md { width: 560px; }
+.modal-lg { width: 720px; max-height: 85vh; }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 28px;
+  border-bottom: 1px solid #E5E6EB;
 }
 .modal-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
+  color: #1D2129;
+  letter-spacing: -0.01em;
 }
 .modal-close {
-  font-size: 20px;
-  color: #999;
   cursor: pointer;
   line-height: 1;
+  transition: all 0.15s ease;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #86909C;
 }
 .modal-close:hover {
-  color: #333;
+  color: #1D2129;
+  background-color: #F2F3F5;
+}
+.modal-close-icon {
+  width: 16px;
+  height: 16px;
 }
 .modal-body {
-  padding: 20px 24px;
+  padding: 24px 28px;
   overflow-y: auto;
   flex: 1;
 }
 .modal-footer {
-  padding: 12px 24px;
-  border-top: 1px solid #f0f0f0;
+  padding: 14px 28px;
+  border-top: 1px solid #E5E6EB;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* ==================== 详情区块 ==================== */
+.detail-section {
+  margin-top: 24px;
+}
+.detail-section:first-child {
+  margin-top: 0;
 }
 .detail-grid {
   display: grid;
@@ -2874,11 +2995,171 @@ const txTypeLabel: Record<string, string> = {
   gap: 4px;
 }
 .detail-grid label {
-  font-size: 12px;
-  color: #999;
+  font-size: 11px;
+  color: #86909C;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 .detail-grid span {
   font-size: 14px;
-  color: #333;
+  color: #4E5969;
+}
+
+/* ==================== 空态占位 ==================== */
+.empty-block {
+  text-align: center;
+  color: #86909C;
+  padding: 24px 0;
+  background-color: #F2F3F5;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+/* ==================== 预选金额 ==================== */
+.preset-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.preset-tag {
+  padding: 6px 16px;
+  border: 1px solid #E5E6EB;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #F2F3F5;
+  color: #1D2129;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+}
+.preset-tag-dashed {
+  border-style: dashed;
+  color: #86909C;
+  font-family: inherit;
+}
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.preset-index {
+  color: #86909C;
+  width: 20px;
+  text-align: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.preset-yen {
+  color: #86909C;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ==================== 按钮尺寸 ==================== */
+.btn-xs {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.btn-text-danger {
+  color: #CF1322;
+}
+
+/* ==================== 表单输入尺寸 ==================== */
+.form-input-xs { width: 80px; }
+.form-input-sm { width: 120px; }
+.form-input-md { width: 190px; flex-shrink: 0; }
+.form-input-lg { width: 320px; }
+.form-input-xl { width: 420px; }
+
+/* ==================== 活动表单辅助 ==================== */
+.af-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+/* ==================== 活动弹窗分组 ==================== */
+.af-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D2129;
+  padding: 0;
+  margin-bottom: 14px;
+  letter-spacing: 0.01em;
+}
+.af-group-divider {
+  height: 1px;
+  background-color: #E5E6EB;
+  margin: 18px 0 14px;
+}
+
+/* ==================== Segmented Control ==================== */
+.segmented-control {
+  display: inline-flex;
+  background-color: #F2F3F5;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.segmented-btn {
+  height: 30px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #4E5969;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 30px;
+}
+.segmented-btn:hover {
+  color: #1D2129;
+}
+.segmented-btn.active {
+  background-color: #FFFFFF;
+  color: #4F6EF7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ==================== 活动表单字段容器 ==================== */
+.af-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.af-field-hint {
+  font-size: 12px;
+  color: #86909C;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* ==================== 限额行 ==================== */
+.af-limit-row {
+  display: flex;
+  gap: 24px;
+  padding-top: 6px;
+}
+.af-limit-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #4E5969;
+}
+
+/* ==================== 开关文字标签 ==================== */
+.af-toggle-label {
+  font-size: 13px;
+  color: #86909C;
+  margin-left: 10px;
+  line-height: 22px;
 }
 </style>
