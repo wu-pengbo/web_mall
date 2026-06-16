@@ -24,7 +24,7 @@ const menuList = [
     label: '用户管理',
     children: [
       { key: 'user_balance', label: '用户余额' },
-      { key: 'points_distribute', label: '积分发放' },
+      { key: 'points_distribute', label: '积分变更' },
     ],
   },
   {
@@ -316,7 +316,7 @@ const mockIssueRecords: FlowRecord[] = [
     id: 'BI-001',
     type: 'earn',
     reason: 'activity',
-    reasonDetail: '618活动奖励',
+    reasonDetail: '618大促活动',
     amount: 5000,
     balance: 12500,
     batch: '2026年Q2季度额度',
@@ -332,7 +332,7 @@ const mockIssueRecords: FlowRecord[] = [
     id: 'BI-002',
     type: 'earn',
     reason: 'manual',
-    reasonDetail: '客诉补偿',
+    reasonDetail: '客诉补偿发放',
     amount: 3000,
     balance: 8000,
     batch: '2026年Q2季度额度',
@@ -348,7 +348,7 @@ const mockIssueRecords: FlowRecord[] = [
     id: 'BI-003',
     type: 'earn',
     reason: 'activity',
-    reasonDetail: '交易获取',
+    reasonDetail: '交易奖励',
     amount: 8000,
     balance: 16000,
     batch: '2026年Q2季度额度',
@@ -364,7 +364,7 @@ const mockIssueRecords: FlowRecord[] = [
     id: 'BI-004',
     type: 'earn',
     reason: 'activity',
-    reasonDetail: '活动奖励',
+    reasonDetail: '新用户注册活动',
     amount: 2000,
     balance: 6000,
     batch: '2026年Q2季度额度',
@@ -384,7 +384,7 @@ const mockConsumeRecords: FlowRecord[] = [
     id: 'BC-001',
     type: 'burn',
     reason: 'consume',
-    reasonDetail: '订单抵扣',
+    reasonDetail: '订单消费抵扣',
     amount: -1500,
     balance: 11000,
     batch: '2026年Q2季度额度',
@@ -400,7 +400,7 @@ const mockConsumeRecords: FlowRecord[] = [
     id: 'BC-002',
     type: 'burn',
     reason: 'consume',
-    reasonDetail: '订单抵扣',
+    reasonDetail: '订单消费抵扣',
     amount: -3000,
     balance: 13000,
     batch: '2026年Q2季度额度',
@@ -416,7 +416,7 @@ const mockConsumeRecords: FlowRecord[] = [
     id: 'BC-003',
     type: 'burn',
     reason: 'expire',
-    reasonDetail: '自然年到期清零',
+    reasonDetail: '年度过期回收',
     amount: -500,
     balance: 10500,
     batch: '2026年Q2季度额度',
@@ -575,6 +575,19 @@ const openMerchantLedger = (item: SignItem) => {
   merchantLedgerTab.value = 'issue'
   showMerchantLedgerModal.value = true
 }
+
+// 商户流水摘要统计
+const merchantTotalIssued = computed(() => {
+  return merchantIssueRecords.value.reduce((sum, r) => sum + r.amount, 0)
+})
+
+const merchantTotalConsumed = computed(() => {
+  return merchantConsumeRecords.value.reduce((sum, r) => sum + Math.abs(r.amount), 0)
+})
+
+const merchantRemainingQuota = computed(() => {
+  return merchantTotalIssued.value - merchantTotalConsumed.value
+})
 
 // ==================== 模块4：额度管理 ====================
 const quotaFilter = reactive({
@@ -893,16 +906,16 @@ interface FlowRecord {
   batch: string // 关联批次名称
   userUid: string // 用户UID
   userPhone: string // 用户手机号
-  type: 'earn' | 'burn' // 类型：获取/消耗
-  reason: string // 原因编码: activity|manual|refund|consume|deduct|expire|revoke
+  type: 'earn' | 'burn' // 类型：发放/消耗
+  reason: string // 原因编码: activity|manual|refund|consume|expire|deduct
   reasonDetail: string // 原因备注
-  amount: number // 变动数值（正=获取，负=消耗）
+  amount: number // 变动数值（正=发放，负=消耗）
   balance: number // 变动后余额
   merchant: string // 来源商户
   operator: string // 操作人
   orderNo: string // 关联订单号
   time: string // 发生时间
-  expireTime: string // 过期时间（获取才有）
+  expireTime: string // 过期时间（发放才有）
 }
 
 const showUserLedgerModal = ref(false)
@@ -915,7 +928,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L001',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '618活动奖励',
+      reasonDetail: '618大促活动',
       amount: 200,
       balance: 2350,
       batch: 'BATCH-20260603-001',
@@ -947,7 +960,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L003',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '签到活动',
+      reasonDetail: '签到活动奖励',
       amount: 500,
       balance: 2250,
       batch: 'BATCH-20260501-001',
@@ -965,7 +978,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L004',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '开业活动赠送',
+      reasonDetail: '新店开业活动',
       amount: 300,
       balance: 1800,
       batch: 'BATCH-20260603-002',
@@ -981,7 +994,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L005',
       type: 'burn',
       reason: 'consume',
-      reasonDetail: '商品购买',
+      reasonDetail: '商品消费',
       amount: -150,
       balance: 1500,
       batch: '',
@@ -999,7 +1012,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L006',
       type: 'earn',
       reason: 'manual',
-      reasonDetail: '618大促活动奖励',
+      reasonDetail: '手动补发',
       amount: 1000,
       balance: 5000,
       batch: 'BATCH-20260603-001',
@@ -1033,7 +1046,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L008',
       type: 'earn',
       reason: 'refund',
-      reasonDetail: '退货退款退回积分',
+      reasonDetail: '退货退款退回',
       amount: 200,
       balance: 800,
       batch: '',
@@ -1051,7 +1064,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L009',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '新用户注册奖励',
+      reasonDetail: '注册奖励活动',
       amount: 600,
       balance: 600,
       batch: 'BATCH-20260603-001',
@@ -1069,7 +1082,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L010',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '满减活动',
+      reasonDetail: '满减活动奖励',
       amount: 800,
       balance: 5000,
       batch: 'BATCH-20260603-001',
@@ -1085,7 +1098,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L011',
       type: 'burn',
       reason: 'expire',
-      reasonDetail: '自然年到期清零',
+      reasonDetail: '年度过期回收',
       amount: -200,
       balance: 4200,
       batch: 'BATCH-20260501-001',
@@ -1101,7 +1114,7 @@ const mockUserLedgerMap: Record<string, FlowRecord[]> = {
       id: 'L012',
       type: 'earn',
       reason: 'activity',
-      reasonDetail: '年中大促赠送',
+      reasonDetail: '年中大促活动',
       amount: 1200,
       balance: 4400,
       batch: 'BATCH-20260603-001',
@@ -1172,6 +1185,9 @@ const closeUserLedgerModal = () => {
 // ==================== 模块6：积分发放 ====================
 const distributeFilter = reactive({
   keyword: '',
+  changeType: '', // '' | 'issue' | 'deduct'
+  reason: '',
+  merchant: '',
   startDate: '',
   endDate: '',
 })
@@ -1189,9 +1205,15 @@ const distributeForm = reactive({
   selectedUser: null as DistributeUser | null,
   batchId: '',
   amount: null as number | null,
-  reasonType: 'compensation',
+  changeType: 'issue', // 'issue' | 'deduct'
+  reasonType: 'manual',
   reasonDetail: '',
 })
+
+const changeTypeOptions = [
+  { value: 'issue', label: '发放' },
+  { value: 'deduct', label: '扣除' },
+]
 
 // 可用的启用批次（模拟）
 const availableBatches = computed(() => {
@@ -1202,12 +1224,44 @@ const selectedBatchInfo = computed(() => {
   return availableBatches.value.find((b) => b.id === distributeForm.batchId)
 })
 
+// 变更原因选项（按变更类型）
+const changeReasonOptions = computed(() => {
+  if (distributeForm.changeType === 'deduct') {
+    return [
+      { value: 'none', label: '无' },
+      { value: 'manual_deduct', label: '手动扣除' },
+      { value: 'fraud_recovery', label: '异常交易收回' },
+      { value: 'duplicate_recovery', label: '重复发放收回' },
+      { value: 'other', label: '其他' },
+    ]
+  }
+  return [
+    { value: 'none', label: '无' },
+    { value: 'complaint', label: '客诉补偿' },
+    { value: 'activity', label: '活动奖励' },
+    { value: 'supplement', label: '补发' },
+    { value: 'other', label: '其他' },
+  ]
+})
+
+// 变更后余额预览
+const previewBalance = computed(() => {
+  const user = distributeForm.selectedUser
+  const amount = distributeForm.amount || 0
+  if (!user) return 0
+  if (distributeForm.changeType === 'deduct') {
+    return user.currentPoints - amount
+  }
+  return user.currentPoints + amount
+})
+
 const openDistributeModal = (user?: UserBalanceItem) => {
   distributeForm.userSearch = ''
   distributeForm.selectedUser = null
   distributeForm.batchId = ''
   distributeForm.amount = null
-  distributeForm.reasonType = 'compensation'
+  distributeForm.changeType = 'issue'
+  distributeForm.reasonType = 'none'
   distributeForm.reasonDetail = ''
   if (user) {
     distributeForm.selectedUser = {
@@ -1237,58 +1291,75 @@ const submitDistribute = () => {
     alert('请先搜索并选择用户')
     return
   }
-  if (!distributeForm.batchId) {
-    alert('请选择积分批次')
-    return
-  }
   if (!distributeForm.amount || distributeForm.amount <= 0) {
-    alert('请输入有效的发放数量')
-    return
-  }
-  const batch = selectedBatchInfo.value
-  if (!batch) return
-
-  // 计算该商户的剩余可用额度
-  const merchantQuota = quotaList.value
-    .filter((q) => q.merchantName === batch.merchantName && q.changeStatus === 'completed')
-    .reduce((sum, q) => sum + q.amount, 0)
-  const merchantIssued = batchList.value
-    .filter((b) => b.merchantName === batch.merchantName)
-    .reduce((sum, b) => sum + b.issuedPoints, 0)
-  const merchantRemaining = merchantQuota - merchantIssued
-
-  if (distributeForm.amount > merchantRemaining) {
-    alert(
-      `发放数量（${distributeForm.amount}）超过该商户剩余可用额度（${merchantRemaining.toLocaleString()}），请先为商户增加额度`,
-    )
+    alert('请输入有效的变更数量')
     return
   }
 
-  batch.issuedPoints += distributeForm.amount
-  // 添加到发放流水（将 old reasonType 映射到新 reason）
-  const reasonMap: Record<string, string> = {
-    activity: 'activity',
-    compensation: 'manual',
-    fix: 'manual',
-    other: 'manual',
+  const isDeduct = distributeForm.changeType === 'deduct'
+
+  // 扣除不需要批次
+  if (!isDeduct) {
+    if (!distributeForm.batchId) {
+      alert('请选择积分批次')
+      return
+    }
   }
+
+  const batch = isDeduct ? null : selectedBatchInfo.value
+  if (!isDeduct && !batch) return
+
+  // 扣除校验：不能超过当前余额
+  if (isDeduct && distributeForm.amount > user.currentPoints) {
+    alert(`扣除数量（${distributeForm.amount}）超过用户当前积分（${user.currentPoints}）`)
+    return
+  }
+
+  // 发放校验：商户剩余额度
+  if (!isDeduct) {
+    const merchantQuota = quotaList.value
+      .filter((q) => q.merchantName === batch.merchantName && q.changeStatus === 'completed')
+      .reduce((sum, q) => sum + q.amount, 0)
+    const merchantIssued = batchList.value
+      .filter((b) => b.merchantName === batch.merchantName)
+      .reduce((sum, b) => sum + b.issuedPoints, 0)
+    const merchantRemaining = merchantQuota - merchantIssued
+
+    if (distributeForm.amount > merchantRemaining) {
+      alert(
+        `发放数量（${distributeForm.amount}）超过该商户剩余可用额度（${merchantRemaining.toLocaleString()}），请先为商户增加额度`,
+      )
+      return
+    }
+    batch.issuedPoints += distributeForm.amount
+  }
+
+  // 变更原因映射（UI选项全部映射到 manual/deduct）
+  const getReason = () => {
+    if (isDeduct) return 'deduct'
+    return 'manual'
+  }
+
   distributeRecordList.value.unshift({
     id: `DIS-${String(distributeRecordList.value.length + 1).padStart(3, '0')}`,
-    batch: batch.batchName,
+    batch: isDeduct ? '' : batch.batchName,
     userUid: user.uid,
     userPhone: user.phone,
-    type: 'earn',
-    reason: reasonMap[distributeForm.reasonType] || 'manual',
+    type: isDeduct ? 'burn' : 'earn',
+    reason: getReason(),
     reasonDetail: distributeForm.reasonDetail,
-    amount: distributeForm.amount,
-    balance: user.currentPoints + distributeForm.amount,
-    merchant: batch.merchantName,
+    amount: isDeduct ? -distributeForm.amount : distributeForm.amount,
+    balance: isDeduct
+      ? user.currentPoints - distributeForm.amount
+      : user.currentPoints + distributeForm.amount,
+    merchant: isDeduct ? '' : batch.merchantName,
     operator: '当前用户',
     orderNo: '',
-    expireTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    expireTime: isDeduct ? '' : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     time: new Date().toLocaleString(),
   })
-  alert(`成功向用户 ${user.phone} 发放 ${distributeForm.amount} 积分！`)
+  const actionText = isDeduct ? '扣除' : '发放'
+  alert(`成功向用户 ${user.phone} ${actionText} ${distributeForm.amount} 积分！`)
   closeDistributeModal()
 }
 
@@ -1296,8 +1367,8 @@ const distributeRecordList = ref<FlowRecord[]>([
   {
     id: 'DIS-001',
     type: 'earn',
-    reason: 'activity',
-    reasonDetail: '618大促活动奖励',
+    reason: 'manual',
+    reasonDetail: '手动补发',
     amount: 1000,
     balance: 2500,
     batch: '2026年Q2季度额度',
@@ -1313,7 +1384,7 @@ const distributeRecordList = ref<FlowRecord[]>([
     id: 'DIS-002',
     type: 'earn',
     reason: 'manual',
-    reasonDetail: '物流延误客诉补偿',
+    reasonDetail: '客诉补偿手动发放',
     amount: 500,
     balance: 1800,
     batch: '开业活动专项额度',
@@ -1329,7 +1400,7 @@ const distributeRecordList = ref<FlowRecord[]>([
     id: 'DIS-003',
     type: 'earn',
     reason: 'manual',
-    reasonDetail: '订单异常积分补发',
+    reasonDetail: '订单异常手动补发',
     amount: 200,
     balance: 3200,
     batch: '2026年Q1剩余额度',
@@ -1345,7 +1416,7 @@ const distributeRecordList = ref<FlowRecord[]>([
     id: 'DIS-004',
     type: 'earn',
     reason: 'manual',
-    reasonDetail: '新店开业推广赠送',
+    reasonDetail: '新店开业手动发放',
     amount: 3000,
     balance: 8000,
     batch: '2026年Q2季度额度',
@@ -1365,6 +1436,10 @@ const filteredDistributeList = computed(() => {
       const kw = distributeFilter.keyword.toLowerCase()
       if (!r.userUid.toLowerCase().includes(kw) && !r.userPhone.includes(kw)) return false
     }
+    if (distributeFilter.changeType === 'issue' && r.type !== 'earn') return false
+    if (distributeFilter.changeType === 'deduct' && r.type !== 'burn') return false
+    if (distributeFilter.reason && r.reason !== distributeFilter.reason) return false
+    if (distributeFilter.merchant && !r.merchant.includes(distributeFilter.merchant)) return false
     if (distributeFilter.startDate && r.time < distributeFilter.startDate) return false
     if (distributeFilter.endDate && r.time > distributeFilter.endDate + ' 23:59:59') return false
     return true
@@ -1373,24 +1448,19 @@ const filteredDistributeList = computed(() => {
 
 const getReasonTypeText = (reason: string) => {
   const map: Record<string, string> = {
-    activity: '活动获取',
+    activity: '活动奖励',
     manual: '手动发放',
     refund: '退款退回',
     consume: '消费',
+    expire: '过期回收',
     deduct: '手动扣除',
-    expire: '过期扣除',
-    revoke: '撤回',
-    // 兼容旧数据
-    compensation: '手动发放',
-    fix: '手动发放',
-    other: '手动发放',
   }
   return map[reason] || reason
 }
 
 const getLedgerTypeText = (type: string) => {
   const map: Record<string, string> = {
-    earn: '获取',
+    earn: '发放',
     burn: '消耗',
   }
   return map[type] || type
@@ -1412,7 +1482,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L001',
     type: 'earn',
     reason: 'activity',
-    reasonDetail: '618活动奖励',
+    reasonDetail: '618大促活动',
     amount: 200,
     balance: 2350,
     batch: 'BATCH-20260603-001',
@@ -1428,7 +1498,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L002',
     type: 'burn',
     reason: 'consume',
-    reasonDetail: '订单消费',
+    reasonDetail: '订单消费抵扣',
     amount: -150,
     balance: 1800,
     batch: '',
@@ -1444,7 +1514,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L003',
     type: 'burn',
     reason: 'consume',
-    reasonDetail: '商品购买',
+    reasonDetail: '商品消费',
     amount: -100,
     balance: 2150,
     batch: '',
@@ -1460,7 +1530,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L004',
     type: 'earn',
     reason: 'manual',
-    reasonDetail: '618大促活动奖励',
+    reasonDetail: '手动补发',
     amount: 1000,
     balance: 5000,
     batch: 'BATCH-20260603-001',
@@ -1476,7 +1546,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L005',
     type: 'earn',
     reason: 'activity',
-    reasonDetail: '签到活动',
+    reasonDetail: '签到活动奖励',
     amount: 500,
     balance: 2250,
     batch: 'BATCH-20260501-001',
@@ -1492,7 +1562,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L006',
     type: 'earn',
     reason: 'refund',
-    reasonDetail: '退货退款退回积分',
+    reasonDetail: '退货退款回滚',
     amount: 200,
     balance: 800,
     batch: '',
@@ -1508,7 +1578,7 @@ const allLedgerList = ref<FlowRecord[]>([
     id: 'L007',
     type: 'burn',
     reason: 'expire',
-    reasonDetail: '自然年到期清零',
+    reasonDetail: '年度过期回收',
     amount: -300,
     balance: 600,
     batch: 'BATCH-20250101-002',
@@ -2322,13 +2392,27 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
           v-if="showMerchantLedgerModal"
           @click="showMerchantLedgerModal = false"
         >
-          <div class="modal-content" style="width: 800px" @click.stop>
+          <div class="modal-content modal-auto-wide" @click.stop>
             <div class="modal-header">
-              <h3>{{ currentMerchantLedger?.merchantName }} - 商户流水</h3>
-              <button class="close-btn" @click="showMerchantLedgerModal = false">✕</button>
+              <h3>商户流水明细</h3>
+              <button class="close-btn" @click="showMerchantLedgerModal = false">
+                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+              </button>
             </div>
             <div class="modal-body">
-              <div class="tab-bar" style="margin-bottom: 16px">
+              <!-- 商户概要 -->
+              <div class="merchant-summary">
+                <div class="summary-row">
+                  <span class="summary-item"><span class="summary-label">商户名称：</span>{{ currentMerchantLedger?.merchantName }}</span>
+                  <span class="summary-item"><span class="summary-label">已发放：</span><span class="summary-value">{{ merchantTotalIssued.toLocaleString() }}</span></span>
+                  <span class="summary-item"><span class="summary-label">已消耗：</span><span class="summary-value">{{ merchantTotalConsumed.toLocaleString() }}</span></span>
+                  <span class="summary-item"><span class="summary-label">剩余额度：</span><span class="summary-value">{{ merchantRemainingQuota.toLocaleString() }}</span></span>
+                </div>
+                <button class="btn btn-primary btn-sm summary-export-btn">导出账单</button>
+              </div>
+
+              <!-- Tab 切换 -->
+              <div class="tab-bar">
                 <button
                   class="tab-btn"
                   :class="{ active: merchantLedgerTab === 'issue' }"
@@ -2341,19 +2425,22 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                   :class="{ active: merchantLedgerTab === 'consume' }"
                   @click="merchantLedgerTab = 'consume'"
                 >
-                  核销流水
+                  消耗流水
                 </button>
               </div>
-              <table class="data-table" v-if="merchantLedgerTab === 'issue'">
+
+              <!-- 发放流水表格 -->
+              <table class="data-table table-nowrap" v-if="merchantLedgerTab === 'issue'">
                 <thead>
                   <tr>
                     <th>流水编号</th>
-                    <th>用户UID</th>
+                    <th>用户id</th>
                     <th>手机号</th>
-                    <th>所属批次</th>
+                    <th class="cell-wrap">所属批次</th>
                     <th>发放数量</th>
                     <th>发放原因</th>
-                    <th>原因备注</th>
+                    <th class="cell-wrap">原因备注</th>
+                    <th>关联订单号</th>
                     <th>操作人</th>
                     <th>发放时间</th>
                     <th>过期时间</th>
@@ -2364,29 +2451,33 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                     <td>{{ r.id }}</td>
                     <td>{{ r.userUid }}</td>
                     <td>{{ r.userPhone }}</td>
-                    <td>{{ r.batch }}</td>
-                    <td style="color: #52c41a">+{{ r.amount.toLocaleString() }}</td>
+                    <td class="cell-wrap">{{ r.batch }}</td>
+                    <td class="amount-positive">+{{ r.amount.toLocaleString() }}</td>
                     <td>{{ getReasonTypeText(r.reason) }}</td>
-                    <td>{{ r.reasonDetail || '-' }}</td>
+                    <td class="cell-wrap">{{ r.reasonDetail || '-' }}</td>
+                    <td>{{ r.orderNo || '-' }}</td>
                     <td>{{ r.operator }}</td>
-                    <td>{{ r.time }}</td>
+                    <td class="time-text">{{ r.time }}</td>
                     <td>{{ r.expireTime || '-' }}</td>
                   </tr>
                   <tr v-if="merchantIssueRecords.length === 0">
-                    <td colspan="10" class="empty-text">暂无发放记录</td>
+                    <td colspan="11" class="empty-text">暂无发放记录</td>
                   </tr>
                 </tbody>
               </table>
-              <table class="data-table" v-if="merchantLedgerTab === 'consume'">
+
+              <!-- 消耗流水表格 -->
+              <table class="data-table table-nowrap" v-if="merchantLedgerTab === 'consume'">
                 <thead>
                   <tr>
                     <th>流水编号</th>
-                    <th>用户UID</th>
+                    <th>用户id</th>
                     <th>手机号</th>
+                    <th class="cell-wrap">所属批次</th>
                     <th>消耗数量</th>
-                    <th>变动后余额</th>
                     <th>消耗原因</th>
-                    <th>关联订单</th>
+                    <th class="cell-wrap">原因备注</th>
+                    <th>关联订单号</th>
                     <th>操作人</th>
                     <th>发生时间</th>
                   </tr>
@@ -2396,15 +2487,16 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                     <td>{{ r.id }}</td>
                     <td>{{ r.userUid }}</td>
                     <td>{{ r.userPhone }}</td>
-                    <td style="color: #ff4d4f">{{ r.amount }}</td>
-                    <td>{{ r.balance }}</td>
+                    <td class="cell-wrap">{{ r.batch || '-' }}</td>
+                    <td class="amount-negative">{{ Math.abs(r.amount).toLocaleString() }}</td>
                     <td>{{ getReasonTypeText(r.reason) }}</td>
+                    <td class="cell-wrap">{{ r.reasonDetail || '-' }}</td>
                     <td>{{ r.orderNo || '-' }}</td>
                     <td>{{ r.operator }}</td>
-                    <td>{{ r.time }}</td>
+                    <td class="time-text">{{ r.time }}</td>
                   </tr>
                   <tr v-if="merchantConsumeRecords.length === 0">
-                    <td colspan="9" class="empty-text">暂无核销记录</td>
+                    <td colspan="10" class="empty-text">暂无消耗记录</td>
                   </tr>
                 </tbody>
               </table>
@@ -2721,7 +2813,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <th>手机号</th>
                 <th>当前积分</th>
                 <th>即将过期</th>
-                <th>累计获取</th>
+                <th>累计发放</th>
                 <th>累计消耗</th>
                 <th>操作</th>
               </tr>
@@ -2742,9 +2834,9 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                   <a class="action-link primary" @click="openUserLedger(user)">明细</a>
                   <a
                     class="action-link"
-                    style="margin-left: 8px; color: #52c41a"
+                    style="margin-left: 8px; color: #0E7B3A"
                     @click="openDistributeModal(user)"
-                    >发放</a
+                    >变更</a
                   >
                 </td>
               </tr>
@@ -2759,13 +2851,13 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
       <!-- ===== 模块6：积分发放 ===== -->
       <div v-if="activeMenu === 'points_distribute'" class="content-panel">
         <div class="panel-header">
-          <h2>积分发放流水</h2>
+          <h2>积分变更流水</h2>
           <button class="btn btn-primary" style="width: auto" @click="openDistributeModal()">
-            + 积分发放
+            + 积分变更
           </button>
         </div>
         <div class="panel-body">
-          <div class="filter-bar">
+          <div class="filter-bar" style="flex-wrap: wrap">
             <div class="filter-item">
               <label>搜索</label>
               <input
@@ -2773,61 +2865,87 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 class="form-input"
                 v-model="distributeFilter.keyword"
                 placeholder="输入UID或手机号"
-                style="width: 180px"
+                style="width: 150px"
               />
             </div>
             <div class="filter-item">
-              <label>发放日期</label>
+              <label>变更类型</label>
+              <select class="form-select" v-model="distributeFilter.changeType" style="width: 100px">
+                <option value="">全部</option>
+                <option value="issue">发放</option>
+                <option value="deduct">扣除</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label>来源商户</label>
+              <input
+                type="text"
+                class="form-input"
+                v-model="distributeFilter.merchant"
+                placeholder="输入商户名"
+                style="width: 130px"
+              />
+            </div>
+            <div class="filter-item">
+              <label>发生时间</label>
               <input
                 type="date"
                 class="form-input"
                 v-model="distributeFilter.startDate"
-                style="width: 140px"
+                style="width: 130px"
               />
               <span>至</span>
               <input
                 type="date"
                 class="form-input"
                 v-model="distributeFilter.endDate"
-                style="width: 140px"
+                style="width: 130px"
               />
             </div>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>流水编号</th>
-                <th>用户UID</th>
-                <th>手机号</th>
-                <th>所属批次</th>
-                <th>商户</th>
-                <th>发放数量</th>
-                <th>变动后余额</th>
-                <th>发放原因</th>
-                <th>原因备注</th>
-                <th>发放时间</th>
-                <th>过期时间</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in filteredDistributeList" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>{{ item.userUid }}</td>
-                <td>{{ item.userPhone }}</td>
-                <td>{{ item.batch }}</td>
-                <td>{{ item.merchant }}</td>
-                <td class="text-success">+{{ item.amount.toLocaleString() }}</td>
-                <td>{{ item.balance.toLocaleString() }}</td>
-                <td>{{ getReasonTypeText(item.reason) }}</td>
-                <td>{{ item.reasonDetail }}</td>
-                <td>{{ item.time }}</td>
-                <td>{{ item.expireTime }}</td>
-              </tr>
-              <tr v-if="filteredDistributeList.length === 0">
-                <td colspan="11" class="empty-text">暂无发放记录</td>
-              </tr>
-            </tbody>
-          </table>
+          <table class="data-table table-nowrap">
+              <thead>
+                <tr>
+                  <th>流水编号</th>
+                  <th>用户id</th>
+                  <th>手机号</th>
+                  <th>类型</th>
+                  <th>原因</th>
+                  <th class="cell-wrap">原因备注</th>
+                  <th>变动数值</th>
+                  <th>变动后余额</th>
+                  <th>来源商户</th>
+                  <th class="cell-wrap">关联批次</th>
+                  <th>关联订单号</th>
+                  <th>发生时间</th>
+                  <th>过期时间</th>
+                  <th>操作人</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in filteredDistributeList" :key="item.id">
+                  <td>{{ item.id }}</td>
+                  <td>{{ item.userUid }}</td>
+                  <td>{{ item.userPhone }}</td>
+                  <td>{{ getLedgerTypeText(item.type) }}</td>
+                  <td>{{ getReasonTypeText(item.reason) }}</td>
+                  <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
+                  <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
+                    {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
+                  </td>
+                  <td>{{ item.balance.toLocaleString() }}</td>
+                  <td>{{ item.merchant || '-' }}</td>
+                  <td class="cell-wrap">{{ item.batch || '-' }}</td>
+                  <td>{{ item.orderNo || '-' }}</td>
+                  <td class="time-text">{{ item.time }}</td>
+                  <td>{{ item.expireTime || '-' }}</td>
+                  <td>{{ item.operator }}</td>
+                </tr>
+                <tr v-if="filteredDistributeList.length === 0">
+                  <td colspan="14" class="empty-text">暂无变更记录</td>
+                </tr>
+              </tbody>
+            </table>
           <div class="pagination-bar">
             <span class="page-info">共 {{ filteredDistributeList.length }} 条记录</span>
           </div>
@@ -2865,7 +2983,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <label>流向</label>
               <select class="form-select" v-model="ledgerFilter.direction" style="width: 100px">
                 <option value="">全部</option>
-                <option value="earn">获取</option>
+                <option value="earn">发放</option>
                 <option value="burn">消耗</option>
               </select>
             </div>
@@ -2886,21 +3004,23 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               />
             </div>
           </div>
-          <table class="data-table">
+          <table class="data-table table-nowrap">
             <thead>
               <tr>
                 <th>流水编号</th>
-                <th>用户UID</th>
+                <th>用户id</th>
                 <th>手机号</th>
                 <th>类型</th>
                 <th>原因</th>
+                <th class="cell-wrap">原因备注</th>
                 <th>变动数值</th>
                 <th>变动后余额</th>
                 <th>来源商户</th>
-                <th>关联批次</th>
-                <th>操作人</th>
+                <th class="cell-wrap">关联批次</th>
                 <th>关联订单号</th>
                 <th>发生时间</th>
+                <th>过期时间</th>
+                <th>操作人</th>
               </tr>
             </thead>
             <tbody>
@@ -2910,18 +3030,20 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <td>{{ item.userPhone }}</td>
                 <td>{{ getLedgerTypeText(item.type) }}</td>
                 <td>{{ getReasonTypeText(item.reason) }}</td>
-                <td :class="item.amount > 0 ? 'text-success' : 'text-danger'">
-                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount }}
+                <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
+                <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
+                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
                 </td>
-                <td>{{ item.balance }}</td>
-                <td>{{ item.merchant }}</td>
-                <td>{{ item.batch || '-' }}</td>
-                <td>{{ item.operator }}</td>
+                <td>{{ item.balance.toLocaleString() }}</td>
+                <td>{{ item.merchant || '-' }}</td>
+                <td class="cell-wrap">{{ item.batch || '-' }}</td>
                 <td>{{ item.orderNo || '-' }}</td>
-                <td>{{ item.time }}</td>
+                <td class="time-text">{{ item.time }}</td>
+                <td>{{ item.expireTime || '-' }}</td>
+                <td>{{ item.operator }}</td>
               </tr>
               <tr v-if="filteredLedgerList.length === 0">
-                <td colspan="12" class="empty-text">暂无流水记录</td>
+                <td colspan="14" class="empty-text">暂无流水记录</td>
               </tr>
             </tbody>
           </table>
@@ -3115,12 +3237,14 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
       </div>
     </div>
 
-    <!-- ===== 全局弹窗：积分发放弹窗 ===== -->
+    <!-- ===== 全局弹窗：积分变更弹窗 ===== -->
     <div class="modal-overlay" v-if="showDistributeModal" @click="closeDistributeModal">
-      <div class="modal-content" style="width: 600px" @click.stop>
+      <div class="modal-content modal-md" @click.stop>
         <div class="modal-header">
-          <h3>积分发放</h3>
-          <button class="close-btn" @click="closeDistributeModal">✕</button>
+          <h3>积分变更</h3>
+          <button class="close-btn" @click="closeDistributeModal">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
         </div>
         <div class="modal-body">
           <div
@@ -3150,6 +3274,13 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             >
           </div>
           <div class="form-item" v-if="distributeForm.selectedUser">
+            <label class="form-label required">变更类型</label>
+            <select class="form-select" v-model="distributeForm.changeType" style="flex: 1">
+              <option value="issue">发放</option>
+              <option value="deduct">扣除</option>
+            </select>
+          </div>
+          <div class="form-item" v-if="distributeForm.selectedUser && distributeForm.changeType === 'issue'">
             <label class="form-label required">所属批次</label>
             <select class="form-select" v-model="distributeForm.batchId" style="flex: 1">
               <option value="">请选择积分批次</option>
@@ -3159,7 +3290,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             </select>
           </div>
           <div class="form-item" v-if="distributeForm.selectedUser">
-            <label class="form-label required">发放数量</label>
+            <label class="form-label required">变更数量</label>
             <div class="form-control-row">
               <input
                 type="number"
@@ -3169,25 +3300,29 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 min="1"
                 placeholder="请输入积分数量"
               />
-              <span v-if="selectedBatchInfo" class="form-tip"
-                >（该批次已发放：{{ selectedBatchInfo.issuedPoints.toLocaleString() }}）</span
+              <span class="form-tip"
+                >（变更后：<strong>{{ previewBalance.toLocaleString() }}</strong> 积分）</span
               >
             </div>
           </div>
           <div class="form-item" v-if="distributeForm.selectedUser">
-            <label class="form-label required">发放原因</label>
+            <label class="form-label required">变更原因</label>
             <div style="flex: 1">
               <select
                 class="form-select"
                 v-model="distributeForm.reasonType"
                 style="width: 100%; margin-bottom: 8px"
               >
-                <option value="compensation">客诉补偿</option>
-                <option value="activity">活动奖励</option>
-                <option value="fix">异常补发</option>
-                <option value="other">其他</option>
+                <option
+                  v-for="opt in changeReasonOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
               </select>
               <textarea
+                v-if="distributeForm.reasonType === 'other'"
                 class="form-textarea"
                 v-model="distributeForm.reasonDetail"
                 rows="2"
@@ -3204,7 +3339,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             :disabled="!distributeForm.selectedUser"
             @click="submitDistribute"
           >
-            确认发放
+            确认变更
           </button>
         </div>
       </div>
@@ -3274,13 +3409,26 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 
     <!-- ===== 全局弹窗：用户流水弹窗 ===== -->
     <div class="modal-overlay" v-if="showUserLedgerModal" @click="closeUserLedgerModal">
-      <div class="modal-content" style="width: 800px" @click.stop>
+      <div class="modal-content modal-auto-wide" @click.stop>
         <div class="modal-header">
-          <h3>{{ currentLedgerUser?.uid }}（{{ currentLedgerUser?.phone }}）- 积分流水明细</h3>
-          <button class="close-btn" @click="closeUserLedgerModal">✕</button>
+          <h3>积分流水明细</h3>
+          <button class="close-btn" @click="closeUserLedgerModal">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
         </div>
         <div class="modal-body">
-          <div class="tab-bar" style="margin-bottom: 16px">
+          <!-- 用户概要 -->
+          <div class="merchant-summary">
+            <div class="summary-row">
+              <span class="summary-item"><span class="summary-label">用户ID：</span>{{ currentLedgerUser?.uid }}</span>
+              <span class="summary-item"><span class="summary-label">手机号：</span>{{ currentLedgerUser?.phone }}</span>
+              <span class="summary-item"><span class="summary-label">当前余额：</span><span class="summary-value">{{ currentLedgerUser?.currentPoints.toLocaleString() }}</span></span>
+            </div>
+            <button class="btn btn-primary btn-sm summary-export-btn">导出全部</button>
+          </div>
+
+          <!-- Tab 切换 -->
+          <div class="tab-bar">
             <button
               class="tab-btn"
               :class="{ active: userLedgerFilter === 'all' }"
@@ -3293,7 +3441,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               :class="{ active: userLedgerFilter === 'earn' }"
               @click="userLedgerFilter = 'earn'"
             >
-              获取
+              发放
             </button>
             <button
               class="tab-btn"
@@ -3303,18 +3451,20 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               消耗
             </button>
           </div>
-          <table class="data-table">
+
+          <table class="data-table table-nowrap">
             <thead>
               <tr>
                 <th>流水编号</th>
                 <th>类型</th>
                 <th>原因</th>
-                <th>变动值</th>
+                <th class="cell-wrap">原因备注</th>
+                <th>变动数值</th>
                 <th>变动后余额</th>
-                <th>商户</th>
-                <th>关联订单</th>
-
-                <th>时间</th>
+                <th>来源商户</th>
+                <th class="cell-wrap">关联批次</th>
+                <th>关联订单号</th>
+                <th>发生时间</th>
                 <th>过期时间</th>
               </tr>
             </thead>
@@ -3323,23 +3473,22 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <td>{{ item.id }}</td>
                 <td>{{ getLedgerTypeText(item.type) }}</td>
                 <td>{{ getReasonTypeText(item.reason) }}</td>
-                <td :class="item.amount > 0 ? 'text-success' : 'text-danger'">
-                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount }}
+                <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
+                <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
+                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
                 </td>
                 <td>{{ item.balance.toLocaleString() }}</td>
-                <td>{{ item.merchant }}</td>
+                <td>{{ item.merchant || '-' }}</td>
+                <td class="cell-wrap">{{ item.batch || '-' }}</td>
                 <td>{{ item.orderNo || '-' }}</td>
-                <td>{{ item.time }}</td>
+                <td class="time-text">{{ item.time }}</td>
                 <td :class="getExpireTimeClass(item)">{{ getExpireTimeDisplay(item) }}</td>
               </tr>
               <tr v-if="filteredUserLedgerList.length === 0">
-                <td colspan="9" class="empty-text">暂无流水记录</td>
+                <td colspan="11" class="empty-text">暂无流水记录</td>
               </tr>
             </tbody>
           </table>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-default" @click="closeUserLedgerModal">关闭</button>
         </div>
       </div>
     </div>
@@ -3695,7 +3844,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3703,15 +3852,16 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .modal-content {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid #E5E6EB;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
   width: 520px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   max-height: 80vh;
   overflow-y: auto;
 }
 .modal-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
+  padding: 16px 28px;
+  border-bottom: 1px solid #E5E6EB;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3723,12 +3873,88 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 .close-btn {
   background: none;
   border: none;
-  font-size: 18px;
-  color: #999;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+.close-btn:hover {
+  background-color: #F2F3F5;
+}
+.modal-close-icon {
+  width: 16px;
+  height: 16px;
+  color: #86909C;
+}
+.modal-lg {
+  width: 720px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 }
 .modal-body {
-  padding: 24px;
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+.merchant-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.summary-row {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.summary-item {
+  font-size: 14px;
+  color: #4E5969;
+  white-space: nowrap;
+}
+.summary-label {
+  color: #86909C;
+}
+.summary-value {
+  color: #1D2129;
+  font-weight: 600;
+}
+.summary-export-btn {
+  flex-shrink: 0;
+}
+.modal-auto-wide {
+  width: auto;
+  min-width: 560px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+}
+.table-nowrap th,
+.table-nowrap td {
+  white-space: nowrap;
+}
+.table-nowrap .cell-wrap {
+  white-space: normal;
+  word-break: break-all;
+  min-width: 100px;
+  max-width: 180px;
+}
+.amount-positive {
+  color: #CF1322;
+  font-weight: 500;
+}
+.amount-negative {
+  color: #0E7B3A;
+  font-weight: 500;
+}
+.time-text {
+  color: #86909C;
+  white-space: nowrap;
 }
 .modal-footer {
   padding: 16px 24px;
