@@ -84,6 +84,7 @@ interface RechargeRecord {
   uid: string
   phone: string
   amount: number
+  receivedAmount: number
   paymentStatus: 'pending' | 'paid' | 'failed' | 'closed'
   rechargeStatus: 'pending' | 'success' | 'failed'
   receiveMerchantName: string
@@ -125,7 +126,7 @@ interface WalletTransaction {
   transactionNo: string
   uid: string
   phone: string
-  type: 'recharge' | 'refund' | 'consume' | 'withdraw'
+  type: 'recharge' | 'refund' | 'consume' | 'withdraw' | 'freeze'
   amount: number
   balance: number
   relatedNo: string
@@ -195,7 +196,7 @@ const walletConfig = reactive<WalletConfig>({
   minBalanceAfterWithdraw: 0,
 })
 
-const configSaved = ref(false)
+const configSaved = ref(true)
 const editingConfig = ref(false)
 type WalletConfigType = typeof walletConfig
 const configBackup = ref<WalletConfigType | null>(null)
@@ -576,45 +577,103 @@ const toggleUserFlowBucket = (txId: string) => {
 
 const freezeModal = ref(false)
 const freezeWalletTarget = ref<UserWallet | null>(null)
-const freezeReason = ref('')
+const freezeMode = ref<'freeze' | 'unfreeze'>('freeze')
+const freezeForm = reactive({
+  amount: 0,
+  reason: '',
+  reasonDetail: '',
+})
 
-const showFreezeModal = (wallet: UserWallet) => {
+const freezeReasonOptions = [
+  { value: 'abnormal', label: '异常交易收回' },
+  { value: 'duplicate', label: '重复发放收回' },
+  { value: 'manual', label: '手动扣除' },
+  { value: 'other', label: '其他' },
+]
+
+const unfreezeReasonOptions = [
+  { value: 'risk_cleared', label: '风险解除' },
+  { value: 'manual', label: '手动解冻' },
+  { value: 'other', label: '其他' },
+]
+
+const showFreezeModal = (wallet: UserWallet, mode: 'freeze' | 'unfreeze') => {
   freezeWalletTarget.value = wallet
-  freezeReason.value = ''
+  freezeMode.value = mode
+  freezeForm.amount = 0
+  freezeForm.reason = ''
+  freezeForm.reasonDetail = ''
   freezeModal.value = true
 }
 
-const confirmFreeze = () => {
-  if (!freezeWalletTarget.value || !freezeReason.value) return
+const confirmFreezeAction = () => {
+  if (!freezeWalletTarget.value || !freezeForm.reason) return
   const target = mockUserWallets.value.find(w => w.walletId === freezeWalletTarget.value!.walletId)
-  if (target) {
+  if (!target) return
+  const isFreeze = freezeMode.value === 'freeze'
+  const maxFreeze = target.balance - target.frozenAmount
+  const maxUnfreeze = target.frozenAmount
+  
+  if (isFreeze) {
+    if (freezeForm.amount <= 0 || freezeForm.amount > maxFreeze) {
+      alert(`冻结金额必须在 1 到 ${maxFreeze.toFixed(2)} 之间`)
+      return
+    }
+  } else {
+    if (freezeForm.amount <= 0 || freezeForm.amount > maxUnfreeze) {
+      alert(`解冻金额必须在 1 到 ${maxUnfreeze.toFixed(2)} 之间`)
+      return
+    }
+  }
+  
+  const amt = isFreeze ? -freezeForm.amount : freezeForm.amount
+  const reasonObj = (isFreeze ? freezeReasonOptions : unfreezeReasonOptions).find(o => o.value === freezeForm.reason)
+  const reasonText = reasonObj ? reasonObj.label : freezeForm.reason
+  const detailText = freezeForm.reason === 'other' && freezeForm.reasonDetail ? `（${freezeForm.reasonDetail}）` : ''
+  
+  if (isFreeze) {
+    target.frozenAmount += freezeForm.amount
     target.status = 'frozen'
-    target.frozenReason = freezeReason.value
+    target.frozenReason = `${reasonText}：冻结 ¥${freezeForm.amount.toFixed(2)}`
+  } else {
+    target.frozenAmount -= freezeForm.amount
+    if (target.frozenAmount <= 0) {
+      target.status = 'normal'
+      target.frozenReason = undefined
+    }
   }
+  
+  // Generate transaction record
+  const nextId = Math.max(...mockTransactions.value.map(t => parseInt(t.id))) + 1
+  mockTransactions.value.push({
+    id: String(nextId),
+    transactionNo: `TXN-FRZ-${nextId.toString().padStart(3, '0')}`,
+    uid: target.uid,
+    phone: target.phone,
+    type: 'freeze',
+    amount: amt,
+    balance: target.balance,
+    relatedNo: '',
+    merchant: '系统',
+    operator: '管理员',
+    time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    remark: `${isFreeze ? '冻结' : '解冻'}：${reasonText}${detailText}`,
+  })
+  
   freezeModal.value = false
-  alert(`钱包 ${freezeWalletTarget.value.walletId} 已冻结`)
-}
-
-const showUnfreezeModal = (wallet: UserWallet) => {
-  if (!confirm(`确定解冻钱包 ${wallet.walletId}？`)) return
-  const target = mockUserWallets.value.find(w => w.walletId === wallet.walletId)
-  if (target) {
-    target.status = 'normal'
-    target.frozenReason = undefined
-  }
-  alert(`钱包 ${wallet.walletId} 已解冻`)
+  alert(`钱包 ${target.walletId} 已${isFreeze ? '冻结' : '解冻'}（${isFreeze ? '冻结' : '解冻'}金额：¥${freezeForm.amount.toFixed(2)}）`)
 }
 
 // ==================== 模块4：充值管理 ====================
 const mockRechargeRecords = ref<RechargeRecord[]>([
-  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' },
-  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中' },
-  { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
-  { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
-  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' },
-  { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
-  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理' },
-  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' },
+  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' },
+  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中' },
+  { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
+  { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
+  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' },
+  { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
+  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理' },
+  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' },
 ])
 
 const rechargeSearchForm = reactive({ keyword: '', paymentStatus: '', rechargeStatus: '' })
@@ -638,7 +697,7 @@ const showRechargeDetail = (item: RechargeRecord) => {
 }
 
 const manualRecharge = (item: RechargeRecord) => {
-  if (!confirm(`确认手动将 ¥${item.amount.toFixed(2)} 入账到用户 ${item.uid} 的钱包？`)) return
+  if (!confirm(`确认手动将 ¥${item.receivedAmount.toFixed(2)} 入账到用户 ${item.uid} 的钱包？`)) return
   item.rechargeStatus = 'success'
   item.rechargeTime = new Date().toLocaleString('zh-CN', { hour12: false })
   alert(`充值单 ${item.rechargeNo} 已手动入账成功`)
@@ -829,7 +888,7 @@ const toggleBucketLogs = (txId: string) => {
 }
 
 const txTypeLabel: Record<string, string> = {
-  recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现',
+  recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结',
 }
 </script>
 
@@ -863,231 +922,296 @@ const txTypeLabel: Record<string, string> = {
     <!-- 右侧内容区 -->
     <div class="main-content">
 
-      <!-- ===== 模块1：钱包设置 ===== -->
+            <!-- ===== 模块1：钱包设置 ===== -->
       <div v-if="activeMenu === 'wallet_config'" class="content-panel">
         <div class="panel-header">
           <h2>钱包设置</h2>
           <span class="panel-subtitle">全局钱包功能开关及业务规则配置</span>
+          <button v-if="configSaved && !editingConfig" class="btn btn-primary btn-xs" @click="startEditConfig" style="margin-left: auto">编辑</button>
         </div>
         <div class="panel-body">
-          <div class="config-form">
-            <!-- ========== 基础设置 ========== -->
-            <div class="form-section-title">基础设置</div>
-
-            <div class="form-item">
-              <label class="form-label">钱包开关</label>
-              <div class="form-control-row">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="walletConfig.enabled" :disabled="configSaved && !editingConfig" />
-                  <span class="toggle-slider"></span>
-                </label>
-                <span class="form-tip">{{ walletConfig.enabled ? '已开启' : '已关闭' }}（关闭后用户端不可见钱包功能）</span>
+          <!-- ========== 编辑模式：表单编辑 ========== -->
+          <template v-if="!configSaved || editingConfig">
+            <div class="wcfg-card">
+              <div class="wcfg-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+                <span>基础设置</span>
+              </div>
+              <div class="wcfg-card-body">
+                <div class="wcfg-row">
+                  <div class="wcfg-field">
+                    <label class="wcfg-label">钱包开关</label>
+                    <label class="toggle-switch">
+                      <input type="checkbox" v-model="walletConfig.enabled" />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="wcfg-field" v-if="walletConfig.enabled">
+                    <label class="wcfg-label required">钱包名称</label>
+                    <input type="text" class="form-input" v-model="walletConfig.name" placeholder="如：零钱、余额" />
+                  </div>
+                </div>
               </div>
             </div>
 
             <template v-if="walletConfig.enabled">
-              <div class="form-item">
-                <label class="form-label required">钱包名称</label>
-                <div class="form-control-row">
-                  <input type="text" class="form-input" style="width: 280px" v-model="walletConfig.name" placeholder="请输入钱包名称" :disabled="configSaved && !editingConfig" />
-                  <span class="form-tip">（用户端展示的钱包名称，如"零钱"、"余额"）</span>
+              <div class="wcfg-card">
+                <div class="wcfg-card-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <span>充值设置</span>
+                </div>
+                <div class="wcfg-card-body">
+                  <div class="wcfg-row">
+                    <div class="wcfg-field">
+                      <label class="wcfg-label required">最低充值金额</label>
+                      <div class="wcfg-input-group">
+                        <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minRecharge" min="0.01" step="0.01" />
+                        <span class="wcfg-unit">元</span>
+                      </div>
+                    </div>
+                    <div class="wcfg-field">
+                      <label class="wcfg-label required">最高充值金额</label>
+                      <div class="wcfg-input-group">
+                        <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.maxRecharge" min="1" step="0.01" />
+                        <span class="wcfg-unit">元</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="wcfg-field" style="margin-bottom: 0">
+                    <label class="wcfg-label required">收款商户</label>
+                    <select class="form-select" v-model="walletConfig.receiveMerchantId" style="width: 240px">
+                      <option value="">请选择商户</option>
+                      <option v-for="m in mockMerchants" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    </select>
+                    <span class="wcfg-hint">用户充值时资金打入该商户账户</span>
+                  </div>
                 </div>
               </div>
 
-              <div class="form-divider"></div>
-
-              <!-- ========== 充值设置 ========== -->
-              <div class="form-section-title">充值设置</div>
-
-              <div class="form-item">
-                <label class="form-label required">最低充值金额</label>
-                <div class="form-control-row">
-                  <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.minRecharge" min="0.01" step="0.01" :disabled="configSaved && !editingConfig" />
-                  <span>元</span>
+              <div class="wcfg-card">
+                <div class="wcfg-card-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  <span>提现设置</span>
+                </div>
+                <div class="wcfg-card-body">
+                  <div class="wcfg-row">
+                    <div class="wcfg-field">
+                      <label class="wcfg-label">是否支持提现</label>
+                      <label class="toggle-switch">
+                        <input type="checkbox" v-model="walletConfig.withdrawEnabled" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="wcfg-field" v-if="walletConfig.withdrawEnabled">
+                      <label class="wcfg-label">提现审核</label>
+                      <label class="toggle-switch">
+                        <input type="checkbox" v-model="walletConfig.withdrawNeedReview" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                      <span class="wcfg-hint">{{ walletConfig.withdrawNeedReview ? '开启（人工审批）' : '关闭（自动放行）' }}</span>
+                    </div>
+                  </div>
+                  <template v-if="walletConfig.withdrawEnabled">
+                    <div class="wcfg-divider"></div>
+                    <div class="wcfg-row">
+                      <div class="wcfg-field">
+                        <label class="wcfg-label">手续费</label>
+                        <div class="wcfg-input-group">
+                          <select class="form-select form-input-sm" v-model="walletConfig.feeType" style="width: 100px">
+                            <option value="fixed">固定</option>
+                            <option value="percent">比例</option>
+                          </select>
+                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.feeValue" min="0" step="0.01" style="width: 80px" />
+                          <span class="wcfg-unit">{{ walletConfig.feeType === "fixed" ? "元/笔" : "%" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="wcfg-row">
+                      <div class="wcfg-field">
+                        <label class="wcfg-label required">最低提现金额</label>
+                        <div class="wcfg-input-group">
+                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minWithdraw" min="0.01" step="0.01" />
+                          <span class="wcfg-unit">元</span>
+                        </div>
+                      </div>
+                      <div class="wcfg-field">
+                        <label class="wcfg-label required">最高提现金额</label>
+                        <div class="wcfg-input-group">
+                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.maxWithdraw" min="1" step="0.01" />
+                          <span class="wcfg-unit">元</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="wcfg-row">
+                      <div class="wcfg-field">
+                        <label class="wcfg-label">日提现限额</label>
+                        <div class="wcfg-input-group">
+                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.dailyWithdrawLimit" min="1" step="0.01" />
+                          <span class="wcfg-unit">元</span>
+                        </div>
+                      </div>
+                      <div class="wcfg-field">
+                        <label class="wcfg-label">提现后余额下限</label>
+                        <div class="wcfg-input-group">
+                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minBalanceAfterWithdraw" min="0" step="0.01" />
+                          <span class="wcfg-unit">元（0=不限制）</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </div>
-
-              <div class="form-item">
-                <label class="form-label required">最高充值金额</label>
-                <div class="form-control-row">
-                  <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.maxRecharge" min="1" step="0.01" :disabled="configSaved && !editingConfig" />
-                  <span>元</span>
-                </div>
-              </div>
-
-              <div class="form-item">
-                <label class="form-label required">收款商户</label>
-                <div class="form-control-row">
-                  <select class="form-select" style="width: 200px" v-model="walletConfig.receiveMerchantId" :disabled="configSaved && !editingConfig">
-                    <option value="">请选择商户</option>
-                    <option v-for="m in mockMerchants" :key="m.id" :value="m.id">{{ m.name }}</option>
-                  </select>
-                  <span class="form-tip">（用户充值时资金打入该商户账户）</span>
-                </div>
-              </div>
-
-              <div class="form-divider"></div>
-
-              <!-- ========== 提现设置 ========== -->
-              <div class="form-section-title">提现设置</div>
-
-              <div class="form-item">
-                <label class="form-label">是否支持提现</label>
-                <div class="form-control-row">
-                  <label class="toggle-switch">
-                    <input type="checkbox" v-model="walletConfig.withdrawEnabled" :disabled="configSaved && !editingConfig" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                  <span class="form-tip">{{ walletConfig.withdrawEnabled ? '已开启' : '已关闭' }}</span>
-                </div>
-              </div>
-
-              <template v-if="walletConfig.withdrawEnabled">
-                <div class="form-item">
-                  <label class="form-label">提现审核</label>
-                  <div class="form-control-row">
-                    <label class="toggle-switch">
-                      <input type="checkbox" v-model="walletConfig.withdrawNeedReview" :disabled="configSaved && !editingConfig" />
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="form-tip">{{ walletConfig.withdrawNeedReview ? '需审核后打款' : '自动通过，无需审核' }}</span>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">手续费类型</label>
-                  <div class="radio-group">
-                    <label class="radio-label">
-                      <input type="radio" v-model="walletConfig.feeType" value="fixed" :disabled="configSaved && !editingConfig" />
-                      固定金额
-                    </label>
-                    <label class="radio-label">
-                      <input type="radio" v-model="walletConfig.feeType" value="percent" :disabled="configSaved && !editingConfig" />
-                      按比例
-                    </label>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">手续费</label>
-                  <div class="form-control-row">
-                    <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.feeValue" min="0" :step="walletConfig.feeType === 'percent' ? 0.01 : 0.1" :disabled="configSaved && !editingConfig" />
-                    <span>{{ walletConfig.feeType === 'fixed' ? '元/笔' : '%' }}</span>
-                    <span class="form-tip" v-if="walletConfig.feeType === 'fixed'">（固定金额：每笔提现收取固定手续费）</span>
-                    <span class="form-tip" v-else>（按比例：按提现金额的百分比收取）</span>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">最低提现金额</label>
-                  <div class="form-control-row">
-                    <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.minWithdraw" min="0.01" step="0.01" :disabled="configSaved && !editingConfig" />
-                    <span>元</span>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">最高提现金额</label>
-                  <div class="form-control-row">
-                    <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.maxWithdraw" min="1" step="0.01" :disabled="configSaved && !editingConfig" />
-                    <span>元</span>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">每日提现限额</label>
-                  <div class="form-control-row">
-                    <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.dailyWithdrawLimit" min="0" step="0.01" :disabled="configSaved && !editingConfig" />
-                    <span>元（0 表示不限）</span>
-                  </div>
-                </div>
-
-                <div class="form-item">
-                  <label class="form-label required">提现后最低余额</label>
-                  <div class="form-control-row">
-                    <input type="number" class="form-input" style="width: 120px" v-model.number="walletConfig.minBalanceAfterWithdraw" min="0" step="0.01" :disabled="configSaved && !editingConfig" />
-                    <span>元</span>
-                  </div>
-                </div>
-              </template>
             </template>
 
-            <!-- 操作按钮 -->
-            <div class="form-actions">
-              <button v-if="!configSaved" class="btn btn-primary" @click="saveConfig">保存配置</button>
-              <template v-else-if="!editingConfig">
-                <button class="btn btn-primary" @click="startEditConfig">修改</button>
-              </template>
-              <template v-else>
-                <button class="btn btn-default" @click="cancelEditConfig">取消</button>
-                <button class="btn btn-primary" style="margin-left: 8px" @click="saveConfig">保存</button>
-              </template>
+            <div style="display: flex; gap: 12px; margin-top: 24px">
+              <button class="btn btn-primary" @click="saveConfig" :disabled="!walletConfig.receiveMerchantId">保存配置</button>
+              <button class="btn btn-default" @click="cancelEditConfig">取消</button>
             </div>
-          </div>
+          </template>
 
-          <!-- 修改记录 -->
-          <div class="history-section">
-            <div class="history-header" @click="configHistorySectionOpen = !configHistorySectionOpen">
-              <span class="history-toggle">{{ configHistorySectionOpen ? '▼' : '▶' }}</span>
-              <span class="history-title">修改记录</span>
-              <span class="history-count">共 {{ configHistoryList.length }} 条</span>
+          <!-- ========== 查看模式：只读展示 ========== -->
+          <template v-else>
+            <div class="wcfg-view-grid">
+              <div class="wcfg-view-card">
+                <div class="wcfg-view-card-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+                  <span>基础设置</span>
+                </div>
+                <div class="wcfg-view-card-body">
+                  <div class="wcfg-view-field">
+                    <span class="wcfg-view-label">钱包开关</span>
+                    <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.enabled ? 'on' : 'off'">{{ walletConfig.enabled ? '已开启' : '已关闭' }}</span></span>
+                  </div>
+                  <div class="wcfg-view-field">
+                    <span class="wcfg-view-label">钱包名称</span>
+                    <span class="wcfg-view-value">{{ walletConfig.name || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+              <template v-if="walletConfig.enabled">
+                <div class="wcfg-view-card">
+                  <div class="wcfg-view-card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>充值设置</span>
+                  </div>
+                  <div class="wcfg-view-card-body">
+                    <div class="wcfg-view-field">
+                      <span class="wcfg-view-label">最低充值金额</span>
+                      <span class="wcfg-view-value price-text">¥{{ walletConfig.minRecharge.toFixed(2) }}</span>
+                    </div>
+                    <div class="wcfg-view-field">
+                      <span class="wcfg-view-label">最高充值金额</span>
+                      <span class="wcfg-view-value price-text">¥{{ walletConfig.maxRecharge.toFixed(2) }}</span>
+                    </div>
+                    <div class="wcfg-view-field">
+                      <span class="wcfg-view-label">收款商户</span>
+                      <span class="wcfg-view-value">{{ walletConfig.receiveMerchantName || '-' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="wcfg-view-card">
+                  <div class="wcfg-view-card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span>提现设置</span>
+                  </div>
+                  <div class="wcfg-view-card-body">
+                    <div class="wcfg-view-field">
+                      <span class="wcfg-view-label">提现开关</span>
+                      <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.withdrawEnabled ? 'on' : 'off'">{{ walletConfig.withdrawEnabled ? '已开启' : '已关闭' }}</span></span>
+                    </div>
+                    <template v-if="walletConfig.withdrawEnabled">
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">提现审核</span>
+                        <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.withdrawNeedReview ? 'on' : 'off'">{{ walletConfig.withdrawNeedReview ? '开启' : '关闭' }}</span></span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">手续费</span>
+                        <span class="wcfg-view-value">{{ walletConfig.feeType === 'fixed' ? walletConfig.feeValue + ' 元/笔' : walletConfig.feeValue + ' %' }}</span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">最低提现金额</span>
+                        <span class="wcfg-view-value price-text">¥{{ walletConfig.minWithdraw.toFixed(2) }}</span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">最高提现金额</span>
+                        <span class="wcfg-view-value price-text">¥{{ walletConfig.maxWithdraw.toFixed(2) }}</span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">日提现限额</span>
+                        <span class="wcfg-view-value price-text">¥{{ walletConfig.dailyWithdrawLimit.toFixed(2) }}</span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">提现后余额下限</span>
+                        <span class="wcfg-view-value price-text">¥{{ walletConfig.minBalanceAfterWithdraw.toFixed(2) }}</span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </div>
-            <div v-show="configHistorySectionOpen" class="history-body">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th style="width: 60px">序号</th>
-                    <th style="width: 100px">修改人</th>
-                    <th style="width: 160px">修改时间</th>
-                    <th style="width: 80px">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template v-for="(record, index) in configHistoryList" :key="record.id">
+
+            <!-- 修改记录 -->
+            <div class="history-section" style="margin-top: 32px">
+              <div class="history-header" @click="configHistorySectionOpen = !configHistorySectionOpen">
+                <span class="history-toggle">{{ configHistorySectionOpen ? '▼' : '▶' }}</span>
+                <span class="history-title">修改记录</span>
+                <span class="history-count">共 {{ configHistoryList.length }} 条</span>
+              </div>
+              <div v-show="configHistorySectionOpen" class="history-body">
+                <table class="data-table">
+                  <thead>
                     <tr>
-                      <td>{{ index + 1 }}</td>
-                      <td>{{ record.operator }}</td>
-                      <td>{{ record.operateTime }}</td>
-                      <td>
-                        <span class="action-link primary" @click="toggleConfigHistory(record.id)">
-                          {{ configHistoryExpandedId === record.id ? '收起' : '展开' }}
-                        </span>
-                      </td>
+                      <th style="width: 60px">序号</th>
+                      <th style="width: 100px">修改人</th>
+                      <th style="width: 160px">修改时间</th>
+                      <th style="width: 80px">操作</th>
                     </tr>
-                    <tr v-show="configHistoryExpandedId === record.id" class="snapshot-row">
-                      <td colspan="4" style="padding: 0">
-                        <div class="snapshot-detail">
-                          <div class="snapshot-header">完整配置快照（只读）</div>
-                          <div class="snapshot-grid">
-                            <div class="snapshot-field">
-                              <span class="snapshot-label">钱包名称</span>
-                              <span class="snapshot-value">{{ record.snapshot.name }}</span>
-                            </div>
-                            <div class="snapshot-field">
-                              <span class="snapshot-label">钱包开关</span>
-                              <span class="snapshot-value">{{ record.snapshot.enabled ? '开启' : '关闭' }}</span>
-                            </div>
-                            <div class="snapshot-field">
-                              <span class="snapshot-label">提现开关</span>
-                              <span class="snapshot-value">{{ record.snapshot.withdrawEnabled ? '开启' : '关闭' }}</span>
-                            </div>
-                            <div class="snapshot-field">
-                              <span class="snapshot-label">手续费</span>
-                              <span class="snapshot-value">{{ record.snapshot.feeType === 'fixed' ? record.snapshot.feeValue + '元/笔' : record.snapshot.feeValue + '%' }}</span>
+                  </thead>
+                  <tbody>
+                    <template v-for="(record, index) in configHistoryList" :key="record.id">
+                      <tr>
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ record.operator }}</td>
+                        <td>{{ record.operateTime }}</td>
+                        <td>
+                          <span class="action-link primary" @click="toggleConfigHistory(record.id)">
+                            {{ configHistoryExpandedId === record.id ? '收起' : '展开' }}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr v-show="configHistoryExpandedId === record.id" class="snapshot-row">
+                        <td colspan="4" style="padding: 0">
+                          <div class="snapshot-detail">
+                            <div class="snapshot-header">完整配置快照（只读）</div>
+                            <div class="snapshot-grid">
+                              <div class="snapshot-field">
+                                <span class="snapshot-label">钱包名称</span>
+                                <span class="snapshot-value">{{ record.snapshot.name }}</span>
+                              </div>
+                              <div class="snapshot-field">
+                                <span class="snapshot-label">钱包开关</span>
+                                <span class="snapshot-value">{{ record.snapshot.enabled ? '开启' : '关闭' }}</span>
+                              </div>
+                              <div class="snapshot-field">
+                                <span class="snapshot-label">提现开关</span>
+                                <span class="snapshot-value">{{ record.snapshot.withdrawEnabled ? '开启' : '关闭' }}</span>
+                              </div>
+                              <div class="snapshot-field">
+                                <span class="snapshot-label">手续费</span>
+                                <span class="snapshot-value">{{ record.snapshot.feeType === 'fixed' ? record.snapshot.feeValue + '元/笔' : record.snapshot.feeValue + '%' }}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </template>
         </div>
-      </div>
-
-      <!-- ===== 充值方案 ===== -->
+      </div><!-- ===== 充值方案 ===== -->
       <div v-if="activeMenu === 'wallet_recharge_plan'" class="content-panel">
         <div class="panel-header">
           <h2>充值方案</h2>
@@ -1263,8 +1387,8 @@ const txTypeLabel: Record<string, string> = {
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">流水</span>
-                  <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w)" style="margin-left: 8px">冻结</span>
-                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="showUnfreezeModal(w)" style="margin-left: 8px">解冻</span>
+                  <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结</span>
+                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="showFreezeModal(w, 'unfreeze')" style="margin-left: 8px">解冻</span>
                 </td>
               </tr>
               <tr v-if="filteredWallets.length === 0">
@@ -1326,7 +1450,8 @@ const txTypeLabel: Record<string, string> = {
               <tr>
                 <th>充值单号</th>
                 <th>用户</th>
-                <th>金额</th>
+                <th>支付金额</th>
+                <th>到账金额</th>
                 <th>收款商户</th>
                 <th>支付状态</th>
                 <th>充值状态</th>
@@ -1339,6 +1464,7 @@ const txTypeLabel: Record<string, string> = {
                 <td>{{ r.rechargeNo }}</td>
                 <td>{{ r.uid }}<br/><span class="sub-text">{{ r.phone }}</span></td>
                 <td class="price-text">¥{{ r.amount.toFixed(2) }}</td>
+                <td class="price-text">¥{{ r.receivedAmount.toFixed(2) }}</td>
                 <td>{{ r.receiveMerchantName }}</td>
                 <td><span class="status-tag" :class="r.paymentStatus">{{ paymentStatusLabel[r.paymentStatus] }}</span></td>
                 <td><span class="status-tag" :class="r.rechargeStatus === 'success' ? 'completed' : r.rechargeStatus">{{ rechargeStatusLabel[r.rechargeStatus] }}</span></td>
@@ -1460,6 +1586,7 @@ const txTypeLabel: Record<string, string> = {
                 <option value="consume">消费</option>
                 <option value="refund">退款</option>
                 <option value="withdraw">提现</option>
+                <option value="freeze">冻结</option>
               </select>
             </div>
             <div class="filter-item">
@@ -1546,7 +1673,7 @@ const txTypeLabel: Record<string, string> = {
       </div>
     </div>
 
-    <!-- ==================== 弹窗：充值方案编辑 ==================== -->
+        <!-- ==================== 弹窗：充值方案编辑 ==================== -->
     <div v-if="planEditModal" class="modal-overlay" @click.self="planEditModal = false">
       <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -1556,103 +1683,130 @@ const txTypeLabel: Record<string, string> = {
           </span>
         </div>
         <div class="modal-body">
-          <!-- 基础信息 -->
-          <div class="detail-section">
-            <div class="form-section-title">基础信息</div>
-            <div class="form-item">
-              <label class="form-label required">方案名称</label>
-              <input type="text" class="form-input form-input-lg" v-model="planEditData.name" placeholder="如：默认充值方案" />
+          <!-- ===== 基础信息 ===== -->
+          <div class="plan-section">
+            <div class="plan-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span>基础信息</span>
+            </div>
+            <div class="plan-section-body">
+              <div class="form-item">
+                <label class="form-label required">方案名称</label>
+                <input type="text" class="form-input form-input-lg" v-model="planEditData.name" placeholder="如：默认充值方案" />
+              </div>
             </div>
           </div>
 
-          <!-- 预选金额 -->
-          <div class="detail-section">
-            <div class="form-section-title">预选金额</div>
-            <div v-for="(preset, index) in planEditData.presets" :key="preset.id" class="preset-row">
-              <span class="preset-index">{{ index + 1 }}</span>
-              <span class="preset-yen">¥</span>
-              <input type="number" class="form-input form-input-sm" v-model.number="preset.amount" placeholder="金额" min="1" />
-              <button class="btn btn-default btn-xs" @click="movePresetUp(index)" :disabled="index === 0">↑</button>
-              <button class="btn btn-default btn-xs" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1">↓</button>
-              <button class="btn btn-default btn-xs btn-text-danger" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1">删除</button>
+          <!-- ===== 预选金额 ===== -->
+          <div class="plan-section">
+            <div class="plan-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>预选金额</span>
+              <span class="plan-count-badge">{{ planEditData.presets.length }}</span>
             </div>
-            <button class="btn btn-default" @click="addPreset" style="margin-top: 4px">+ 添加预选金额</button>
-
-            <div class="form-divider"></div>
-
-            <div class="form-item" style="margin-bottom: 12px">
-              <label class="form-label">允许自定义金额</label>
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="planEditData.allowCustom" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            <template v-if="planEditData.allowCustom">
-              <div class="af-row" style="margin-top: 8px">
-                <div class="form-item" style="margin-bottom: 0">
-                  <label class="form-label">最低金额（元）</label>
-                  <input type="number" class="form-input form-input-sm" v-model.number="planEditData.customMin" min="1" />
-                </div>
-                <div class="form-item" style="margin-bottom: 0">
-                  <label class="form-label">最高金额（元）</label>
-                  <input type="number" class="form-input form-input-sm" v-model.number="planEditData.customMax" min="1" />
+            <div class="plan-section-body">
+              <div v-for="(preset, index) in planEditData.presets" :key="preset.id" class="plan-preset-row">
+                <div class="plan-preset-card">
+                  <span class="plan-preset-index">{{ index + 1 }}</span>
+                  <span class="plan-preset-yen">¥</span>
+                  <input type="number" class="form-input form-input-sm" v-model.number="preset.amount" placeholder="金额" min="1" />
+                  <div class="plan-preset-actions">
+                    <button class="plan-icon-btn" @click="movePresetUp(index)" :disabled="index === 0" title="上移">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    <button class="plan-icon-btn" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1" title="下移">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <button class="plan-icon-btn plan-icon-btn-danger" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1" title="删除">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </template>
+              <button class="plan-add-btn" @click="addPreset">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                添加预选金额
+              </button>
+
+              <div class="plan-divider"></div>
+
+              <div class="plan-custom-row">
+                <label class="plan-toggle-label">
+                  <label class="toggle-switch" style="margin-right: 8px">
+                    <input type="checkbox" v-model="planEditData.allowCustom" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span>允许用户自定义金额</span>
+                </label>
+                <template v-if="planEditData.allowCustom">
+                  <div class="plan-custom-fields">
+                    <div class="plan-custom-field">
+                      <span>最低</span>
+                      <input type="number" class="form-input form-input-xs" v-model.number="planEditData.customMin" min="1" />
+                      <span>元</span>
+                    </div>
+                    <div class="plan-custom-field">
+                      <span>最高</span>
+                      <input type="number" class="form-input form-input-xs" v-model.number="planEditData.customMax" min="1" />
+                      <span>元</span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
 
-          <!-- 充值活动 -->
-          <div class="detail-section">
-            <div class="form-section-title" style="display: flex; justify-content: space-between; align-items: center">
-              <span>充值活动（可选）</span>
-              <button class="btn btn-primary btn-xs" @click="openActivityCreate">+ 添加活动</button>
+          <!-- ===== 充值活动 ===== -->
+          <div class="plan-section">
+            <div class="plan-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>充值活动</span>
+              <span class="plan-count-badge">{{ planEditData.activities.length }}</span>
             </div>
-            <div v-if="planEditData.activities.length === 0" class="empty-block">暂无充值活动，点击右上角添加</div>
-            <table v-else class="data-table" style="margin-top: 8px">
-              <thead>
-                <tr>
-                  <th>活动名称</th>
-                  <th>类型</th>
-                  <th>触发条件</th>
-                  <th>优惠内容</th>
-                  <th>有效期</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(act, index) in planEditData.activities" :key="act.id">
-                  <td>{{ act.name }}</td>
-                  <td><span class="status-tag" :class="act.type === 'bonus' ? 'refunded' : 'paid'">{{ act.type === 'bonus' ? '赠送' : '折扣' }}</span></td>
-                  <td>充值满 ¥{{ act.conditionAmount }}</td>
-                  <td>
-                    <span v-if="act.type === 'bonus'">赠送 ¥{{ act.bonusAmount }}</span>
-                    <span v-else>{{ (act.discountPercent / 10).toFixed(1) }} 折</span>
-                  </td>
-                  <td>
-                    <span v-if="!act.startTime && !act.endTime">永久有效</span>
-                    <span v-else class="sub-text">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
-                  </td>
-                  <td>
-                    <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
-                  </td>
-                  <td>
-                    <span class="action-link primary" @click="openActivityEdit(index)">编辑</span>
-                    <span class="action-link danger" @click="removeActivity(index)" style="margin-left: 8px">删除</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="plan-section-body">
+              <div v-if="planEditData.activities.length === 0" class="plan-empty">暂无充值活动</div>
+              <table v-else class="plan-activity-table">
+                <thead>
+                  <tr>
+                    <th>活动名称</th>
+                    <th>类型</th>
+                    <th>触发条件</th>
+                    <th>优惠内容</th>
+                    <th>有效期</th>
+                    <th style="width: 60px">启用</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(act, index) in planEditData.activities" :key="act.id">
+                    <td>{{ act.name }}</td>
+                    <td><span class="plan-type-tag" :class="act.type === 'bonus' ? 'bonus' : 'discount'">{{ act.type === 'bonus' ? '赠送' : '折扣' }}</span></td>
+                    <td class="plan-mono">≥ ¥{{ act.conditionAmount.toLocaleString() }}</td>
+                    <td class="plan-mono plan-discount-amount">{{ act.type === 'bonus' ? '送 ¥' + act.bonusAmount?.toLocaleString() : (act.discountPercent || 0) / 10 + '折' }}</td>
+                    <td class="plan-mono">{{ act.startTime || act.endTime ? (act.startTime || '—') + ' ~ ' + (act.endTime || '—') : '永久' }}</td>
+                    <td style="text-align: center">
+                      <label class="toggle-switch" style="margin: 0">
+                        <input type="checkbox" v-model="act.enabled" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td>
+                      <span class="action-link primary" @click="openActivityEdit(index)">编辑</span>
+                      <span class="action-link danger" @click="removeActivity(index)" style="margin-left: 8px">删除</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <button class="btn btn-primary btn-xs" @click="openActivityCreate" style="margin-top: 8px">+ 添加活动</button>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="planEditModal = false">取消</button>
-          <button class="btn btn-primary" @click="savePlan">保存方案</button>
+          <button class="btn btn-primary" @click="savePlanEdit">保存方案</button>
         </div>
       </div>
-    </div>
-
-    <!-- ==================== 弹窗：充值活动编辑 ==================== -->
+    </div><!-- ==================== 弹窗：充值活动编辑 ==================== -->
     <div v-if="activityEditModal" class="modal-overlay" @click.self="activityEditModal = false">
       <div class="modal-content activity-modal-content">
         <div class="modal-header">
@@ -1738,38 +1892,9 @@ const txTypeLabel: Record<string, string> = {
             </div>
           </div>
 
-          <!-- ====== 分组3：高级设置 ====== -->
-          <div class="af-group-divider"></div>
-          <div class="af-group-title">高级设置</div>
 
-          <!-- 每人限享 | 每日限量 -->
-          <div class="form-item">
-            <label class="form-label">使用限制</label>
-            <div class="af-field">
-              <div class="af-limit-row">
-                <div class="af-limit-item">
-                  <span>每人限享</span>
-                  <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.perUserLimit" min="0" />
-                  <span>次</span>
-                </div>
-                <div class="af-limit-item">
-                  <span>每日限量</span>
-                  <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.dailyLimit" min="0" />
-                  <span>次</span>
-                </div>
-              </div>
-              <div class="af-field-hint">0 表示不限制</div>
-            </div>
-          </div>
 
-          <!-- 是否启用 -->
-          <div class="form-item">
-            <label class="form-label">是否启用</label>
-            <div class="af-field">
-              <label class="toggle-switch"><input type="checkbox" v-model="activityEditData.enabled" /><span class="toggle-slider"></span></label>
-              <span class="af-toggle-label">{{ activityEditData.enabled ? '启用' : '禁用' }}</span>
-            </div>
-          </div>
+
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="activityEditModal = false">取消</button>
@@ -1920,26 +2045,57 @@ const txTypeLabel: Record<string, string> = {
       </div>
     </div>
 
-    <!-- ==================== 弹窗：冻结钱包 ==================== -->
+    <!-- ==================== 弹窗：冻结/解冻 ==================== -->
     <div v-if="freezeModal" class="modal-overlay" @click.self="freezeModal = false">
-      <div class="modal-content modal-sm">
+      <div class="modal-content modal-md">
         <div class="modal-header">
-          <h3>冻结钱包</h3>
+          <h3>{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}钱包</h3>
           <span class="modal-close" @click="freezeModal = false">
             <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </span>
         </div>
         <div class="modal-body">
-          <div class="form-item" style="margin-bottom: 0">
-            <label class="form-label required">冻结原因</label>
+          <!-- 用户信息 -->
+          <div class="detail-grid" style="margin-bottom: 16px; padding: 12px; background: #F7F8FA; border-radius: 8px;">
+            <div><label>钱包ID</label><span>{{ freezeWalletTarget?.walletId }}</span></div>
+            <div><label>用户</label><span>{{ freezeWalletTarget?.phone }}（{{ freezeWalletTarget?.uid }}）</span></div>
+            <div><label>当前余额</label><span>¥{{ freezeWalletTarget?.balance.toFixed(2) }}</span></div>
+            <div><label>冻结金额</label><span>¥{{ freezeWalletTarget?.frozenAmount.toFixed(2) }}</span></div>
+            <div><label>可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}金额</label><span style="color: #4F6EF7; font-weight: 600;">¥{{ (freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)).toFixed(2) }}</span></div>
+          </div>
+          
+          <!-- 模式切换 -->
+          <div style="text-align: center; margin-bottom: 16px;">
+            <div class="segmented-control">
+              <button class="segmented-btn" :class="{ active: freezeMode === 'freeze' }" @click="freezeMode = 'freeze'">冻结</button>
+              <button class="segmented-btn" :class="{ active: freezeMode === 'unfreeze' }" @click="freezeMode = 'unfreeze'">解冻</button>
+            </div>
+          </div>
+          
+          <!-- 金额 -->
+          <div class="form-item">
+            <label class="form-label required">金额</label>
             <div class="form-control-row">
-              <textarea class="form-textarea" v-model="freezeReason" placeholder="请输入冻结原因" rows="3"></textarea>
+              <input type="number" class="form-input" v-model.number="freezeForm.amount" min="0.01" :max="freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)" step="0.01" placeholder="请输入金额" style="width: 200px" />
+              <span class="form-tip">（可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}：¥{{ (freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)).toFixed(2) }}）</span>
+            </div>
+          </div>
+          
+          <!-- 原因 -->
+          <div class="form-item">
+            <label class="form-label required">原因备注</label>
+            <div style="flex: 1">
+              <select class="form-select" v-model="freezeForm.reason" style="width: 100%; margin-bottom: 8px">
+                <option value="" disabled>请选择原因</option>
+                <option v-for="opt in (freezeMode === 'freeze' ? freezeReasonOptions : unfreezeReasonOptions)" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+              <textarea v-if="freezeForm.reason === 'other'" class="form-textarea" v-model="freezeForm.reasonDetail" rows="2" placeholder="请补充详细描述" style="width: 100%"></textarea>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="freezeModal = false">取消</button>
-          <button class="btn btn-primary" @click="confirmFreeze" :disabled="!freezeReason">确认冻结</button>
+          <button class="btn btn-primary" @click="confirmFreezeAction" :disabled="!freezeForm.amount || !freezeForm.reason">{{ freezeMode === 'freeze' ? '确认冻结' : '确认解冻' }}</button>
         </div>
       </div>
     </div>
@@ -1957,7 +2113,8 @@ const txTypeLabel: Record<string, string> = {
           <div class="detail-grid">
             <div><label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span></div>
             <div><label>用户</label><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span></div>
-            <div><label>金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
+            <div><div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
+            <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div></div>
             <div><label>收款商户</label><span>{{ rechargeDetailItem.receiveMerchantName }}</span></div>
             <div><label>支付状态</label><span class="status-tag" :class="rechargeDetailItem.paymentStatus">{{ paymentStatusLabel[rechargeDetailItem.paymentStatus] }}</span></div>
             <div><label>充值状态</label><span class="status-tag" :class="rechargeDetailItem.rechargeStatus">{{ rechargeStatusLabel[rechargeDetailItem.rechargeStatus] }}</span></div>
@@ -3162,4 +3319,342 @@ const txTypeLabel: Record<string, string> = {
   margin-left: 10px;
   line-height: 22px;
 }
+
+/* ==================== 钱包设置卡片 ==================== */
+.wcfg-card {
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.wcfg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1D2129;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E6EB;
+}
+.wcfg-card-body {
+  padding: 16px;
+}
+.wcfg-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+.wcfg-row:last-child {
+  margin-bottom: 0;
+}
+.wcfg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.wcfg-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4E5969;
+}
+.wcfg-label.required::after {
+  content: " *";
+  color: #CF1322;
+}
+.wcfg-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wcfg-unit {
+  font-size: 13px;
+  color: #86909C;
+  white-space: nowrap;
+}
+.wcfg-hint {
+  font-size: 12px;
+  color: #86909C;
+  margin-top: 4px;
+}
+.wcfg-divider {
+  height: 1px;
+  background: #E5E6EB;
+  margin: 12px 0;
+}
+
+/* ==================== 钱包设置查看模式 ==================== */
+.wcfg-view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.wcfg-view-card {
+  border: 1px solid #E5E6EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.wcfg-view-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1D2129;
+  background: #FAFAFA;
+  border-bottom: 1px solid #E5E6EB;
+}
+.wcfg-view-card-body {
+  padding: 12px 16px;
+}
+.wcfg-view-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #F2F3F5;
+}
+.wcfg-view-field:last-child {
+  border-bottom: none;
+}
+.wcfg-view-label {
+  font-size: 13px;
+  color: #86909C;
+}
+.wcfg-view-value {
+  font-size: 14px;
+  color: #1D2129;
+  font-weight: 500;
+}
+.wcfg-status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.wcfg-status-badge.on {
+  background: #E8FFE8;
+  color: #00A854;
+}
+.wcfg-status-badge.off {
+  background: #FFF0F0;
+  color: #CF1322;
+}
+
+
+/* ==================== 充值方案弹窗 ==================== */
+.plan-section {
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.plan-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D2129;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E6EB;
+}
+.plan-count-badge {
+  margin-left: auto;
+  background: #F2F3F5;
+  color: #4E5969;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.plan-section-body {
+  padding: 14px;
+}
+.plan-preset-row {
+  margin-bottom: 8px;
+}
+.plan-preset-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E5E6EB;
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.plan-preset-card:focus-within {
+  border-color: #4F6EF7;
+  box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.1);
+}
+.plan-preset-index {
+  color: #86909C;
+  font-size: 12px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.plan-preset-yen {
+  color: #86909C;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.plan-preset-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.plan-icon-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #86909C;
+  transition: all 0.15s;
+}
+.plan-icon-btn:hover:not(:disabled) {
+  background: #F2F3F5;
+  color: #4E5969;
+}
+.plan-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.plan-icon-btn-danger:hover:not(:disabled) {
+  color: #CF1322;
+  background: #FFF0F0;
+}
+.plan-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px dashed #C9CDD4;
+  background: transparent;
+  border-radius: 6px;
+  color: #86909C;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.plan-add-btn:hover {
+  border-color: #4F6EF7;
+  color: #4F6EF7;
+}
+.plan-divider {
+  height: 1px;
+  background: #E5E6EB;
+  margin: 14px 0;
+}
+.plan-custom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.plan-toggle-label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #4E5969;
+  cursor: pointer;
+}
+.plan-custom-fields {
+  display: flex;
+  gap: 16px;
+  padding-left: 4px;
+}
+.plan-custom-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #4E5969;
+}
+.plan-empty {
+  text-align: center;
+  color: #86909C;
+  padding: 20px 0;
+  font-size: 13px;
+}
+.plan-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.plan-activity-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 500;
+  color: #86909C;
+  border-bottom: 1px solid #E5E6EB;
+  white-space: nowrap;
+}
+.plan-activity-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #F2F3F5;
+}
+.plan-type-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.plan-type-tag.bonus {
+  background: #E8FFE8;
+  color: #00A854;
+}
+.plan-type-tag.discount {
+  background: #FFF7E6;
+  color: #D46B08;
+}
+.plan-mono {
+  font-family: "Geist Mono", "SF Mono", "Menlo", monospace;
+  font-size: 12px;
+}
+.plan-discount-amount {
+  color: #CF1322;
+}
+.plan-act-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+.plan-act-status.on {
+  color: #00A854;
+}
+.plan-act-status.off {
+  color: #86909C;
+}
+
+
+.plan-preset-tag {
+  padding: 4px 14px;
+  border: 1px solid #E5E6EB;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #F7F8FA;
+  color: #1D2129;
+  font-family: "Geist Mono", "SF Mono", "Menlo", monospace;
+}
+.plan-preset-tag-dashed {
+  border-style: dashed;
+  color: #86909C;
+  font-family: inherit;
+}
+
 </style>

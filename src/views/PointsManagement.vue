@@ -24,7 +24,7 @@ const menuList = [
     label: '用户管理',
     children: [
       { key: 'user_balance', label: '用户余额' },
-      { key: 'points_distribute', label: '积分变更' },
+      { key: 'points_distribute', label: '积分变更流水' },
     ],
   },
   {
@@ -40,7 +40,6 @@ const menuList = [
     key: 'settlement',
     label: '结算与报表',
     children: [
-      { key: 'ledger', label: '积分流水' },
       { key: 'merchant_settlement', label: '商户结算' },
       { key: 'reconciliation', label: '对账报表' },
     ],
@@ -1466,151 +1465,6 @@ const getLedgerTypeText = (type: string) => {
   return map[type] || type
 }
 
-// ==================== 模块7：积分流水 ====================
-const ledgerFilter = reactive({
-  userKeyword: '',
-  merchant: '',
-  type: [] as string[],
-  direction: '',
-  startDate: '',
-  endDate: '',
-  batchId: '',
-})
-
-const allLedgerList = ref<FlowRecord[]>([
-  {
-    id: 'L001',
-    type: 'earn',
-    reason: 'activity',
-    reasonDetail: '618大促活动',
-    amount: 200,
-    balance: 2350,
-    batch: 'BATCH-20260603-001',
-    userUid: 'U10001',
-    userPhone: '138****1234',
-    merchant: '总部直营店',
-    operator: '系统',
-    orderNo: 'ORD-20260603-001',
-    expireTime: '2027-06-03',
-    time: '2026-06-03 15:30:00',
-  },
-  {
-    id: 'L002',
-    type: 'burn',
-    reason: 'consume',
-    reasonDetail: '订单消费抵扣',
-    amount: -150,
-    balance: 1800,
-    batch: '',
-    userUid: 'U10002',
-    userPhone: '139****5678',
-    merchant: '总部加盟店',
-    operator: '系统',
-    orderNo: 'ORD-20260603-002',
-    expireTime: '',
-    time: '2026-06-03 14:00:00',
-  },
-  {
-    id: 'L003',
-    type: 'burn',
-    reason: 'consume',
-    reasonDetail: '商品消费',
-    amount: -100,
-    balance: 2150,
-    batch: '',
-    userUid: 'U10001',
-    userPhone: '138****1234',
-    merchant: '总部加盟店',
-    operator: '系统',
-    orderNo: 'ORD-20260602-005',
-    expireTime: '',
-    time: '2026-06-02 11:20:00',
-  },
-  {
-    id: 'L004',
-    type: 'earn',
-    reason: 'manual',
-    reasonDetail: '手动补发',
-    amount: 1000,
-    balance: 5000,
-    batch: 'BATCH-20260603-001',
-    userUid: 'U10003',
-    userPhone: '136****9999',
-    merchant: '总部直营店',
-    operator: '运营小王',
-    orderNo: '',
-    expireTime: '2027-06-01',
-    time: '2026-06-01 09:00:00',
-  },
-  {
-    id: 'L005',
-    type: 'earn',
-    reason: 'activity',
-    reasonDetail: '签到活动奖励',
-    amount: 500,
-    balance: 2250,
-    batch: 'BATCH-20260501-001',
-    userUid: 'U10001',
-    userPhone: '138****1234',
-    merchant: '总部直营店',
-    operator: '系统',
-    orderNo: 'ORD-20260520-003',
-    expireTime: '2026-12-31',
-    time: '2026-05-20 14:00:00',
-  },
-  {
-    id: 'L006',
-    type: 'earn',
-    reason: 'refund',
-    reasonDetail: '退货退款回滚',
-    amount: 200,
-    balance: 800,
-    batch: '',
-    userUid: 'U10004',
-    userPhone: '137****4444',
-    merchant: '总部加盟店',
-    operator: '系统',
-    orderNo: 'ORD-20260515-008',
-    expireTime: '',
-    time: '2026-05-16 10:00:00',
-  },
-  {
-    id: 'L007',
-    type: 'burn',
-    reason: 'expire',
-    reasonDetail: '年度过期回收',
-    amount: -300,
-    balance: 600,
-    batch: 'BATCH-20250101-002',
-    userUid: 'U10005',
-    userPhone: '135****2222',
-    merchant: '总部直营店',
-    operator: '系统',
-    orderNo: '',
-    expireTime: '2025-12-31',
-    time: '2026-04-01 00:00:00',
-  },
-])
-
-const filteredLedgerList = computed(() => {
-  return allLedgerList.value.filter((l) => {
-    const keyword = ledgerFilter.userKeyword
-    if (keyword && !l.userUid.includes(keyword) && !l.userPhone.includes(keyword)) return false
-    if (ledgerFilter.merchant && l.merchant !== ledgerFilter.merchant) return false
-    if (ledgerFilter.type.length > 0 && !ledgerFilter.type.includes(l.type)) return false
-    if (ledgerFilter.direction === 'earn' && l.amount <= 0) return false
-    if (ledgerFilter.direction === 'burn' && l.amount >= 0) return false
-    if (ledgerFilter.startDate && l.time < ledgerFilter.startDate) return false
-    if (ledgerFilter.endDate && l.time > ledgerFilter.endDate + ' 23:59:59') return false
-    if (ledgerFilter.batchId && l.batch !== ledgerFilter.batchId) return false
-    return true
-  })
-})
-
-const exportLedger = () => {
-  alert(`已导出 ${filteredLedgerList.value.length} 条流水记录（模拟）`)
-}
-
 // ==================== 模块8：商户结算 ====================
 const settlementMonth = ref('2026-06')
 
@@ -2848,12 +2702,12 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
         </div>
       </div>
 
-      <!-- ===== 模块6：积分发放 ===== -->
+      <!-- ===== 模块6：积分变更流水 ===== -->
       <div v-if="activeMenu === 'points_distribute'" class="content-panel">
         <div class="panel-header">
           <h2>积分变更流水</h2>
           <button class="btn btn-primary" style="width: auto" @click="openDistributeModal()">
-            + 积分变更
+            + 手动变更
           </button>
         </div>
         <div class="panel-body">
@@ -2948,107 +2802,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             </table>
           <div class="pagination-bar">
             <span class="page-info">共 {{ filteredDistributeList.length }} 条记录</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== 模块7：积分流水 ===== -->
-      <div v-if="activeMenu === 'ledger'" class="content-panel">
-        <div class="panel-header">
-          <h2>积分流水</h2>
-          <button class="btn btn-default" style="width: auto" @click="exportLedger">
-            导出报表
-          </button>
-        </div>
-        <div class="panel-body">
-          <div class="filter-bar">
-            <div class="filter-item">
-              <label>用户</label>
-              <input
-                type="text"
-                class="form-input"
-                v-model="ledgerFilter.userKeyword"
-                placeholder="手机号/UID"
-                style="width: 140px"
-              />
-            </div>
-            <div class="filter-item">
-              <label>商户</label>
-              <select class="form-select" v-model="ledgerFilter.merchant" style="width: 140px">
-                <option value="">全部商户</option>
-                <option v-for="m in merchantOptions" :key="m" :value="m">{{ m }}</option>
-              </select>
-            </div>
-            <div class="filter-item">
-              <label>流向</label>
-              <select class="form-select" v-model="ledgerFilter.direction" style="width: 100px">
-                <option value="">全部</option>
-                <option value="earn">发放</option>
-                <option value="burn">消耗</option>
-              </select>
-            </div>
-            <div class="filter-item">
-              <label>日期</label>
-              <input
-                type="date"
-                class="form-input"
-                v-model="ledgerFilter.startDate"
-                style="width: 140px"
-              />
-              <span>至</span>
-              <input
-                type="date"
-                class="form-input"
-                v-model="ledgerFilter.endDate"
-                style="width: 140px"
-              />
-            </div>
-          </div>
-          <table class="data-table table-nowrap">
-            <thead>
-              <tr>
-                <th>流水编号</th>
-                <th>用户id</th>
-                <th>手机号</th>
-                <th>类型</th>
-                <th>原因</th>
-                <th class="cell-wrap">原因备注</th>
-                <th>变动数值</th>
-                <th>变动后余额</th>
-                <th>来源商户</th>
-                <th class="cell-wrap">关联批次</th>
-                <th>关联订单号</th>
-                <th>发生时间</th>
-                <th>过期时间</th>
-                <th>操作人</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in filteredLedgerList" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>{{ item.userUid }}</td>
-                <td>{{ item.userPhone }}</td>
-                <td>{{ getLedgerTypeText(item.type) }}</td>
-                <td>{{ getReasonTypeText(item.reason) }}</td>
-                <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
-                <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
-                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
-                </td>
-                <td>{{ item.balance.toLocaleString() }}</td>
-                <td>{{ item.merchant || '-' }}</td>
-                <td class="cell-wrap">{{ item.batch || '-' }}</td>
-                <td>{{ item.orderNo || '-' }}</td>
-                <td class="time-text">{{ item.time }}</td>
-                <td>{{ item.expireTime || '-' }}</td>
-                <td>{{ item.operator }}</td>
-              </tr>
-              <tr v-if="filteredLedgerList.length === 0">
-                <td colspan="14" class="empty-text">暂无流水记录</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pagination-bar">
-            <span class="page-info">共 {{ filteredLedgerList.length }} 条记录</span>
           </div>
         </div>
       </div>
@@ -3241,7 +2994,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
     <div class="modal-overlay" v-if="showDistributeModal" @click="closeDistributeModal">
       <div class="modal-content modal-md" @click.stop>
         <div class="modal-header">
-          <h3>积分变更</h3>
+          <h3>变更</h3>
           <button class="close-btn" @click="closeDistributeModal">
             <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </button>
@@ -3274,7 +3027,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             >
           </div>
           <div class="form-item" v-if="distributeForm.selectedUser">
-            <label class="form-label required">变更类型</label>
+            <label class="form-label required">变更</label>
             <select class="form-select" v-model="distributeForm.changeType" style="flex: 1">
               <option value="issue">发放</option>
               <option value="deduct">扣除</option>
@@ -3306,7 +3059,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             </div>
           </div>
           <div class="form-item" v-if="distributeForm.selectedUser">
-            <label class="form-label required">变更原因</label>
+            <label class="form-label required">原因备注</label>
             <div style="flex: 1">
               <select
                 class="form-select"
