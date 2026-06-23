@@ -65,6 +65,7 @@ const handleMenuClick = (menuKey: string) => {
 // ==================== 模块1：积分配置 ====================
 const pointsConfig = reactive({
   name: '平台通用积分',
+  enabled: false,
   code: 'PTS-20260604-001',
   exchangeRate: 100, // N积分 = 1元
   validityType: 'forever' as 'yearly' | 'dynamic' | 'forever',
@@ -74,10 +75,12 @@ const pointsConfig = reactive({
 
 const configSaved = ref(false)
 const editingConfig = ref(false)
+const editEnabled = ref(false)
 type PointsConfig = typeof pointsConfig
 const configBackup = ref<PointsConfig | null>(null)
 
 const savePointsConfig = () => {
+  pointsConfig.enabled = editEnabled.value
   configSaved.value = true
   editingConfig.value = false
   alert('积分配置保存成功！')
@@ -87,14 +90,40 @@ const savePointsConfig = () => {
 const startEditConfig = () => {
   configBackup.value = { ...pointsConfig }
   editingConfig.value = true
+  editEnabled.value = pointsConfig.enabled
 }
 
 const cancelEditConfig = () => {
+  if (!configSaved.value) {
+    pointsConfig.enabled = false
+    editingConfig.value = false
+    return
+  }
   if (configBackup.value) {
     Object.assign(pointsConfig, configBackup.value)
   }
   editingConfig.value = false
 }
+
+const enablePoints = () => {
+  configSaved.value = false
+  editingConfig.value = true
+  pointsConfig.enabled = true
+  editEnabled.value = false
+}
+const validityTypeText = computed(() => {
+  switch (pointsConfig.validityType) {
+    case 'forever':
+      return '永久有效'
+    case 'dynamic':
+      return `自获取之日起 ${pointsConfig.dynamicDays} 天内有效`
+    case 'yearly':
+      return `每年 ${pointsConfig.yearlyClearDate} 统一清零`
+    default:
+      return ''
+  }
+})
+
 
 // ==================== 积分配置-修改记录 ====================
 interface ConfigSnapshot {
@@ -444,7 +473,6 @@ const signFilter = reactive({
 const signStatusOptions = [
   { value: '', label: '全部状态' },
   { value: 'signed', label: '已签约' },
-  { value: 'unsigned', label: '待签约' },
   { value: 'terminated', label: '已解约' },
 ]
 
@@ -477,7 +505,7 @@ const signList = ref<SignItem[]>([
   {
     id: '3',
     merchantName: '社区便利店A',
-    status: 'unsigned',
+    status: 'signed',
     currentQuota: 0,
     signTime: '',
     terminateTime: '',
@@ -1637,6 +1665,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
     <!-- 右侧内容区 -->
     <div class="main-content">
       <!-- ===== 模块1：积分配置 ===== -->
+      <!-- ===== 模块1：积分配置 ===== -->
       <div v-if="activeMenu === 'points_config'" class="content-panel">
         <div class="panel-header">
           <h2>积分配置</h2>
@@ -1644,132 +1673,176 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
         </div>
         <div class="panel-body">
           <div class="config-form">
+            <!-- 开关行 -->
             <div class="form-item">
-              <label class="form-label required">积分名称</label>
+              <label class="form-label">积分开关</label>
               <div class="form-control-row">
-                <input
-                  type="text"
-                  class="form-input"
-                  style="width: 280px"
-                  v-model="pointsConfig.name"
-                  placeholder="请输入积分名称"
-                  :disabled="configSaved && !editingConfig"
-                />
-              </div>
-            </div>
-
-            <div class="form-item">
-              <label class="form-label">编码</label>
-              <div class="form-control-row">
-                <input
-                  type="text"
-                  class="form-input"
-                  style="width: 280px"
-                  :value="pointsConfig.code"
-                  disabled
-                />
-                <span class="form-tip">（系统自动生成）</span>
-              </div>
-            </div>
-
-            <div class="form-divider"></div>
-
-            <div class="form-item">
-              <label class="form-label required">积分汇率</label>
-              <div class="form-control-row">
-                <input
-                  type="number"
-                  class="form-input"
-                  style="width: 120px"
-                  v-model.number="pointsConfig.exchangeRate"
-                  min="1"
-                  :disabled="configSaved && !editingConfig"
-                />
-                <span>积分 = 1 元</span>
-                <span class="form-tip">（用于商品价格自动换算展示）</span>
-              </div>
-            </div>
-
-            <div class="form-divider"></div>
-
-            <div class="form-item">
-              <label class="form-label required">积分有效期策略</label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input
-                    type="radio"
-                    v-model="pointsConfig.validityType"
-                    value="forever"
-                    :disabled="configSaved && !editingConfig"
+                <label class="toggle-switch">
+                  <input type="checkbox"
+                    :checked="editingConfig ? editEnabled : pointsConfig.enabled"
+                    @change="editEnabled = $event.target.checked"
+                    :disabled="!editingConfig"
                   />
-                  永久有效
+                  <span class="toggle-slider"></span>
                 </label>
-                <label class="radio-label">
+                <span style="margin-left: 8px; font-size: 13px; color: #666;">
+                  {{ editingConfig ? (editEnabled ? '已开启' : '已关闭') : (pointsConfig.enabled ? '已开启' : '已关闭') }}
+                </span>
+              </div>
+            </div>
+
+            <!-- View 1: 关闭状态 -->
+            <template v-if="!pointsConfig.enabled">
+              <div class="form-item">
+                <div class="form-control-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+                  <span style="color: #999; font-size: 13px;">积分系统已停用，点击下方按钮开启</span>
+                  <button class="btn btn-primary" @click="enablePoints">开启积分系统</button>
+                </div>
+              </div>
+            </template>
+
+            <!-- View 2 & 4: 编辑模式（首次开启 或 修改中） -->
+            <template v-if="pointsConfig.enabled && (!configSaved || editingConfig)">
+              <template v-if="editEnabled">
+              <div class="form-item">
+                <label class="form-label required">积分名称</label>
+                <div class="form-control-row">
                   <input
-                    type="radio"
-                    v-model="pointsConfig.validityType"
-                    value="dynamic"
-                    :disabled="configSaved && !editingConfig"
+                    type="text"
+                    class="form-input"
+                    style="width: 280px"
+                    v-model="pointsConfig.name"
+                    placeholder="请输入积分名称"
                   />
-                  动态有效期
-                </label>
-                <label class="radio-label">
+                </div>
+              </div>
+
+              <div class="form-item">
+                <label class="form-label">编码</label>
+                <div class="form-control-row">
                   <input
-                    type="radio"
-                    v-model="pointsConfig.validityType"
-                    value="yearly"
-                    :disabled="configSaved && !editingConfig"
+                    type="text"
+                    class="form-input"
+                    style="width: 280px"
+                    :value="pointsConfig.code"
+                    disabled
                   />
-                  自然年清零
-                </label>
+                  <span class="form-tip">（系统自动生成）</span>
+                </div>
               </div>
-            </div>
 
-            <div class="form-item" v-if="pointsConfig.validityType === 'dynamic'">
-              <label class="form-label required">有效期天数</label>
-              <div class="form-control-row">
-                <input
-                  type="number"
-                  class="form-input"
-                  style="width: 100px"
-                  v-model.number="pointsConfig.dynamicDays"
-                  min="1"
-                  :disabled="configSaved && !editingConfig"
-                />
-                <span>天（自用户获得积分之日起计算）</span>
+              <div class="form-divider"></div>
+
+              <div class="form-item">
+                <label class="form-label required">积分汇率</label>
+                <div class="form-control-row">
+                  <input
+                    type="number"
+                    class="form-input"
+                    style="width: 120px"
+                    v-model.number="pointsConfig.exchangeRate"
+                    min="1"
+                  />
+                  <span>积分 = 1 元</span>
+                  <span class="form-tip">（用于商品价格自动换算展示）</span>
+                </div>
               </div>
-            </div>
 
-            <div class="form-item" v-if="pointsConfig.validityType === 'yearly'">
-              <label class="form-label required">清零日期</label>
-              <div class="form-control-row">
-                <span>每年</span>
-                <input
-                  type="text"
-                  class="form-input"
-                  style="width: 80px"
-                  v-model="pointsConfig.yearlyClearDate"
-                  placeholder="12-31"
-                  :disabled="configSaved && !editingConfig"
-                />
-                <span>统一清零上一年度积分</span>
+              <div class="form-divider"></div>
+
+              <div class="form-item">
+                <label class="form-label required">有效期策略</label>
+                <div class="form-control-row" style="flex-wrap: wrap; gap: 12px;">
+                  <label class="radio-label">
+                    <input type="radio" v-model="pointsConfig.validityType" value="forever" />
+                    永久有效
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" v-model="pointsConfig.validityType" value="dynamic" />
+                    动态有效期
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" v-model="pointsConfig.validityType" value="yearly" />
+                    自然年清零
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div class="form-actions">
-              <button v-if="!configSaved" class="btn btn-primary" @click="savePointsConfig">
-                保存配置
-              </button>
-              <template v-else-if="!editingConfig">
+              <div class="form-item" v-if="pointsConfig.validityType === 'dynamic'">
+                <label class="form-label required">有效期天数</label>
+                <div class="form-control-row">
+                  <input
+                    type="number"
+                    class="form-input"
+                    style="width: 100px"
+                    v-model.number="pointsConfig.dynamicDays"
+                    min="1"
+                  />
+                  <span>天（自用户获得积分之日起计算）</span>
+                </div>
+              </div>
+
+              <div class="form-item" v-if="pointsConfig.validityType === 'yearly'">
+                <label class="form-label required">清零日期</label>
+                <div class="form-control-row">
+                  <span>每年</span>
+                  <input
+                    type="text"
+                    class="form-input"
+                    style="width: 80px"
+                    v-model="pointsConfig.yearlyClearDate"
+                    placeholder="12-31"
+                  />
+                  <span>统一清零上一年度积分</span>
+                </div>
+              </div>
+
+              </template>
+              <div class="form-actions">
+                <button class="btn btn-primary" @click="savePointsConfig">保存</button>
+                <button class="btn btn-default" style="margin-left: 8px" @click="cancelEditConfig">取消</button>
+              </div>
+            </template>
+
+            <!-- View 3: 已开启只读模式 -->
+            <template v-if="pointsConfig.enabled && configSaved && !editingConfig">
+              <div class="form-item">
+                <label class="form-label">积分名称</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ pointsConfig.name }}</span>
+                </div>
+              </div>
+
+              <div class="form-item">
+                <label class="form-label">编码</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ pointsConfig.code }}</span>
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+
+              <div class="form-item">
+                <label class="form-label">积分汇率</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ pointsConfig.exchangeRate }} 积分 = 1 元</span>
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+
+              <div class="form-item">
+                <label class="form-label">有效期策略</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ validityTypeText }}</span>
+                </div>
+              </div>
+
+              <div class="form-actions">
                 <button class="btn btn-primary" @click="startEditConfig">修改</button>
-              </template>
-              <template v-else>
-                <button class="btn btn-default" @click="cancelEditConfig">取消</button>
-                <button class="btn btn-primary" style="margin-left: 8px" @click="savePointsConfig">
-                  保存
-                </button>
-              </template>
-            </div>
+              </div>
+            </template>
+
           </div>
 
           <!-- 修改记录 -->
@@ -1819,9 +1892,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                             </div>
                             <div class="snapshot-field">
                               <span class="snapshot-label">价值比例</span>
-                              <span class="snapshot-value"
-                                >{{ record.snapshot.exchangeRate }}:1</span
-                              >
+                              <span class="snapshot-value">{{ record.snapshot.exchangeRate }}:1</span>
                             </div>
                             <div class="snapshot-field">
                               <span class="snapshot-label">有效期策略</span>
@@ -1849,7 +1920,6 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
           </div>
         </div>
       </div>
-
       <!-- ===== 模块2：积分批次 ===== -->
       <div v-if="activeMenu === 'points_batch'" class="content-panel">
         <div class="panel-header">
@@ -2160,15 +2230,9 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <tr v-for="item in filteredSignList" :key="item.id">
                 <td>{{ item.merchantName }}</td>
                 <td>
-                  <span class="status-tag" :class="item.status">
                     {{
-                      item.status === 'signed'
-                        ? '已签约'
-                        : item.status === 'unsigned'
-                          ? '待签约'
-                          : '已解约'
+                      item.status === 'signed' ? '已签约' : '已解约'
                     }}
-                  </span>
                 </td>
                 <td>{{ item.currentQuota.toLocaleString() }}</td>
                 <td>{{ item.signTime || '-' }}</td>
@@ -3373,6 +3437,56 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   font-size: 12px;
   color: #999;
 }
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #E5E6EB;
+  transition: 0.25s ease;
+  border-radius: 22px;
+}
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.25s ease;
+  border-radius: 50%;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #4F6EF7;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.display-value {
+  font-size: 14px;
+  color: #1D2129;
+  font-weight: 500;
+  padding: 4px 0;
+}
 .form-divider {
   height: 1px;
   background: #eee;
@@ -3590,6 +3704,22 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 .btn-default:hover {
   color: #1677ff;
   border-color: #1677ff;
+}
+.status-tag.active {
+  background: #e6f4ff;
+  color: #1677ff;
+  border: 1px solid #91caff;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.status-tag.closed {
+  background: #f5f5f5;
+  color: #999;
+  border: 1px solid #d9d9d9;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
 }
 .modal-overlay {
   position: fixed;
