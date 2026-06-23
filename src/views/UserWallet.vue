@@ -676,13 +676,13 @@ const mockRechargeRecords = ref<RechargeRecord[]>([
   { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' },
 ])
 
-const rechargeSearchForm = reactive({ keyword: '', paymentStatus: '', rechargeStatus: '' })
+const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
 
 const filteredRecharges = computed(() => {
   return mockRechargeRecords.value.filter(r => {
     const kw = rechargeSearchForm.keyword
     const matchKw = !kw || r.rechargeNo.includes(kw) || r.uid.includes(kw) || r.phone.includes(kw)
-    const matchPay = !rechargeSearchForm.paymentStatus || r.paymentStatus === rechargeSearchForm.paymentStatus
+    const matchPay = r.paymentStatus === 'paid'
     const matchRech = !rechargeSearchForm.rechargeStatus || r.rechargeStatus === rechargeSearchForm.rechargeStatus
     return matchKw && matchPay && matchRech
   })
@@ -861,7 +861,7 @@ const filteredLedger = computed(() => {
     const kw = ledgerSearchForm.keyword
     const matchKw = !kw || tx.transactionNo.includes(kw) || tx.uid.includes(kw) || tx.phone.includes(kw)
     const matchType = !ledgerSearchForm.type || tx.type === ledgerSearchForm.type
-    return matchKw && matchType
+    return matchKw && matchType && (tx.type === 'consume' || tx.type === 'refund')
   })
 })
 
@@ -1421,16 +1421,6 @@ const txTypeLabel: Record<string, string> = {
               <input type="text" class="form-input" v-model="rechargeSearchForm.keyword" placeholder="充值单号 / UID / 手机号" style="width: 200px" />
             </div>
             <div class="filter-item">
-              <label>支付状态</label>
-              <select class="form-select" v-model="rechargeSearchForm.paymentStatus" style="width: 120px">
-                <option value="">全部</option>
-                <option value="pending">待支付</option>
-                <option value="paid">支付成功</option>
-                <option value="failed">支付失败</option>
-                <option value="closed">已关闭</option>
-              </select>
-            </div>
-            <div class="filter-item">
               <label>充值状态</label>
               <select class="form-select" v-model="rechargeSearchForm.rechargeStatus" style="width: 120px">
                 <option value="">全部</option>
@@ -1441,7 +1431,7 @@ const txTypeLabel: Record<string, string> = {
             </div>
             <div class="filter-item">
               <button class="btn btn-primary" @click="">查询</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="rechargeSearchForm.keyword = ''; rechargeSearchForm.paymentStatus = ''; rechargeSearchForm.rechargeStatus = ''">重置</button>
+              <button class="btn btn-default" style="margin-left: 8px" @click="rechargeSearchForm.keyword = ''; rechargeSearchForm.rechargeStatus = ''">重置</button>
             </div>
           </div>
 
@@ -1582,11 +1572,8 @@ const txTypeLabel: Record<string, string> = {
               <label>交易类型</label>
               <select class="form-select" v-model="ledgerSearchForm.type" style="width: 120px">
                 <option value="">全部</option>
-                <option value="recharge">充值</option>
                 <option value="consume">消费</option>
                 <option value="refund">退款</option>
-                <option value="withdraw">提现</option>
-                <option value="freeze">冻结</option>
               </select>
             </div>
             <div class="filter-item">
@@ -1863,7 +1850,7 @@ const txTypeLabel: Record<string, string> = {
                 <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.bonusAmount" min="1" />
                 <span>元</span>
               </div>
-              <div class="af-field-hint">赠送金额将分笔入账，本金与赠送分开记录</div>
+              <div class="af-field-hint">自动计算：充值满 ¥{{ activityEditData.conditionAmount }} 得 ¥{{ ((activityEditData.conditionAmount || 0) + (activityEditData.bonusAmount || 0)).toFixed(2) }}</div>
             </div>
           </div>
 
@@ -1873,9 +1860,10 @@ const txTypeLabel: Record<string, string> = {
             <div class="af-field">
               <div class="af-control-row">
                 <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.discountPercent" min="1" max="99" />
+                <span>%</span>
                 <span>即 {{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }} 折</span>
               </div>
-              <div class="af-field-hint">实付 = 充值金额 × {{ activityEditData.discountPercent || 0 }}%</div>
+              <div class="af-field-hint">充值 ¥{{ activityEditData.conditionAmount }}以上，打{{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }}折，如支付¥{{ ((activityEditData.conditionAmount || 0) * (activityEditData.discountPercent || 0) / 100).toFixed(2) }}得¥{{ activityEditData.conditionAmount }}</div>
             </div>
           </div>
 
