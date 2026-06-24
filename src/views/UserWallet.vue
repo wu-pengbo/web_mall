@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 
 // ==================== 侧边栏导航（分组结构，对齐积分管理） ====================
@@ -1463,7 +1463,7 @@ const txTypeLabel: Record<string, string> = {
                 <td class="time-text">{{ r.applyTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showRechargeDetail(r)">详情</span>
-                  <span v-if="r.rechargeStatus === 'success'" class="action-link primary" @click="showRechargeFlow(r)" style="margin-right: 8px">查看流水</span>
+                  <span v-if="r.rechargeStatus === 'success'" class="action-link primary" @click="showRechargeFlow(r)" style="margin: 0 8px">查看流水</span>
                   <span v-if="r.paymentStatus === 'paid' && r.rechargeStatus === 'failed'" class="action-link danger" @click="manualRecharge(r)" style="margin-left: 8px">手动入账</span>
                 </td>
               </tr>
