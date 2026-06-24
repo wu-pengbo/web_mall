@@ -2077,8 +2077,8 @@ const txTypeLabel: Record<string, string> = {
             <div><label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span></div>
             <div><label>支付单号</label><span>{{ rechargeDetailItem.payOrderNo || '-' }}</span></div>
             <div><label>用户</label><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span></div>
-            <div><div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
-            <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div></div>
+            <div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
+            <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div>
             <div><label>收款商户</label><span>{{ rechargeDetailItem.receiveMerchantName }}</span></div>
             <div><label>支付状态</label><span class="status-tag" :class="rechargeDetailItem.paymentStatus">{{ paymentStatusLabel[rechargeDetailItem.paymentStatus] }}</span></div>
             <div><label>充值状态</label><span class="status-tag" :class="rechargeDetailItem.rechargeStatus">{{ rechargeStatusLabel[rechargeDetailItem.rechargeStatus] }}</span></div>
@@ -3720,4 +3720,5 @@ const txTypeLabel: Record<string, string> = {
 .order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
 </style>
+
 
