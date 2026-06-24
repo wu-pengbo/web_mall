@@ -63,6 +63,7 @@ interface RechargeRecord {
   rechargeStatus: 'pending' | 'success' | 'failed'
   receiveMerchantName: string
   paymentTime: string
+  payOrderNo?: string
   rechargeTime: string
   applyTime: string
   remark: string
@@ -641,14 +642,14 @@ const confirmFreezeAction = () => {
 
 // ==================== 模块4：充值管理 ====================
 const mockRechargeRecords = ref<RechargeRecord[]>([
-  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1050, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50 },
-  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中' },
+  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1050, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50, payOrderNo: 'PAY-20260611-001'},
+  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中', payOrderNo: 'PAY-20260611-002'},
   { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
   { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
-  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5200, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200 },
+  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5200, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200, payOrderNo: 'PAY-20260610-001'},
   { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
-  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理' },
-  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1580, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80 },
+  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理', payOrderNo: 'PAY-20260609-001'},
+  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1580, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80, payOrderNo: 'PAY-20260609-002'},
 ])
 
 const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
@@ -1441,6 +1442,7 @@ const txTypeLabel: Record<string, string> = {
             <thead>
               <tr>
                 <th>充值单号</th>
+                <th>支付单号</th>
                 <th>用户</th>
                 <th>支付金额</th>
                 <th>到账金额</th>
@@ -1454,6 +1456,7 @@ const txTypeLabel: Record<string, string> = {
             <tbody>
               <tr v-for="r in filteredRecharges" :key="r.id">
                 <td>{{ r.rechargeNo }}</td>
+                <td>{{ r.payOrderNo || '-' }}</td>
                 <td>{{ r.uid }}<br/><span class="sub-text">{{ r.phone }}</span></td>
                 <td class="price-text">¥{{ r.amount.toFixed(2) }}</td>
                 <td class="price-text">¥{{ r.receivedAmount.toFixed(2) }}</td>
@@ -2072,6 +2075,7 @@ const txTypeLabel: Record<string, string> = {
         <div class="modal-body" v-if="rechargeDetailItem">
           <div class="detail-grid">
             <div><label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span></div>
+            <div><label>支付单号</label><span>{{ rechargeDetailItem.payOrderNo || '-' }}</span></div>
             <div><label>用户</label><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span></div>
             <div><div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
             <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div></div>
@@ -2105,6 +2109,7 @@ const txTypeLabel: Record<string, string> = {
           <div class="flow-summary" v-if="rechargeFlowItem">
             <div class="flow-summary-row"><span class="flow-summary-label">用户</span><span class="flow-summary-value">{{ rechargeFlowItem.phone }}</span></div>
             <div class="flow-summary-row"><span class="flow-summary-label">充值单号</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeNo }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">支付单号</span><span class="flow-summary-value">{{ rechargeFlowItem.payOrderNo || '-' }}</span></div>
             <div class="flow-summary-row"><span class="flow-summary-label">充值时间</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeTime || rechargeFlowItem.applyTime }}</span></div>
             <div class="flow-summary-divider"></div>
             <div class="flow-summary-amounts">
@@ -3715,3 +3720,4 @@ const txTypeLabel: Record<string, string> = {
 .order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
 </style>
+
