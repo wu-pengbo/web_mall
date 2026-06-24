@@ -3,44 +3,17 @@ import { ref, reactive, computed } from 'vue'
 
 // ==================== 侧边栏导航（分组结构，对齐积分管理） ====================
 const menuList = [
-  {
-    key: 'config',
-    label: '配置管理',
-    children: [
-      { key: 'wallet_config', label: '钱包设置' },
-      { key: 'wallet_recharge_plan', label: '充值方案' },
-    ],
-  },
-  {
-    key: 'business',
-    label: '业务管理',
-    children: [
-      { key: 'wallet_overview', label: '钱包概览' },
-      { key: 'wallet_user', label: '用户钱包' },
-    ],
-  },
-  {
-    key: 'transaction',
-    label: '交易管理',
-    children: [
-      { key: 'wallet_recharge', label: '充值管理' },
-      { key: 'wallet_withdraw', label: '提现管理' },
-      { key: 'wallet_ledger', label: '交易流水' },
-    ],
-  },
+  { key: 'wallet_overview', label: '钱包概览' },
+  { key: 'wallet_config', label: '钱包设置' },
+  { key: 'wallet_recharge_plan', label: '充值方案' },
+  { key: 'wallet_recharge', label: '充值管理' },
+  { key: 'wallet_withdraw', label: '提现管理' },
+  { key: 'wallet_ledger', label: '交易流水' },
+  { key: 'wallet_user', label: '用户钱包' },
 ]
 
-const activeMenu = ref('wallet_config')
-const expandedMenus = ref<string[]>(['config', 'business', 'transaction'])
+const activeMenu = ref('wallet_overview')
 
-const toggleExpand = (key: string) => {
-  const idx = expandedMenus.value.indexOf(key)
-  if (idx > -1) {
-    expandedMenus.value.splice(idx, 1)
-  } else {
-    expandedMenus.value.push(key)
-  }
-}
 
 const handleMenuClick = (menuKey: string) => {
   activeMenu.value = menuKey
@@ -85,6 +58,7 @@ interface RechargeRecord {
   phone: string
   amount: number
   receivedAmount: number
+  bonusAmount?: number
   paymentStatus: 'pending' | 'paid' | 'failed' | 'closed'
   rechargeStatus: 'pending' | 'success' | 'failed'
   receiveMerchantName: string
@@ -102,6 +76,7 @@ interface WithdrawRecord {
   amount: number
   refundType: 'full' | 'partial'
   relatedOrderNo: string
+  relatedRechargeNo?: string
   originalPayMethod: 'wechat' | 'alipay' | 'bank'
   fee: number
   actualAmount: number
@@ -666,14 +641,14 @@ const confirmFreezeAction = () => {
 
 // ==================== 模块4：充值管理 ====================
 const mockRechargeRecords = ref<RechargeRecord[]>([
-  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' },
+  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50 },
   { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中' },
   { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
   { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
-  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' },
+  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200 },
   { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
   { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理' },
-  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' },
+  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80 },
 ])
 
 const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
@@ -703,6 +678,52 @@ const manualRecharge = (item: RechargeRecord) => {
   alert(`充值单 ${item.rechargeNo} 已手动入账成功`)
 }
 
+// ==================== 充值流水资金桶视图 ====================
+interface RechargeBucket {
+  type: 'principal' | 'bonus'
+  originalAmount: number
+  remainingAmount: number
+  withdrawable: boolean
+  sourceRule: string
+  consumptions: { orderNo: string; type: string; amount: number; time: string }[]
+}
+
+const rechargeFlowModal = ref(false)
+const rechargeFlowItem = ref<RechargeRecord | null>(null)
+const rechargeFlowBuckets = ref<RechargeBucket[]>([])
+
+const showRechargeFlow = (record: RechargeRecord) => {
+  rechargeFlowItem.value = record
+  const principal = record.amount - (record.bonusAmount || 0)
+  rechargeFlowBuckets.value = [
+    {
+      type: 'principal',
+      originalAmount: principal,
+      remainingAmount: Math.round(principal * 0.65),
+      withdrawable: true,
+      sourceRule: '用户充值本金，按充值金额入账',
+      consumptions: [
+        { orderNo: 'ORD-20260615-001', type: 'consume', amount: Math.round(principal * 0.25), time: '2026-06-15 14:30:00' },
+        { orderNo: 'ORD-20260618-002', type: 'consume', amount: Math.round(principal * 0.10), time: '2026-06-18 09:15:00' },
+      ],
+    },
+  ]
+  const bonus = record.bonusAmount || 0
+  if (bonus > 0) {
+    rechargeFlowBuckets.value.push({
+      type: 'bonus',
+      originalAmount: bonus,
+      remainingAmount: Math.round(bonus * 0.80),
+      withdrawable: false,
+      sourceRule: '充值活动赠送，按活动规则入账',
+      consumptions: [
+        { orderNo: 'ORD-20260616-003', type: 'consume', amount: Math.round(bonus * 0.20), time: '2026-06-16 11:00:00' },
+      ],
+    })
+  }
+  rechargeFlowModal.value = true
+}
+
 const paymentStatusLabel: Record<string, string> = {
   pending: '待支付', paid: '支付成功', failed: '支付失败', closed: '已关闭',
 }
@@ -712,11 +733,11 @@ const rechargeStatusLabel: Record<string, string> = {
 
 // ==================== 模块5：提现管理 ====================
 const mockWithdrawRecords = ref<WithdrawRecord[]>([
-  { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '' },
-  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', partialRefundReason: '商品部分退货' },
-  { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00' },
-  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '提现申请超出规定期限' },
-  { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00' },
+  { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', relatedRechargeNo: 'RCH-2026060-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '' },
+  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', relatedRechargeNo: 'RCH-2026068-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', partialRefundReason: '商品部分退货' },
+  { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', relatedRechargeNo: 'RCH-2026065-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00' },
+  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', relatedRechargeNo: 'RCH-2026069-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '提现申请超出规定期限' },
+  { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', relatedRechargeNo: 'RCH-2026068-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00' },
 ])
 
 const withdrawSearchForm = reactive({ keyword: '', refundType: '', status: '' })
@@ -773,12 +794,12 @@ const payMethodLabel: Record<string, string> = {
 // ==================== 模块6：交易流水 ====================
 const mockTransactions = ref<WalletTransaction[]>([
   {
-    id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234',
+    id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260601-001',
     type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001',
     merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值',
   },
   {
-    id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234',
+    id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260601-001',
     type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001',
     merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费',
     bucketLogs: [
@@ -787,17 +808,17 @@ const mockTransactions = ref<WalletTransaction[]>([
     ],
   },
   {
-    id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678',
+    id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678', relatedRechargeNo: 'RCH-20260520-001',
     type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003',
     merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值',
   },
   {
-    id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890',
+    id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260520-001',
     type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005',
     merchant: '系统', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
   },
   {
-    id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456',
+    id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', relatedRechargeNo: 'RCH-20260520-001',
     type: 'withdraw', amount: -800, balance: 4400, relatedNo: 'WDR-20260609-001',
     merchant: '系统', operator: '张三', time: '2026-06-09 10:00:00', remark: '用户提现',
     bucketLogs: [
@@ -806,12 +827,12 @@ const mockTransactions = ref<WalletTransaction[]>([
     ],
   },
   {
-    id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123',
+    id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123', relatedRechargeNo: 'RCH-20260601-002',
     type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002',
     merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值',
   },
   {
-    id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678',
+    id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678', relatedRechargeNo: 'RCH-20260601-002',
     type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002',
     merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费',
     bucketLogs: [
@@ -819,7 +840,7 @@ const mockTransactions = ref<WalletTransaction[]>([
     ],
   },
   {
-    id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012',
+    id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012', relatedRechargeNo: 'RCH-20260605-003',
     type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001',
     merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费',
     bucketLogs: [
@@ -827,12 +848,12 @@ const mockTransactions = ref<WalletTransaction[]>([
     ],
   },
   {
-    id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345',
+    id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345', relatedRechargeNo: 'RCH-20260520-005',
     type: 'recharge', amount: 2000, balance: 13500, relatedNo: 'RCH-20260605-001',
     merchant: '平台自营商户', operator: '系统', time: '2026-06-05 14:00:00', remark: '线上充值',
   },
   {
-    id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345',
+    id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345', relatedRechargeNo: 'RCH-20260520-005',
     type: 'consume', amount: -500, balance: 11500, relatedNo: 'ORD-20260604-003',
     merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-04 18:00:00', remark: '订单消费',
     bucketLogs: [
@@ -840,12 +861,12 @@ const mockTransactions = ref<WalletTransaction[]>([
     ],
   },
   {
-    id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234',
+    id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260515-001',
     type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002',
     merchant: '系统', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
   },
   {
-    id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890',
+    id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260515-001',
     type: 'withdraw', amount: -200, balance: 800, relatedNo: 'WDR-20260602-001',
     merchant: '系统', operator: '系统', time: '2026-06-02 15:00:00', remark: '用户提现',
     bucketLogs: [
@@ -875,17 +896,7 @@ const showTxDetail = (item: WalletTransaction) => {
 }
 
 // 交易列表中展开的子流水行 ID
-const expandedTxIds = ref<Set<string>>(new Set())
 
-const toggleBucketLogs = (txId: string) => {
-  if (expandedTxIds.value.has(txId)) {
-    expandedTxIds.value.delete(txId)
-  } else {
-    expandedTxIds.value.add(txId)
-  }
-  // 触发响应式更新
-  expandedTxIds.value = new Set(expandedTxIds.value)
-}
 
 const txTypeLabel: Record<string, string> = {
   recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结',
@@ -898,24 +909,15 @@ const txTypeLabel: Record<string, string> = {
     <div class="sidebar">
       <div class="sidebar-title">钱包管理</div>
       <div class="menu-list">
-        <template v-for="menu in menuList" :key="menu.key">
-          <!-- 父级菜单 -->
-          <div class="menu-group-title" @click="toggleExpand(menu.key)">
-            <span class="expand-icon">{{ expandedMenus.includes(menu.key) ? '▼' : '▶' }}</span>
-            <span>{{ menu.label }}</span>
-          </div>
-          <div v-show="expandedMenus.includes(menu.key)" class="menu-children">
-            <div
-              v-for="child in menu.children"
-              :key="child.key"
-              class="menu-item"
-              :class="{ active: activeMenu === child.key }"
-              @click="handleMenuClick(child.key)"
-            >
-              {{ child.label }}
-            </div>
-          </div>
-        </template>
+        <div
+          v-for="menu in menuList"
+          :key="menu.key"
+          class="menu-item"
+          :class="{ active: activeMenu === menu.key }"
+          @click="handleMenuClick(menu.key)"
+        >
+          {{ menu.label }}
+        </div>
       </div>
     </div>
 
@@ -1461,6 +1463,7 @@ const txTypeLabel: Record<string, string> = {
                 <td class="time-text">{{ r.applyTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showRechargeDetail(r)">详情</span>
+                  <span v-if="r.rechargeStatus === 'success'" class="action-link primary" @click="showRechargeFlow(r)" style="margin-right: 8px">查看流水</span>
                   <span v-if="r.paymentStatus === 'paid' && r.rechargeStatus === 'failed'" class="action-link danger" @click="manualRecharge(r)" style="margin-left: 8px">手动入账</span>
                 </td>
               </tr>
@@ -1522,6 +1525,7 @@ const txTypeLabel: Record<string, string> = {
                 <th>提现金额</th>
                 <th>提现类型</th>
                 <th>关联订单</th>
+                <th>关联充值</th>
                 <th>到账方式</th>
                 <th>状态</th>
                 <th>操作</th>
@@ -1534,6 +1538,7 @@ const txTypeLabel: Record<string, string> = {
                 <td class="price-text">¥{{ w.amount.toFixed(2) }}</td>
                 <td><span class="status-tag" :class="w.refundType">{{ w.refundType === 'full' ? '全额提现' : '部分提现' }}</span></td>
                 <td>{{ w.relatedOrderNo }}</td>
+                <td>{{ w.relatedRechargeNo || '-' }}</td>
                 <td>{{ payMethodLabel[w.originalPayMethod] }}</td>
                 <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
                 <td>
@@ -1586,13 +1591,13 @@ const txTypeLabel: Record<string, string> = {
           <table class="data-table">
             <thead>
               <tr>
-                <th style="width: 40px"></th>
                 <th>流水号</th>
                 <th>用户</th>
                 <th>交易类型</th>
                 <th>金额</th>
                 <th>余额</th>
                 <th>关联单号</th>
+                <th>关联充值</th>
                 <th>时间</th>
                 <th>操作</th>
               </tr>
@@ -1601,50 +1606,17 @@ const txTypeLabel: Record<string, string> = {
               <template v-for="tx in filteredLedger" :key="tx.id">
                 <!-- 主流水行 -->
                 <tr>
-                  <td>
-                    <span
-                      v-if="tx.bucketLogs && tx.bucketLogs.length"
-                      class="expand-btn"
-                      @click="toggleBucketLogs(tx.id)"
-                    >{{ expandedTxIds.has(tx.id) ? '▼' : '▶' }}</span>
-                  </td>
                   <td>{{ tx.transactionNo }}</td>
                   <td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td>
                   <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
                   <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
                   <td>¥{{ tx.balance.toFixed(2) }}</td>
                   <td>{{ tx.relatedNo || '-' }}</td>
+                  <td>{{ tx.relatedRechargeNo || '-' }}</td>
                   <td class="time-text">{{ tx.time }}</td>
                   <td><span class="action-link primary" @click="showTxDetail(tx)">详情</span></td>
                 </tr>
-                <!-- 子流水行 -->
-                <tr v-if="expandedTxIds.has(tx.id) && tx.bucketLogs" class="bucket-row">
-                  <td></td>
-                  <td colspan="8" style="padding: 0">
-                    <div class="bucket-panel">
-                      <div class="bucket-header">资金来源（先进先出）</div>
-                      <table class="bucket-table">
-                        <thead>
-                          <tr>
-                            <th>充值批次</th>
-                            <th>充值时间</th>
-                            <th>扣减金额</th>
-                            <th>批次剩余</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(bl, idx) in tx.bucketLogs" :key="idx">
-                            <td>{{ bl.bucketNo }}</td>
-                            <td class="time-text">{{ bl.bucketTime }}</td>
-                            <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
-                            <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </td>
-                </tr>
-              </template>
+                </template>
             </tbody>
           </table>
 
@@ -2119,6 +2091,63 @@ const txTypeLabel: Record<string, string> = {
       </div>
     </div>
 
+    <!-- ==================== 弹窗：充值流水 ==================== -->
+    <div v-if="rechargeFlowModal" class="modal-overlay" @click.self="rechargeFlowModal = false">
+      <div class="modal-content recharge-flow-modal">
+        <div class="modal-header">
+          <h3>充值流水详情</h3>
+          <span class="modal-close" @click="rechargeFlowModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </span>
+        </div>
+        <div class="modal-body">
+          <!-- 摘要卡片 -->
+          <div class="flow-summary" v-if="rechargeFlowItem">
+            <div class="flow-summary-row"><span class="flow-summary-label">用户</span><span class="flow-summary-value">{{ rechargeFlowItem.phone }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">充值单号</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeNo }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">充值时间</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeTime || rechargeFlowItem.applyTime }}</span></div>
+            <div class="flow-summary-divider"></div>
+            <div class="flow-summary-amounts">
+              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">支付金额</span><span class="flow-summary-amount-value">¥{{ rechargeFlowItem.amount.toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item" v-if="(rechargeFlowItem.bonusAmount || 0) > 0"><span class="flow-summary-amount-label">赠送金额</span><span class="flow-summary-amount-value bonus">+¥{{ (rechargeFlowItem.bonusAmount || 0).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">到账金额</span><span class="flow-summary-amount-value">¥{{ (rechargeFlowItem.receivedAmount).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item total"><span class="flow-summary-amount-label">流水剩余总额</span><span class="flow-summary-amount-value total">¥{{ rechargeFlowBuckets.reduce((s, b) => s + b.remainingAmount, 0).toFixed(2) }}</span></div>
+            </div>
+          </div>
+          <!-- 资金桶 -->
+          <div class="flow-buckets-row">
+            <div class="flow-bucket" v-for="bucket in rechargeFlowBuckets" :key="bucket.type">
+              <div class="flow-bucket-header">
+                <span class="flow-bucket-type" :class="bucket.type">{{ bucket.type === 'principal' ? '本金' : '赠送' }}</span>
+                <span class="flow-bucket-status" :class="{ empty: bucket.remainingAmount <= 0 }">{{ bucket.remainingAmount <= 0 ? '已耗尽' : '可用' }}</span>
+                <span class="flow-bucket-withdrawable" :class="{ yes: bucket.withdrawable }">{{ bucket.withdrawable ? '可提现' : '不可提现' }}</span>
+              </div>
+              <div class="flow-bucket-body">
+                <div class="flow-bucket-bar-area">
+                  <div class="flow-bucket-bar"><div class="flow-bucket-bar-fill" :class="bucket.type" :style="{ width: ((bucket.originalAmount - bucket.remainingAmount) / bucket.originalAmount * 100) + '%' }"></div></div>
+                  <div class="flow-bucket-bar-labels"><span>已用 <strong>¥{{ (bucket.originalAmount - bucket.remainingAmount).toFixed(2) }}</strong></span><span>剩余 <strong>¥{{ bucket.remainingAmount.toFixed(2) }}</strong></span></div>
+                </div>
+                <div class="flow-detail-label">消耗明细</div>
+                <div v-if="bucket.consumptions.length">
+                  <table class="flow-consumption-table">
+                    <thead><tr><th>类型</th><th>关联单号</th><th>金额</th><th>时间</th></tr></thead>
+                    <tbody>
+                      <tr v-for="(item, ci) in bucket.consumptions" :key="ci">
+                        <td><span class="status-tag consume-type-tag" :class="item.type === 'consume' ? 'consume' : 'withdraw'">{{ item.type === 'consume' ? '消费' : item.type === 'withdraw' ? '提现' : item.type === 'refund' ? '退款' : item.type }}</span></td>
+                        <td class="order-no-cell">{{ item.orderNo }}</td>
+                        <td class="amount-negative" style="text-align:right; white-space:nowrap">-¥{{ item.amount.toFixed(2) }}</td>
+                        <td class="time-text">{{ item.time }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  </div>
+                  <div v-else class="flow-no-data">暂无消耗记录</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- ==================== 弹窗：提现详情 ==================== -->
     <div v-if="withdrawDetailModal" class="modal-overlay" @click.self="withdrawDetailModal = false">
       <div class="modal-content modal-md">
@@ -3645,4 +3674,44 @@ const txTypeLabel: Record<string, string> = {
   font-family: inherit;
 }
 
+
+/* ==================== 充值流水资金桶弹窗 ==================== */
+.recharge-flow-modal { max-width: 800px !important; }
+.flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+.flow-summary-row { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.8; }
+.flow-summary-label { color: #86909c; width: 72px; flex-shrink: 0; }
+.flow-summary-value { color: #1d2129; font-weight: 500; }
+.flow-summary-divider { height: 1px; background: #e5e6eb; margin: 8px 0; }
+.flow-summary-amounts { display: flex; gap: 24px; flex-wrap: wrap; }
+.flow-summary-amount-item { display: flex; flex-direction: column; gap: 2px; }
+.flow-summary-amount-label { font-size: 11px; color: #86909c; white-space: nowrap; }
+.flow-summary-amount-value { font-size: 16px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-summary-amount-value.bonus { color: #d46b08; }
+.flow-summary-amount-item.total { margin-left: auto; }
+.flow-summary-amount-value.total { color: #1677ff; font-size: 18px; }
+.flow-buckets-row { display: flex; gap: 12px; }
+.flow-bucket { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.flow-bucket-header { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #f2f3f5; font-size: 12px; flex-wrap: wrap; }
+.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.flow-bucket-type.principal { background: #e8f4ff; color: #1677ff; }
+.flow-bucket-type.bonus { background: #fff7e6; color: #d46b08; }
+.flow-bucket-status { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
+.flow-bucket-status.empty { background: #fff0f0; color: #cf1322; }
+.flow-bucket-withdrawable { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
+.flow-bucket-withdrawable.yes { background: #e8ffe8; color: #00a854; }
+.flow-bucket-body { padding: 10px 12px; }
+.flow-bucket-bar-area { margin-bottom: 12px; }
+.flow-bucket-bar { height: 6px; background: #f2f3f5; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.flow-bucket-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0%; }
+.flow-bucket-bar-fill.principal { background: linear-gradient(90deg, #1677ff, #4096ff); }
+.flow-bucket-bar-fill.bonus { background: linear-gradient(90deg, #d46b08, #fa8c16); }
+.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #86909c; }
+.flow-bucket-bar-labels strong { color: #1d2129; font-size: 12px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-detail-label { font-size: 11px; color: #86909c; margin-bottom: 6px; font-weight: 500; }
+.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.flow-consumption-table th { text-align: left; padding: 4px 6px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 10px; }
+.flow-consumption-table td { padding: 4px 6px; border-bottom: 1px solid #f2f3f5; }
+.consume-type-tag { font-size: 10px !important; padding: 1px 5px !important; }
+.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 10px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.flow-no-data { text-align: center; color: #c9cdd4; font-size: 12px; padding: 16px 0; }
 </style>
