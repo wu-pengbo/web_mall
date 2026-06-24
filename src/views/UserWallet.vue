@@ -641,14 +641,14 @@ const confirmFreezeAction = () => {
 
 // ==================== 模块4：充值管理 ====================
 const mockRechargeRecords = ref<RechargeRecord[]>([
-  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50 },
+  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1050, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50 },
   { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中' },
   { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
   { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
-  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5000, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200 },
+  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5200, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200 },
   { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
   { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理' },
-  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1500, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80 },
+  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1580, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80 },
 ])
 
 const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
@@ -694,7 +694,7 @@ const rechargeFlowBuckets = ref<RechargeBucket[]>([])
 
 const showRechargeFlow = (record: RechargeRecord) => {
   rechargeFlowItem.value = record
-  const principal = record.amount - (record.bonusAmount || 0)
+  const principal = record.amount
   rechargeFlowBuckets.value = [
     {
       type: 'principal',
@@ -2110,7 +2110,7 @@ const txTypeLabel: Record<string, string> = {
             <div class="flow-summary-amounts">
               <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">支付金额</span><span class="flow-summary-amount-value">¥{{ rechargeFlowItem.amount.toFixed(2) }}</span></div>
               <div class="flow-summary-amount-item" v-if="(rechargeFlowItem.bonusAmount || 0) > 0"><span class="flow-summary-amount-label">赠送金额</span><span class="flow-summary-amount-value bonus">+¥{{ (rechargeFlowItem.bonusAmount || 0).toFixed(2) }}</span></div>
-              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">到账金额</span><span class="flow-summary-amount-value">¥{{ (rechargeFlowItem.receivedAmount).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">到账金额</span><span class="flow-summary-amount-value">¥{{ (rechargeFlowItem.amount + (rechargeFlowItem.bonusAmount || 0)).toFixed(2) }}</span></div>
               <div class="flow-summary-amount-item total"><span class="flow-summary-amount-label">流水剩余总额</span><span class="flow-summary-amount-value total">¥{{ rechargeFlowBuckets.reduce((s, b) => s + b.remainingAmount, 0).toFixed(2) }}</span></div>
             </div>
           </div>
@@ -3678,26 +3678,26 @@ const txTypeLabel: Record<string, string> = {
 /* ==================== 充值流水资金桶弹窗 ==================== */
 .recharge-flow-modal { max-width: 1200px !important; }
 .flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 36px; margin-bottom: 24px; }
-.flow-summary-row { display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 2; }
+.flow-summary-row { display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 2; }
 .flow-summary-label { color: #86909c; width: 72px; flex-shrink: 0; }
-.flow-summary-value { color: #1d2129; font-weight: 500; font-size: 14px; }
+.flow-summary-value { color: #1d2129; font-weight: 500; font-size: 15px; }
 .flow-summary-divider { height: 1px; background: #e5e6eb; margin: 14px 0; }
 .flow-summary-amounts { display: flex; gap: 40px; flex-wrap: wrap; }
 .flow-summary-amount-item { display: flex; flex-direction: column; gap: 6px; }
-.flow-summary-amount-label { font-size: 12px; color: #86909c; white-space: nowrap; }
-.flow-summary-amount-value { font-size: 18px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-summary-amount-label { font-size: 13px; color: #86909c; white-space: nowrap; }
+.flow-summary-amount-value { font-size: 19px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
 .flow-summary-amount-value.bonus { color: #d46b08; }
 .flow-summary-amount-item.total { margin-left: auto; }
-.flow-summary-amount-value.total { color: #1677ff; font-size: 20px; }
+.flow-summary-amount-value.total { color: #1677ff; font-size: 21px; }
 .flow-buckets-row { display: flex; gap: 20px; }
 .flow-bucket { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-.flow-bucket-header { display: flex; align-items: center; gap: 10px; padding: 10px 36px; border-bottom: 1px solid #f2f3f5; font-size: 13px; flex-wrap: wrap; }
-.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.flow-bucket-header { display: flex; align-items: center; gap: 10px; padding: 10px 36px; border-bottom: 1px solid #f2f3f5; font-size: 14px; flex-wrap: wrap; }
+.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .flow-bucket-type.principal { background: #e8f4ff; color: #1677ff; }
 .flow-bucket-type.bonus { background: #fff7e6; color: #d46b08; }
-.flow-bucket-status { font-size: 11px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
+.flow-bucket-status { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
 .flow-bucket-status.empty { background: #fff0f0; color: #cf1322; }
-.flow-bucket-withdrawable { font-size: 11px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
+.flow-bucket-withdrawable { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
 .flow-bucket-withdrawable.yes { background: #e8ffe8; color: #00a854; }
 .flow-bucket-body { padding: 10px 36px; }
 .flow-bucket-bar-area { margin-bottom: 16px; }
@@ -3705,13 +3705,13 @@ const txTypeLabel: Record<string, string> = {
 .flow-bucket-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0%; }
 .flow-bucket-bar-fill.principal { background: linear-gradient(90deg, #1677ff, #4096ff); }
 .flow-bucket-bar-fill.bonus { background: linear-gradient(90deg, #d46b08, #fa8c16); }
-.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: #86909c; }
-.flow-bucket-bar-labels strong { color: #1d2129; font-size: 13px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
-.flow-detail-label { font-size: 12px; color: #86909c; margin-bottom: 10px; font-weight: 500; }
-.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.flow-consumption-table th { text-align: left; padding: 4px 16px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 11px; }
+.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 13px; color: #86909c; }
+.flow-bucket-bar-labels strong { color: #1d2129; font-size: 15px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-detail-label { font-size: 14px; color: #86909c; margin-bottom: 10px; font-weight: 500; }
+.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.flow-consumption-table th { text-align: left; padding: 4px 16px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 13px; }
 .flow-consumption-table td { padding: 4px 16px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; }
-.consume-type-tag { font-size: 11px !important; padding: 1px 5px !important; }
-.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 11px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.flow-no-data { text-align: center; color: #c9cdd4; font-size: 13px; padding: 20px 0; }
+.consume-type-tag { font-size: 13px !important; padding: 1px 5px !important; }
+.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
 </style>
