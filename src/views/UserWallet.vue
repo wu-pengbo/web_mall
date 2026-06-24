@@ -5,11 +5,11 @@ import { ref, reactive, computed } from 'vue'
 const menuList = [
   { key: 'wallet_overview', label: '钱包概览' },
   { key: 'wallet_config', label: '钱包设置' },
+  { key: 'wallet_user', label: '用户钱包' },
   { key: 'wallet_recharge_plan', label: '充值方案' },
+  { key: 'wallet_ledger', label: '交易流水' },
   { key: 'wallet_recharge', label: '充值管理' },
   { key: 'wallet_withdraw', label: '提现管理' },
-  { key: 'wallet_ledger', label: '交易流水' },
-  { key: 'wallet_user', label: '用户钱包' },
 ]
 
 const activeMenu = ref('wallet_overview')
@@ -3720,5 +3720,6 @@ const txTypeLabel: Record<string, string> = {
 .order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
 </style>
+
 
 
