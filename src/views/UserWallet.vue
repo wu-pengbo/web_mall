@@ -3676,42 +3676,42 @@ const txTypeLabel: Record<string, string> = {
 
 
 /* ==================== 充值流水资金桶弹窗 ==================== */
-.recharge-flow-modal { max-width: 800px !important; }
-.flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
-.flow-summary-row { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.8; }
+.recharge-flow-modal { max-width: 1000px !important; }
+.flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 28px; margin-bottom: 20px; }
+.flow-summary-row { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 2; }
 .flow-summary-label { color: #86909c; width: 72px; flex-shrink: 0; }
-.flow-summary-value { color: #1d2129; font-weight: 500; }
-.flow-summary-divider { height: 1px; background: #e5e6eb; margin: 8px 0; }
-.flow-summary-amounts { display: flex; gap: 24px; flex-wrap: wrap; }
-.flow-summary-amount-item { display: flex; flex-direction: column; gap: 2px; }
-.flow-summary-amount-label { font-size: 11px; color: #86909c; white-space: nowrap; }
-.flow-summary-amount-value { font-size: 16px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-summary-value { color: #1d2129; font-weight: 500; font-size: 14px; }
+.flow-summary-divider { height: 1px; background: #e5e6eb; margin: 12px 0; }
+.flow-summary-amounts { display: flex; gap: 32px; flex-wrap: wrap; }
+.flow-summary-amount-item { display: flex; flex-direction: column; gap: 4px; }
+.flow-summary-amount-label { font-size: 12px; color: #86909c; white-space: nowrap; }
+.flow-summary-amount-value { font-size: 18px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
 .flow-summary-amount-value.bonus { color: #d46b08; }
 .flow-summary-amount-item.total { margin-left: auto; }
-.flow-summary-amount-value.total { color: #1677ff; font-size: 18px; }
-.flow-buckets-row { display: flex; gap: 12px; }
+.flow-summary-amount-value.total { color: #1677ff; font-size: 20px; }
+.flow-buckets-row { display: flex; gap: 16px; }
 .flow-bucket { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-.flow-bucket-header { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #f2f3f5; font-size: 12px; flex-wrap: wrap; }
-.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.flow-bucket-header { display: flex; align-items: center; gap: 8px; padding: 10px 28px; border-bottom: 1px solid #f2f3f5; font-size: 13px; flex-wrap: wrap; }
+.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .flow-bucket-type.principal { background: #e8f4ff; color: #1677ff; }
 .flow-bucket-type.bonus { background: #fff7e6; color: #d46b08; }
-.flow-bucket-status { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
+.flow-bucket-status { font-size: 11px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
 .flow-bucket-status.empty { background: #fff0f0; color: #cf1322; }
-.flow-bucket-withdrawable { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
+.flow-bucket-withdrawable { font-size: 11px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
 .flow-bucket-withdrawable.yes { background: #e8ffe8; color: #00a854; }
-.flow-bucket-body { padding: 10px 12px; }
-.flow-bucket-bar-area { margin-bottom: 12px; }
+.flow-bucket-body { padding: 10px 28px; }
+.flow-bucket-bar-area { margin-bottom: 14px; }
 .flow-bucket-bar { height: 6px; background: #f2f3f5; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
 .flow-bucket-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0%; }
 .flow-bucket-bar-fill.principal { background: linear-gradient(90deg, #1677ff, #4096ff); }
 .flow-bucket-bar-fill.bonus { background: linear-gradient(90deg, #d46b08, #fa8c16); }
-.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #86909c; }
-.flow-bucket-bar-labels strong { color: #1d2129; font-size: 12px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
-.flow-detail-label { font-size: 11px; color: #86909c; margin-bottom: 6px; font-weight: 500; }
-.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.flow-consumption-table th { text-align: left; padding: 4px 6px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 10px; }
-.flow-consumption-table td { padding: 4px 6px; border-bottom: 1px solid #f2f3f5; }
-.consume-type-tag { font-size: 10px !important; padding: 1px 5px !important; }
-.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 10px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
-.flow-no-data { text-align: center; color: #c9cdd4; font-size: 12px; padding: 16px 0; }
+.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: #86909c; }
+.flow-bucket-bar-labels strong { color: #1d2129; font-size: 13px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-detail-label { font-size: 12px; color: #86909c; margin-bottom: 8px; font-weight: 500; }
+.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.flow-consumption-table th { text-align: left; padding: 4px 12px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 11px; }
+.flow-consumption-table td { padding: 4px 12px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; }
+.consume-type-tag { font-size: 11px !important; padding: 1px 5px !important; }
+.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 11px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-no-data { text-align: center; color: #c9cdd4; font-size: 13px; padding: 16px 0; }
 </style>
