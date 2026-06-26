@@ -2053,7 +2053,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <h3>新建积分批次</h3>
               <button class="close-btn" @click="closeBatchModal">✕</button>
             </div>
-            <div class="modal-body" v-show="!showQuotaQrView">
+            <div class="modal-body">
               <div class="form-item">
                 <label class="form-label required">所属商户</label>
                 <select class="form-select" v-model="batchForm.merchantName" style="width: 100%">
@@ -2570,7 +2570,8 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
         <!-- 平台新增弹窗 -->
         <div class="modal-overlay" v-if="showQuotaModal" @click="closeQuotaModal">
           <div class="modal-content" @click.stop>
-            <div class="modal-header">
+            <template v-if="!showQuotaQrView">
+              <div class="modal-header">
               <h3>平台新增额度</h3>
               <button class="close-btn" @click="closeQuotaModal">✕</button>
             </div>
@@ -2670,8 +2671,11 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <button class="btn btn-primary" @click="submitQuota">生成流水</button>
             </div>
 
+            </template>
+
+          <template v-else>
           <!-- 扫码支付视图 -->
-          <div v-if="showQuotaQrView && quotaCreatedItem" class="qr-panel" @click.stop>
+          <div class="qr-panel" @click.stop>
             <div class="qr-header">📱 扫码支付</div>
             <div class="qr-code-area">
               <svg viewBox="0 0 200 200" width="160" height="160">
@@ -2699,6 +2703,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <button class="btn btn-default" @click="closeQuotaModal">关闭</button>
             </div>
           </div>
+            </template>
           </div>
         </div>
       </div>
