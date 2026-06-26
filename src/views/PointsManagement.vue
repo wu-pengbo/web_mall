@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 
 // ==================== 侧边栏导航 ====================
@@ -643,7 +643,7 @@ interface QuotaItem {
   action: 'recharge' | 'recycle'
   rechargeType: 'buy' | 'gift'
   amount: number
-  payMethod: 'cash' | 'transfer' | 'online' | ''
+  payMethod: 'cash' | 'transfer' | 'online' | 'qrcode' | ''
   payAmount: number
   payStatus: 'unpaid' | 'paid' | ''
   changeStatus: 'pending' | 'completed' | 'rejected'
@@ -736,7 +736,7 @@ const getRechargeTypeText = (type: string) => {
 }
 
 const getPayMethodText = (method: string) => {
-  const map: Record<string, string> = { cash: '现金', transfer: '转账', online: '线上付款' }
+  const map: Record<string, string> = { cash: '现金', transfer: '转账', online: '线上付款', qrcode: '扫码支付' }
   return map[method] || '-'
 }
 
@@ -777,7 +777,14 @@ const autoPayAmount = computed(() => {
 
 const closeQuotaModal = () => {
   showQuotaModal.value = false
+  showQuotaQrView.value = false
 }
+
+
+const showQuotaQrView = ref(false)
+const quotaCreatedItem = ref<QuotaItem | null>(null)
+const showPayQrModal = ref(false)
+const payQrTarget = ref<QuotaItem | null>(null)
 
 const submitQuota = () => {
   if (!quotaForm.merchantName || !quotaForm.amount) {
@@ -787,6 +794,7 @@ const submitQuota = () => {
 
   const isRecycle = quotaForm.action === 'recycle'
   const isBuy = quotaForm.action === 'recharge' && quotaForm.rechargeType === 'buy'
+  const isQr = isBuy && quotaForm.payMethod === 'qrcode'
   const newQuota: QuotaItem = {
     id: String(Date.now()),
     recordNo: `QUOTA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(quotaList.value.length + 1).padStart(3, '0')}`,
@@ -794,7 +802,7 @@ const submitQuota = () => {
     action: quotaForm.action as 'recharge' | 'recycle',
     rechargeType: isRecycle ? 'buy' : (quotaForm.rechargeType as 'buy' | 'gift'),
     amount: quotaForm.amount,
-    payMethod: isBuy ? (quotaForm.payMethod as 'cash' | 'transfer') : '',
+    payMethod: isBuy ? (quotaForm.payMethod as 'cash' | 'transfer' | 'qrcode') : '',
     payAmount: isBuy ? autoPayAmount.value || 0 : 0,
     payStatus: isBuy ? 'unpaid' : '',
     changeStatus: 'pending',
@@ -804,9 +812,41 @@ const submitQuota = () => {
     remark: quotaForm.remark,
   }
   quotaList.value.unshift(newQuota)
-  alert('额度流水已生成！')
-  closeQuotaModal()
+  if (isQr) {
+    quotaCreatedItem.value = newQuota
+    showQuotaQrView.value = true
+  } else {
+    alert('额度流水已生成！')
+    closeQuotaModal()
+  }
 }
+
+const confirmQrPayment = () => {
+  if (quotaCreatedItem.value) {
+    const found = quotaList.value.find(q => q.id === quotaCreatedItem.value!.id)
+    if (found) { found.payStatus = 'paid'; found.changeStatus = 'completed' }
+    showQuotaQrView.value = false
+    showQuotaModal.value = false
+    quotaCreatedItem.value = null
+    return
+  }
+  if (payQrTarget.value) {
+    const found = quotaList.value.find(q => q.id === payQrTarget.value!.id)
+    if (found) { found.payStatus = 'paid'; found.changeStatus = 'completed' }
+    closePayQr()
+  }
+}
+
+const openPayQr = (item: QuotaItem) => {
+  payQrTarget.value = item
+  showPayQrModal.value = true
+}
+
+const closePayQr = () => {
+  showPayQrModal.value = false
+  payQrTarget.value = null
+}
+
 
 // 财务确认弹窗
 const showFinanceModal = ref(false)
@@ -1297,6 +1337,7 @@ const openDistributeModal = (user?: UserBalanceItem) => {
       currentPoints: user.currentPoints,
     }
   }
+
   showDistributeModal.value = true
 }
 
@@ -2012,7 +2053,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <h3>新建积分批次</h3>
               <button class="close-btn" @click="closeBatchModal">✕</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" v-show="!showQuotaQrView">
               <div class="form-item">
                 <label class="form-label required">所属商户</label>
                 <select class="form-select" v-model="batchForm.merchantName" style="width: 100%">
@@ -2505,7 +2546,13 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <td>{{ item.operateTime }}</td>
                 <td>
                   <a
-                    v-if="item.payStatus === 'unpaid' || item.changeStatus === 'pending'"
+                    v-if="item.payMethod === 'qrcode' && item.payStatus === 'unpaid'"
+                    class="action-link primary"
+                    @click="openPayQr(item)"
+                    >扫码支付</a
+                  >
+                  <a
+                    v-else-if="item.payStatus === 'unpaid' || item.changeStatus === 'pending'"
                     class="action-link primary"
                     @click="openFinanceModal(item)"
                     >财务确认</a
@@ -2579,6 +2626,10 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                     </label>
                     <label class="radio-label">
                       <input type="radio" v-model="quotaForm.payMethod" value="transfer" /> 转账
+
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" v-model="quotaForm.payMethod" value="qrcode" /> 扫码支付
                     </label>
                   </div>
                 </div>
@@ -2618,12 +2669,83 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <button class="btn btn-default" @click="closeQuotaModal">取消</button>
               <button class="btn btn-primary" @click="submitQuota">生成流水</button>
             </div>
+
+          <!-- 扫码支付视图 -->
+          <div v-if="showQuotaQrView && quotaCreatedItem" class="qr-panel" @click.stop>
+            <div class="qr-header">📱 扫码支付</div>
+            <div class="qr-code-area">
+              <svg viewBox="0 0 200 200" width="160" height="160">
+                <rect x="0" y="0" width="200" height="200" fill="#fff" rx="8" />
+                <rect x="15" y="15" width="40" height="40" fill="#000" rx="4" />
+                <rect x="145" y="15" width="40" height="40" fill="#000" rx="4" />
+                <rect x="80" y="50" width="40" height="40" fill="#000" rx="2" />
+                <rect x="30" y="80" width="20" height="20" fill="#000" rx="1" />
+                <rect x="60" y="100" width="30" height="30" fill="#000" rx="2" />
+                <rect x="120" y="70" width="50" height="20" fill="#000" rx="1" />
+                <rect x="100" y="110" width="30" height="40" fill="#000" rx="2" />
+                <rect x="30" y="130" width="50" height="20" fill="#000" rx="1" />
+                <rect x="130" y="130" width="30" height="30" fill="#000" rx="2" />
+                <rect x="15" y="145" width="40" height="40" fill="#000" rx="4" />
+                <rect x="145" y="145" width="40" height="40" fill="#000" rx="4" />
+              </svg>
+            </div>
+            <div class="qr-info">
+              <div class="qr-info-row"><span class="qr-label">支付单号</span><span class="qr-value">QR-{{ quotaCreatedItem.recordNo }}</span></div>
+              <div class="qr-info-row"><span class="qr-label">支付金额</span><span class="qr-value" style="color:#ff4d4f;font-weight:600">¥{{ quotaCreatedItem.payAmount.toLocaleString() }}</span></div>
+              <div class="qr-info-row"><span class="qr-label">状态</span><span class="qr-value" style="color:#faad14">⏳ 待付款</span></div>
+            </div>
+            <div class="qr-actions">
+              <button class="btn btn-primary" @click="confirmQrPayment">我已付款，确认完成</button>
+              <button class="btn btn-default" @click="closeQuotaModal">关闭</button>
+            </div>
+          </div>
           </div>
         </div>
       </div>
 
       <!-- 财务确认弹窗 -->
-      <div class="modal-overlay" v-if="showFinanceModal" @click="closeFinanceModal">
+      <!-- 扫码支付弹窗（从列表重新打开） -->
+      <div class="modal-overlay" v-if="showPayQrModal && payQrTarget" @click="closePayQr">
+        <div class="modal-content" style="width: 420px" @click.stop>
+          <div class="modal-header">
+            <h3>扫码支付</h3>
+            <button class="close-btn" @click="closePayQr">✕</button>
+          </div>
+          <div class="modal-body" style="text-align:center">
+            <div class="qr-code-area" style="margin: 16px auto">
+              <svg viewBox="0 0 200 200" width="160" height="160">
+                <rect x="0" y="0" width="200" height="200" fill="#fff" rx="8" />
+                <rect x="15" y="15" width="40" height="40" fill="#000" rx="4" />
+                <rect x="145" y="15" width="40" height="40" fill="#000" rx="4" />
+                <rect x="80" y="50" width="40" height="40" fill="#000" rx="2" />
+                <rect x="30" y="80" width="20" height="20" fill="#000" rx="1" />
+                <rect x="60" y="100" width="30" height="30" fill="#000" rx="2" />
+                <rect x="120" y="70" width="50" height="20" fill="#000" rx="1" />
+                <rect x="100" y="110" width="30" height="40" fill="#000" rx="2" />
+                <rect x="30" y="130" width="50" height="20" fill="#000" rx="1" />
+                <rect x="130" y="130" width="30" height="30" fill="#000" rx="2" />
+                <rect x="15" y="145" width="40" height="40" fill="#000" rx="4" />
+                <rect x="145" y="145" width="40" height="40" fill="#000" rx="4" />
+              </svg>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:13px;color:#999;margin-bottom:4px">支付单号</div>
+              <div style="font-size:14px;font-weight:500">QR-{{ payQrTarget.recordNo }}</div>
+            </div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:13px;color:#999;margin-bottom:4px">支付金额</div>
+              <div style="font-size:22px;color:#ff4d4f;font-weight:600">¥{{ payQrTarget.payAmount.toLocaleString() }}</div>
+            </div>
+            <div style="font-size:14px;color:#faad14">⏳ 待付款</div>
+          </div>
+          <div class="modal-footer" style="justify-content:center">
+            <button class="btn btn-primary" @click="confirmQrPayment">我已付款，确认完成</button>
+            <button class="btn btn-default" @click="closePayQr">关闭</button>
+          </div>
+        </div>
+      </div>
+
+            <div class="modal-overlay" v-if="showFinanceModal" @click="closeFinanceModal">
         <div class="modal-content" style="width: 460px" @click.stop>
           <div class="modal-header">
             <h3>财务确认</h3>
@@ -4084,5 +4206,51 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   font-size: 14px;
   color: #333;
   font-weight: 500;
+}
+
+/* ==================== 扫码支付视图 ==================== */
+.qr-panel {
+  padding: 24px;
+  text-align: center;
+  border-top: 1px solid #eee;
+}
+.qr-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+.qr-code-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.qr-code-area svg {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+.qr-info {
+  margin-bottom: 20px;
+}
+.qr-info-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.qr-label {
+  color: #999;
+}
+.qr-value {
+  color: #333;
+  font-weight: 500;
+}
+.qr-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 </style>
