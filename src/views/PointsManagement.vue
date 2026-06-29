@@ -3848,6 +3848,37 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   border-radius: 4px;
   font-size: 13px;
 }
+
+/* ==================== 状态标签配色 ==================== */
+.status-tag.signed,
+.status-tag.paid,
+.status-tag.completed {
+  background: #e8ffe8;
+  color: #00a854;
+  border: 1px solid #95de64;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.status-tag.pending,
+.status-tag.unpaid {
+  background: #fff7e6;
+  color: #d46b08;
+  border: 1px solid #ffd591;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.status-tag.disabled,
+.status-tag.terminated {
+  background: #f5f5f5;
+  color: #999;
+  border: 1px solid #d9d9d9;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -4259,3 +4290,5 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   justify-content: center;
 }
 </style>
+
+
