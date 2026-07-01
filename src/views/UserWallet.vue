@@ -866,6 +866,10 @@ const mockTransactions = ref<WalletTransaction[]>([
     id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260515-001',
     type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002',
     merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 400 },
+      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 131.50, remainAmount: 131.50 },
+    ],
   },
   {
     id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260515-001',
@@ -2580,13 +2584,13 @@ const openSettlementFlow = (item: MerchantSign) => {
           </div>
           <!-- 子流水详情 -->
           <div v-if="txDetailItem.bucketLogs && txDetailItem.bucketLogs.length" style="margin-top: 20px">
-            <div class="form-section-title" style="margin-bottom: 12px">资金来源（先进先出）</div>
+            <div class="form-section-title" style="margin-bottom: 12px">{{ txDetailItem.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}</div>
             <table class="bucket-table">
               <thead>
                 <tr>
                   <th>充值批次</th>
                   <th>充值时间</th>
-                  <th>扣减金额</th>
+                  <th>{{ txDetailItem.type === 'refund' ? '回充金额' : '扣减金额' }}</th>
                   <th>批次剩余</th>
                 </tr>
               </thead>
@@ -2594,7 +2598,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tr v-for="(bl, idx) in txDetailItem.bucketLogs" :key="idx">
                   <td>{{ bl.bucketNo }}</td>
                   <td class="time-text">{{ bl.bucketTime }}</td>
-                  <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
+                  <td :class="txDetailItem.type === 'refund' ? 'amount-positive' : 'amount-negative'">{{ txDetailItem.type === 'refund' ? '+' : '-' }}¥{{ bl.deductAmount.toFixed(2) }}</td>
                   <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
                 </tr>
               </tbody>
