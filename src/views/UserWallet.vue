@@ -2334,7 +2334,7 @@ const openSettlementFlow = (item: MerchantSign) => {
             <button class="segmented-btn" :class="{ active: userFlowTab === 'transaction' }" @click="userFlowTab = 'transaction'">交易流水</button>
           </div>
 
-          <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'recharge'">
+          <table class="data-table table-nowrap" style="margin-top: 16px" v-if="userFlowTab === 'recharge'">
             <thead>
               <tr>
                 <th>充值单号</th>
