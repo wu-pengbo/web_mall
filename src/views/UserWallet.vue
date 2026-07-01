@@ -1,10 +1,11 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 
 // ==================== 侧边栏导航（分组结构，对齐积分管理） ====================
 const menuList = [
   { key: 'wallet_overview', label: '钱包概览' },
   { key: 'wallet_config', label: '钱包设置' },
+  { key: 'wallet_merchant_sign', label: '商户签约' },
   { key: 'wallet_recharge_plan', label: '充值方案' },
   { key: 'wallet_user', label: '用户钱包' },
   { key: 'wallet_ledger', label: '交易流水' },
@@ -902,6 +903,154 @@ const showTxDetail = (item: WalletTransaction) => {
 const txTypeLabel: Record<string, string> = {
   recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结',
 }
+
+// ==================== 模块：商户签约 ====================
+interface MerchantSign {
+  id: string
+  merchantName: string
+  status: 'signed' | 'terminated'
+  contactPerson: string
+  contactPhone: string
+  signTime: string
+  terminateTime?: string
+  remark?: string
+}
+
+const signList = ref<MerchantSign[]>([
+  { id: 'ms-001', merchantName: '平台自营商户', status: 'signed', contactPerson: '张三', contactPhone: '138****0001', signTime: '2026-01-15', terminateTime: '', remark: '' },
+  { id: 'ms-002', merchantName: 'XX数码旗舰店', status: 'signed', contactPerson: '李四', contactPhone: '139****0002', signTime: '2026-03-20', terminateTime: '', remark: '' },
+  { id: 'ms-003', merchantName: 'XX服饰专营店', status: 'terminated', contactPerson: '王五', contactPhone: '137****0003', signTime: '2025-11-01', terminateTime: '2026-04-30', remark: '合作到期' },
+])
+
+const signFilter = reactive({
+  keyword: '',
+  status: '',
+})
+
+const signStatusOptions = [
+  { value: '', label: '全部状态' },
+  { value: 'signed', label: '已签约' },
+  { value: 'terminated', label: '已解约' },
+]
+
+const filteredSignList = computed(() => {
+  return signList.value.filter((s) => {
+    const kw = signFilter.keyword
+    const matchKw = !kw || s.merchantName.includes(kw) || s.contactPerson.includes(kw) || s.contactPhone.includes(kw)
+    const matchStatus = !signFilter.status || s.status === signFilter.status
+    return matchKw && matchStatus
+  })
+})
+
+const showSignModal = ref(false)
+const isEditSign = ref(false)
+const editingSignId = ref('')
+const signForm = reactive({
+  merchantName: '',
+  contactPerson: '',
+  contactPhone: '',
+  remark: '',
+})
+
+const openSignModal = (item?: MerchantSign) => {
+  if (item) {
+    isEditSign.value = true
+    editingSignId.value = item.id
+    signForm.merchantName = item.merchantName
+    signForm.contactPerson = item.contactPerson
+    signForm.contactPhone = item.contactPhone
+    signForm.remark = item.remark || ''
+  } else {
+    isEditSign.value = false
+    editingSignId.value = ''
+    signForm.merchantName = ''
+    signForm.contactPerson = ''
+    signForm.contactPhone = ''
+    signForm.remark = ''
+  }
+  showSignModal.value = true
+}
+
+const closeSignModal = () => {
+  showSignModal.value = false
+}
+
+const submitSign = () => {
+  if (!signForm.merchantName) {
+    alert('请选择商户')
+    return
+  }
+  if (isEditSign.value) {
+    const target = signList.value.find((s) => s.id === editingSignId.value)
+    if (target) {
+      target.merchantName = signForm.merchantName
+      target.contactPerson = signForm.contactPerson
+      target.contactPhone = signForm.contactPhone
+      target.remark = signForm.remark
+    }
+    alert('签约信息已更新')
+  } else {
+    const newSign: MerchantSign = {
+      id: 'ms-' + String(Date.now()),
+      merchantName: signForm.merchantName,
+      status: 'signed',
+      contactPerson: signForm.contactPerson,
+      contactPhone: signForm.contactPhone,
+      signTime: new Date().toISOString().slice(0, 10),
+      terminateTime: '',
+      remark: signForm.remark,
+    }
+    signList.value.unshift(newSign)
+    alert('签约成功')
+  }
+  closeSignModal()
+}
+
+const terminateSign = (item: MerchantSign) => {
+  if (confirm('确认与「' + item.merchantName + '」解约？解约后该商户将不再参与结算。')) {
+    item.status = 'terminated'
+    item.terminateTime = new Date().toISOString().slice(0, 10)
+    alert('已解约')
+  }
+}
+
+// ==================== 收款流水 ====================
+const showSettlementModal = ref(false)
+const settlementMerchant = ref<MerchantSign | null>(null)
+const settlementTab = ref<'consume' | 'refund'>('consume')
+
+const settlementConsumeRecords = computed(() => {
+  if (!settlementMerchant.value) return []
+  return mockTransactions.value.filter(
+    (tx) => tx.merchant === settlementMerchant.value!.merchantName && tx.type === 'consume',
+  )
+})
+
+const settlementRefundRecords = computed(() => {
+  if (!settlementMerchant.value) return []
+  return mockTransactions.value.filter(
+    (tx) => tx.merchant === settlementMerchant.value!.merchantName && tx.type === 'refund',
+  )
+})
+
+const settlementTotalConsume = computed(() => {
+  return settlementConsumeRecords.value.reduce((sum, r) => sum + Math.abs(r.amount), 0)
+})
+
+const settlementTotalRefund = computed(() => {
+  return settlementRefundRecords.value.reduce((sum, r) => sum + Math.abs(r.amount), 0)
+})
+
+const settlementNet = computed(() => {
+  return settlementTotalConsume.value - settlementTotalRefund.value
+})
+
+const openSettlementFlow = (item: MerchantSign) => {
+  settlementMerchant.value = item
+  settlementTab.value = 'consume'
+  showSettlementModal.value = true
+}
+
 </script>
 
 <template>
@@ -1215,6 +1364,194 @@ const txTypeLabel: Record<string, string> = {
           </template>
         </div>
       </div><!-- ===== 充值方案 ===== -->
+
+      <!-- ===== 商户签约 ===== -->
+      <div v-if="activeMenu === 'wallet_merchant_sign'" class="content-panel">
+        <div class="panel-header">
+          <h2>商户签约</h2>
+          <button class="btn btn-primary" @click="openSignModal()">+ 新增签约</button>
+        </div>
+        <div class="panel-body">
+          <div class="filter-bar">
+            <div class="filter-item">
+              <label>商户名称</label>
+              <input type="text" class="form-input" v-model="signFilter.keyword" placeholder="商户名称/联系人/电话" style="width: 200px" />
+            </div>
+            <div class="filter-item">
+              <label>签约状态</label>
+              <select class="form-select" v-model="signFilter.status" style="width: 120px">
+                <option v-for="opt in signStatusOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>商户名称</th>
+                <th>联系人</th>
+                <th>联系电话</th>
+                <th>签约状态</th>
+                <th>签约时间</th>
+                <th>解约时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in filteredSignList" :key="item.id">
+                <td>{{ item.merchantName }}</td>
+                <td>{{ item.contactPerson || '-' }}</td>
+                <td>{{ item.contactPhone || '-' }}</td>
+                <td>
+                  <span :class="'status-badge ' + (item.status === 'signed' ? 'on' : 'off')">
+                    {{ item.status === 'signed' ? '已签约' : '已解约' }}
+                  </span>
+                </td>
+                <td>{{ item.signTime || '-' }}</td>
+                <td>{{ item.terminateTime || '-' }}</td>
+                <td>
+                  <a class="action-link" @click="openSignModal(item)">编辑</a>
+                  <a class="action-link primary" @click="openSettlementFlow(item)" style="margin-left: 8px">收款流水</a>
+                  <a v-if="item.status === 'signed'" class="action-link danger" @click="terminateSign(item)" style="margin-left: 8px">解约</a>
+                </td>
+              </tr>
+              <tr v-if="filteredSignList.length === 0">
+                <td colspan="7" class="empty-text">暂无签约数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 新增/编辑签约弹窗 -->
+        <div class="modal-overlay" v-if="showSignModal" @click="closeSignModal">
+          <div class="modal-content modal-md" @click.stop>
+            <div class="modal-header">
+              <h3>{{ isEditSign ? '编辑签约' : '新增签约' }}</h3>
+              <div class="modal-close" @click="closeSignModal">
+                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+              </div>
+            </div>
+            <div class="modal-body">
+              <div class="form-item">
+                <label class="form-label required">商户</label>
+                <select class="form-select" v-model="signForm.merchantName" :disabled="isEditSign" style="width: 100%">
+                  <option value="">请选择商户</option>
+                  <option v-for="m in mockMerchants" :key="m.id" :value="m.name">{{ m.name }}</option>
+                </select>
+              </div>
+              <div class="form-item">
+                <label class="form-label">联系人</label>
+                <input type="text" class="form-input" v-model="signForm.contactPerson" placeholder="选填" style="width: 100%" />
+              </div>
+              <div class="form-item">
+                <label class="form-label">联系电话</label>
+                <input type="text" class="form-input" v-model="signForm.contactPhone" placeholder="选填" style="width: 100%" />
+              </div>
+              <div class="form-item">
+                <label class="form-label">备注</label>
+                <textarea class="form-textarea" v-model="signForm.remark" rows="2" placeholder="选填" style="width: 100%"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-default" @click="closeSignModal">取消</button>
+              <button class="btn btn-primary" @click="submitSign">{{ isEditSign ? '保存' : '确认签约' }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 收款流水弹窗 -->
+        <div class="modal-overlay" v-if="showSettlementModal" @click="showSettlementModal = false">
+          <div class="modal-content modal-lg" @click.stop>
+            <div class="modal-header">
+              <h3>收款流水 - {{ settlementMerchant?.merchantName }}</h3>
+              <div class="modal-close" @click="showSettlementModal = false">
+                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+              </div>
+            </div>
+            <div class="modal-body">
+              <div class="settlement-summary">
+                <div class="settlement-summary-row">
+                  <div class="settlement-summary-item">
+                    <span class="settlement-summary-label">消费总额</span>
+                    <span class="settlement-summary-value consume">¥{{ settlementTotalConsume.toLocaleString() }}</span>
+                  </div>
+                  <div class="settlement-summary-item">
+                    <span class="settlement-summary-label">退款总额</span>
+                    <span class="settlement-summary-value refund">¥{{ settlementTotalRefund.toLocaleString() }}</span>
+                  </div>
+                  <div class="settlement-summary-item net">
+                    <span class="settlement-summary-label">净结算</span>
+                    <span class="settlement-summary-value" :class="settlementNet >= 0 ? 'positive' : 'negative'">¥{{ settlementNet.toLocaleString() }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-bar" style="margin-top: 20px">
+                <button class="tab-btn" :class="{ active: settlementTab === 'consume' }" @click="settlementTab = 'consume'">消费流水</button>
+                <button class="tab-btn" :class="{ active: settlementTab === 'refund' }" @click="settlementTab = 'refund'">退款流水</button>
+              </div>
+
+              <table class="data-table table-nowrap" v-if="settlementTab === 'consume'">
+                <thead>
+                  <tr>
+                    <th>流水号</th>
+                    <th>用户ID</th>
+                    <th>手机号</th>
+                    <th>消费金额</th>
+                    <th>关联订单</th>
+                    <th>时间</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in settlementConsumeRecords" :key="r.id">
+                    <td>{{ r.transactionNo }}</td>
+                    <td>{{ r.uid }}</td>
+                    <td>{{ r.phone }}</td>
+                    <td class="amount-positive">¥{{ Math.abs(r.amount).toLocaleString() }}</td>
+                    <td>{{ r.relatedNo }}</td>
+                    <td class="time-text">{{ r.time }}</td>
+                    <td>{{ r.remark || '-' }}</td>
+                  </tr>
+                  <tr v-if="settlementConsumeRecords.length === 0">
+                    <td colspan="7" class="empty-text">暂无消费流水</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table class="data-table table-nowrap" v-if="settlementTab === 'refund'">
+                <thead>
+                  <tr>
+                    <th>流水号</th>
+                    <th>用户ID</th>
+                    <th>手机号</th>
+                    <th>退款金额</th>
+                    <th>关联订单</th>
+                    <th>时间</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in settlementRefundRecords" :key="r.id">
+                    <td>{{ r.transactionNo }}</td>
+                    <td>{{ r.uid }}</td>
+                    <td>{{ r.phone }}</td>
+                    <td class="amount-negative">¥{{ Math.abs(r.amount).toLocaleString() }}</td>
+                    <td>{{ r.relatedNo }}</td>
+                    <td class="time-text">{{ r.time }}</td>
+                    <td>{{ r.remark || '-' }}</td>
+                  </tr>
+                  <tr v-if="settlementRefundRecords.length === 0">
+                    <td colspan="7" class="empty-text">暂无退款流水</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeMenu === 'wallet_recharge_plan'" class="content-panel">
         <div class="panel-header">
           <h2>充值方案</h2>
