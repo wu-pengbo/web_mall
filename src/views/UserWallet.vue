@@ -1488,7 +1488,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 
         <!-- 收款流水弹窗 -->
         <div class="modal-overlay" v-if="showSettlementModal" @click="showSettlementModal = false">
-          <div class="modal-content modal-lg" @click.stop>
+          <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;" @click.stop>
             <div class="modal-header">
               <h3>收款流水 - {{ settlementMerchant?.merchantName }}</h3>
               <div class="modal-close" @click="showSettlementModal = false">
