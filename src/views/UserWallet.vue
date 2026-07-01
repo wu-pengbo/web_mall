@@ -1980,6 +1980,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tr>
                   <td>{{ tx.transactionNo }}</td>
                   <td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td>
+                  <td>{{ tx.merchant }}</td>
                   <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
                   <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
                   <td>¥{{ tx.balance.toFixed(2) }}</td>
