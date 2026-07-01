@@ -2337,21 +2337,29 @@ const openSettlementFlow = (item: MerchantSign) => {
           <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'recharge'">
             <thead>
               <tr>
-                <th>流水号</th>
-                <th>充值金额</th>
-                <th>余额</th>
-                <th>时间</th>
+                <th>充值单号</th>
+                <th>支付单号</th>
+                <th>支付金额</th>
+                <th>到账金额</th>
+                <th>支付状态</th>
+                <th>充值状态</th>
+                <th>申请时间</th>
+                <th>入账时间</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tx in userFlowTxs.filter(t => t.type === 'recharge')" :key="tx.id">
-                <td>{{ tx.transactionNo }}</td>
-                <td class="amount-positive">+¥{{ tx.amount.toFixed(2) }}</td>
-                <td>¥{{ tx.balance.toFixed(2) }}</td>
-                <td class="time-text">{{ tx.time }}</td>
+              <tr v-for="r in mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid)" :key="r.id">
+                <td>{{ r.rechargeNo }}</td>
+                <td>{{ r.payOrderNo || '-' }}</td>
+                <td class="amount-positive">+¥{{ r.amount.toFixed(2) }}</td>
+                <td class="amount-positive">+¥{{ r.receivedAmount.toFixed(2) }}</td>
+                <td><span class="status-tag" :class="r.paymentStatus">{{ r.paymentStatus === 'paid' ? '已支付' : r.paymentStatus === 'pending' ? '待支付' : r.paymentStatus === 'failed' ? '支付失败' : '已关闭' }}</span></td>
+                <td><span class="status-tag" :class="r.rechargeStatus">{{ r.rechargeStatus === 'success' ? '已入账' : r.rechargeStatus === 'pending' ? '待入账' : '入账失败' }}</span></td>
+                <td class="time-text">{{ r.applyTime }}</td>
+                <td class="time-text">{{ r.rechargeTime || '-' }}</td>
               </tr>
-              <tr v-if="userFlowTxs.filter(t => t.type === 'recharge').length === 0">
-                <td colspan="4" class="empty-text">暂无充值记录</td>
+              <tr v-if="mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid).length === 0">
+                <td colspan="8" class="empty-text">暂无充值记录</td>
               </tr>
             </tbody>
           </table>
