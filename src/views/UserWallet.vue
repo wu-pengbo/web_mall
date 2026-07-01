@@ -1496,20 +1496,18 @@ const openSettlementFlow = (item: MerchantSign) => {
               </div>
             </div>
             <div class="modal-body">
-              <div class="settlement-summary">
-                <div class="settlement-summary-row">
-                  <div class="settlement-summary-item">
-                    <span class="settlement-summary-label">消费总额</span>
-                    <span class="settlement-summary-value consume">¥{{ settlementTotalConsume.toLocaleString() }}</span>
-                  </div>
-                  <div class="settlement-summary-item">
-                    <span class="settlement-summary-label">退款总额</span>
-                    <span class="settlement-summary-value refund">¥{{ settlementTotalRefund.toLocaleString() }}</span>
-                  </div>
-                  <div class="settlement-summary-item net">
-                    <span class="settlement-summary-label">净结算</span>
-                    <span class="settlement-summary-value" :class="settlementNet >= 0 ? 'positive' : 'negative'">¥{{ settlementNet.toLocaleString() }}</span>
-                  </div>
+              <div class="settle-stats">
+                <div class="settle-stat-card consume">
+                  <div class="settle-stat-label">消费总额</div>
+                  <div class="settle-stat-value">¥{{ settlementTotalConsume.toLocaleString() }}</div>
+                </div>
+                <div class="settle-stat-card refund">
+                  <div class="settle-stat-label">退款总额</div>
+                  <div class="settle-stat-value">¥{{ settlementTotalRefund.toLocaleString() }}</div>
+                </div>
+                <div class="settle-stat-card" :class="settlementNet >= 0 ? 'net-positive' : 'net-negative'">
+                  <div class="settle-stat-label">净结算</div>
+                  <div class="settle-stat-value">{{ settlementNet >= 0 ? '+' : '' }}¥{{ settlementNet.toLocaleString() }}</div>
                 </div>
               </div>
 
@@ -4082,6 +4080,66 @@ const openSettlementFlow = (item: MerchantSign) => {
 .consume-type-tag { font-size: 13px !important; padding: 1px 5px !important; }
 .order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
+
+/* ==================== 收款流水统计卡片 ==================== */
+.settle-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.settle-stat-card {
+  flex: 1;
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  border-radius: 8px;
+  padding: 16px 20px;
+  transition: box-shadow 0.2s ease;
+}
+.settle-stat-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.settle-stat-label {
+  font-size: 12px;
+  color: #86909C;
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.settle-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1D2129;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+  letter-spacing: -0.02em;
+}
+.settle-stat-card.consume {
+  background: #F0F5FF;
+  border-color: #D6E4FF;
+}
+.settle-stat-card.consume .settle-stat-value {
+  color: #4F6EF7;
+}
+.settle-stat-card.refund {
+  background: #FFF7E6;
+  border-color: #FFE0B2;
+}
+.settle-stat-card.refund .settle-stat-value {
+  color: #D46B08;
+}
+.settle-stat-card.net-positive {
+  background: #E8FFE8;
+  border-color: #B7EB8F;
+}
+.settle-stat-card.net-positive .settle-stat-value {
+  color: #00A854;
+}
+.settle-stat-card.net-negative {
+  background: #FFF0F0;
+  border-color: #FFCCC7;
+}
+.settle-stat-card.net-negative .settle-stat-value {
+  color: #CF1322;
+}
 </style>
 
 
