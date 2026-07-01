@@ -2318,7 +2318,7 @@ const openSettlementFlow = (item: MerchantSign) => {
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
       <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;">
         <div class="modal-header">
-          <h3>{{ userFlowWallet?.walletId }} 流水明细 <span :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; margin-left: 8px; vertical-align: middle">{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span></h3>
+          <h3>{{ userFlowWallet?.walletId }} 资金流水 <span :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; margin-left: 8px; vertical-align: middle">{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span></h3>
           <span class="modal-close" @click="userFlowModal = false">
             <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </span>
