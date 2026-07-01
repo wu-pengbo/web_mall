@@ -914,6 +914,7 @@ interface MerchantSign {
   signTime: string
   terminateTime?: string
   remark?: string
+  agreement?: string
 }
 
 const signList = ref<MerchantSign[]>([
@@ -949,6 +950,7 @@ const signForm = reactive({
   merchantName: '',
   contactPerson: '',
   contactPhone: '',
+  agreement: '',
   remark: '',
 })
 
@@ -960,6 +962,7 @@ const openSignModal = (item?: MerchantSign) => {
     signForm.contactPerson = item.contactPerson
     signForm.contactPhone = item.contactPhone
     signForm.remark = item.remark || ''
+    signForm.agreement = item.agreement || ''
   } else {
     isEditSign.value = false
     editingSignId.value = ''
@@ -967,6 +970,7 @@ const openSignModal = (item?: MerchantSign) => {
     signForm.contactPerson = ''
     signForm.contactPhone = ''
     signForm.remark = ''
+    signForm.agreement = ''
   }
   showSignModal.value = true
 }
@@ -974,6 +978,19 @@ const openSignModal = (item?: MerchantSign) => {
 const closeSignModal = () => {
   showSignModal.value = false
 }
+
+const handleAgreementUpload = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.pdf,.jpg,.png'
+  input.onchange = () => {
+    if (input.files && input.files[0]) {
+      signForm.agreement = input.files[0].name
+    }
+  }
+  input.click()
+}
+
 
 const submitSign = () => {
   if (!signForm.merchantName) {
@@ -988,6 +1005,7 @@ const submitSign = () => {
       target.contactPhone = signForm.contactPhone
       target.remark = signForm.remark
     }
+      target.agreement = signForm.agreement
     alert('签约信息已更新')
   } else {
     const newSign: MerchantSign = {
@@ -1000,6 +1018,7 @@ const submitSign = () => {
       terminateTime: '',
       remark: signForm.remark,
     }
+      agreement: signForm.agreement,
     signList.value.unshift(newSign)
     alert('签约成功')
   }
@@ -1451,6 +1470,13 @@ const openSettlementFlow = (item: MerchantSign) => {
               <div class="form-item">
                 <label class="form-label">备注</label>
                 <textarea class="form-textarea" v-model="signForm.remark" rows="2" placeholder="选填" style="width: 100%"></textarea>
+              <div class="form-item">
+                <label class="form-label">签约协议</label>
+                <button class="btn btn-default" style="width: auto; height: 32px; font-size: 13px;" @click="handleAgreementUpload">
+                  上传协议扫描件
+                </button>
+                <span v-if="signForm.agreement" style="margin-left: 8px; font-size: 13px; color: #00A854;">已上传：{{ signForm.agreement }}</span>
+              </div>
               </div>
             </div>
             <div class="modal-footer">
