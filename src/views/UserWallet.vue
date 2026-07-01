@@ -2316,17 +2316,29 @@ const openSettlementFlow = (item: MerchantSign) => {
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
       <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;">
         <div class="modal-header">
-          <h3>{{ userFlowWallet?.walletId }} 流水明细</h3>
+          <h3>{{ userFlowWallet?.walletId }} 流水明细 <span :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; margin-left: 8px; vertical-align: middle">{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span></h3>
           <span class="modal-close" @click="userFlowModal = false">
             <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </span>
         </div>
         <div class="modal-body">
-          <div class="detail-grid" v-if="userFlowWallet">
-            <div><label>用户</label><span>{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</span></div>
-            <div><label>当前余额</label><span>¥{{ userFlowWallet.balance.toFixed(2) }}</span></div>
-            <div><label>冻结金额</label><span>{{ userFlowWallet.frozenAmount > 0 ? '¥' + userFlowWallet.frozenAmount.toFixed(2) : '-' }}</span></div>
-            <div><label>状态</label><span>{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span></div>
+          <div style="display: flex; gap: 16px; margin-bottom: 16px;" v-if="userFlowWallet">
+            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
+              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">用户</div>
+              <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</div>
+            </div>
+            <div style="flex: 1; background: #F0F5FF; border: 1px solid #D6E4FF; border-radius: 8px; padding: 14px 16px;">
+              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">当前余额</div>
+              <div style="font-size: 20px; color: #4F6EF7; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.balance.toFixed(2) }}</div>
+            </div>
+            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
+              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">冻结金额</div>
+              <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.frozenAmount > 0 ? '¥' + userFlowWallet.frozenAmount.toFixed(2) : '-' }}</div>
+            </div>
+            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
+              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">状态</div>
+              <div><span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span></div>
+            </div>
           </div>
           <div class="segmented-control" style="margin-top: 16px">
             <button class="segmented-btn" :class="{ active: userFlowTab === 'recharge' }" @click="userFlowTab = 'recharge'">充值流水</button>
