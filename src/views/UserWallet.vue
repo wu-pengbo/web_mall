@@ -805,7 +805,7 @@ const mockTransactions = ref<WalletTransaction[]>([
     type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001',
     merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费',
     bucketLogs: [
-      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 100, remainAmount: 400 },
+      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 100, remainAmount: 0 },
       { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 312 },
     ],
   },
