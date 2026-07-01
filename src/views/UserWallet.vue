@@ -1943,6 +1943,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <option value="">全部</option>
                 <option value="consume">消费</option>
                 <option value="refund">退款</option>
+              </select>
             </div>
             <div class="filter-item">
               <label>商户</label>
