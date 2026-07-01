@@ -552,6 +552,9 @@ const toggleUserFlowBucket = (txId: string) => {
   userFlowExpandedTxId.value = userFlowExpandedTxId.value === txId ? null : txId
 }
 
+const userFlowTab = ref<'recharge' | 'transaction'>('recharge')
+
+
 const freezeModal = ref(false)
 const freezeWalletTarget = ref<UserWallet | null>(null)
 const freezeMode = ref<'freeze' | 'unfreeze'>('freeze')
@@ -2325,7 +2328,34 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div><label>冻结金额</label><span>{{ userFlowWallet.frozenAmount > 0 ? '¥' + userFlowWallet.frozenAmount.toFixed(2) : '-' }}</span></div>
             <div><label>状态</label><span>{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span></div>
           </div>
-          <table class="data-table" style="margin-top: 16px">
+          <div class="segmented-control" style="margin-top: 16px">
+            <button class="segmented-btn" :class="{ active: userFlowTab === 'recharge' }" @click="userFlowTab = 'recharge'">充值流水</button>
+            <button class="segmented-btn" :class="{ active: userFlowTab === 'transaction' }" @click="userFlowTab = 'transaction'">交易流水</button>
+          </div>
+
+          <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'recharge'">
+            <thead>
+              <tr>
+                <th>流水号</th>
+                <th>充值金额</th>
+                <th>余额</th>
+                <th>时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tx in userFlowTxs.filter(t => t.type === 'recharge')" :key="tx.id">
+                <td>{{ tx.transactionNo }}</td>
+                <td class="amount-positive">+¥{{ tx.amount.toFixed(2) }}</td>
+                <td>¥{{ tx.balance.toFixed(2) }}</td>
+                <td class="time-text">{{ tx.time }}</td>
+              </tr>
+              <tr v-if="userFlowTxs.filter(t => t.type === 'recharge').length === 0">
+                <td colspan="4" class="empty-text">暂无充值记录</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'transaction'">
             <thead>
               <tr>
                 <th style="width: 30px"></th>
@@ -2337,14 +2367,10 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tr>
             </thead>
             <tbody>
-              <template v-for="tx in userFlowTxs" :key="tx.id">
+              <template v-for="tx in userFlowTxs.filter(t => t.type !== 'recharge')" :key="tx.id">
                 <tr>
                   <td>
-                    <span
-                      v-if="tx.bucketLogs && tx.bucketLogs.length"
-                      class="expand-btn"
-                      @click="toggleUserFlowBucket(tx.id)"
-                    >{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span>
+                    <span v-if="tx.bucketLogs && tx.bucketLogs.length" class="expand-btn" @click="toggleUserFlowBucket(tx.id)">{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span>
                   </td>
                   <td>{{ tx.transactionNo }}</td>
                   <td>{{ txTypeLabel[tx.type] }}</td>
@@ -2356,13 +2382,13 @@ const openSettlementFlow = (item: MerchantSign) => {
                   <td></td>
                   <td colspan="5" style="padding: 0">
                     <div class="bucket-panel">
-                      <div class="bucket-header">资金来源（先进先出）</div>
+                      <div class="bucket-header">{{ tx.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}</div>
                       <table class="bucket-table">
                         <thead>
                           <tr>
                             <th>充值批次</th>
                             <th>充值时间</th>
-                            <th>扣减金额</th>
+                            <th>{{ tx.type === 'refund' ? '回充金额' : '扣减金额' }}</th>
                             <th>批次剩余</th>
                           </tr>
                         </thead>
@@ -2370,11 +2396,20 @@ const openSettlementFlow = (item: MerchantSign) => {
                           <tr v-for="(bl, idx) in tx.bucketLogs" :key="idx">
                             <td>{{ bl.bucketNo }}</td>
                             <td class="time-text">{{ bl.bucketTime }}</td>
-                            <td class="amount-negative">-¥{{ bl.deductAmount.toFixed(2) }}</td>
+                            <td :class="tx.type === 'refund' ? 'amount-positive' : 'amount-negative'">{{ tx.type === 'refund' ? '+' : '-' }}¥{{ bl.deductAmount.toFixed(2) }}</td>
                             <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="userFlowTxs.filter(t => t.type !== 'recharge').length === 0">
+                <td colspan="6" class="empty-text">暂无交易记录</td>
+              </tr>
+            </tbody>
+          </table>
                     </div>
                   </td>
                 </tr>
