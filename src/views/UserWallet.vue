@@ -615,14 +615,9 @@ const confirmFreezeAction = () => {
   
   if (isFreeze) {
     target.frozenAmount += freezeForm.amount
-    target.status = 'frozen'
     target.frozenReason = `${reasonText}：冻结 ¥${freezeForm.amount.toFixed(2)}`
   } else {
     target.frozenAmount -= freezeForm.amount
-    if (target.frozenAmount <= 0) {
-      target.status = 'normal'
-      target.frozenReason = undefined
-    }
   }
   
   // Generate transaction record
@@ -644,6 +639,24 @@ const confirmFreezeAction = () => {
   
   freezeModal.value = false
   alert(`钱包 ${target.walletId} 已${isFreeze ? '冻结' : '解冻'}（${isFreeze ? '冻结' : '解冻'}金额：¥${freezeForm.amount.toFixed(2)}）`)
+
+
+const freezeWallet = (item: UserWallet) => {
+    if (confirm(`确认冻结钱包「${item.walletId}」？冻结后该用户无法进行消费、提现等操作。`)) {
+    item.status = 'frozen'
+    item.frozenReason = '管理员冻结钱包'
+    alert('钱包已冻结')
+  }
+}
+
+const unfreezeWallet = (item: UserWallet) => {
+    if (confirm(`确认解冻钱包「${item.walletId}」？`)) {
+    item.status = 'normal'
+    item.frozenReason = undefined
+    alert('钱包已解冻')
+  }
+}
+
 }
 
 // ==================== 模块4：充值管理 ====================
@@ -1763,8 +1776,10 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
-                  <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结</span>
-                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="showFreezeModal(w, 'unfreeze')" style="margin-left: 8px">解冻</span>
+                  <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结余额</span>
+                  <span v-if="w.status === 'normal'" class="action-link danger" @click="freezeWallet(w)" style="margin-left: 8px">冻结钱包</span>
+                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="showFreezeModal(w, 'unfreeze')" style="margin-left: 8px">解冻余额</span>
+                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="unfreezeWallet(w)" style="margin-left: 8px">解冻钱包</span>
                 </td>
               </tr>
               <tr v-if="filteredWallets.length === 0">
@@ -2471,7 +2486,7 @@ const openSettlementFlow = (item: MerchantSign) => {
     <div v-if="freezeModal" class="modal-overlay" @click.self="freezeModal = false">
       <div class="modal-content modal-md">
         <div class="modal-header">
-          <h3>{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}钱包</h3>
+          <h3>{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}余额</h3>
           <span class="modal-close" @click="freezeModal = false">
             <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
           </span>
