@@ -1772,7 +1772,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td class="price-text">¥{{ w.balance.toFixed(2) }}</td>
                 <td>{{ w.frozenAmount > 0 ? '¥' + w.frozenAmount.toFixed(2) : '-' }}</td>
                 <td>¥{{ w.totalRecharge.toFixed(2) }}</td>
-                <td style="white-space: nowrap;"><span class="status-tag" :class="w.status" style="margin-right: 8px;">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span><label class="toggle-switch" style="vertical-align: middle;" :title="w.status === 'normal' ? '冻结钱包' : '解冻钱包'"><input type="checkbox" :checked="w.status === 'normal'" @click.prevent="w.status === 'normal' ? freezeWallet(w) : unfreezeWallet(w)" /><span class="toggle-slider"></span></label></td>
+                <td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span></td>
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
@@ -2360,7 +2360,7 @@ const openSettlementFlow = (item: MerchantSign) => {
             </div>
             <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
               <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">状态</div>
-              <div><span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span></div>
+              <div><span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span> <label class="toggle-switch" style="vertical-align: middle; margin-left: 8px;" :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'"><input type="checkbox" :checked="userFlowWallet.status === 'normal'" @click.prevent="userFlowWallet.status === 'normal' ? freezeWallet(userFlowWallet) : unfreezeWallet(userFlowWallet)" /><span class="toggle-slider"></span></label></div>
             </div>
           </div>
           <div class="segmented-control" style="margin-top: 16px">
