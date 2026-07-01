@@ -1511,11 +1511,10 @@ const openSettlementFlow = (item: MerchantSign) => {
                 </div>
               </div>
 
-              <div class="tab-bar" style="margin-top: 20px">
-                <button class="tab-btn" :class="{ active: settlementTab === 'consume' }" @click="settlementTab = 'consume'">消费流水</button>
-                <button class="tab-btn" :class="{ active: settlementTab === 'refund' }" @click="settlementTab = 'refund'">退款流水</button>
+              <div class="segmented-control">
+                <button class="segmented-btn" :class="{ active: settlementTab === 'consume' }" @click="settlementTab = 'consume'">消费流水</button>
+                <button class="segmented-btn" :class="{ active: settlementTab === 'refund' }" @click="settlementTab = 'refund'">退款流水</button>
               </div>
-
               <table class="data-table table-nowrap" v-if="settlementTab === 'consume'">
                 <thead>
                   <tr>
@@ -4141,6 +4140,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   color: #CF1322;
 }
 </style>
+
 
 
 
