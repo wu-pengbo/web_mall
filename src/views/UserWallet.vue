@@ -2553,7 +2553,6 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tbody>
             </table>
           </div>
-        </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="freezeModal = false">取消</button>
           <button class="btn btn-primary" @click="confirmFreezeAction" :disabled="!freezeForm.amount || !freezeForm.reason">{{ freezeMode === 'freeze' ? '确认冻结' : '确认解冻' }}</button>
