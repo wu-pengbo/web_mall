@@ -2410,12 +2410,6 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tr>
             </tbody>
           </table>
-                    </div>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
