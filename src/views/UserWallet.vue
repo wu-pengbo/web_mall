@@ -1772,7 +1772,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td class="price-text">¥{{ w.balance.toFixed(2) }}</td>
                 <td>{{ w.frozenAmount > 0 ? '¥' + w.frozenAmount.toFixed(2) : '-' }}</td>
                 <td>¥{{ w.totalRecharge.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span> <span v-if="w.status === 'normal'" class="action-link danger" @click="freezeWallet(w)" style="margin-left: 8px">冻结钱包</span><span v-if="w.status === 'frozen'" class="action-link primary" @click="unfreezeWallet(w)" style="margin-left: 8px">解冻钱包</span></td>
+                <td style="white-space: nowrap;"><span class="status-tag" :class="w.status" style="margin-right: 8px;">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span><label class="toggle-switch" style="vertical-align: middle;" :title="w.status === 'normal' ? '冻结钱包' : '解冻钱包'"><input type="checkbox" :checked="w.status === 'normal'" @click.prevent="w.status === 'normal' ? freezeWallet(w) : unfreezeWallet(w)" /><span class="toggle-slider"></span></label></td>
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
