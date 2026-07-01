@@ -2559,7 +2559,6 @@ const openSettlementFlow = (item: MerchantSign) => {
         </div>
       </div>
     </div>
-    </div>
     <!-- ==================== 弹窗：充值详情 ==================== -->
     <div v-if="rechargeDetailModal" class="modal-overlay" @click.self="rechargeDetailModal = false">
       <div class="modal-content modal-md">
