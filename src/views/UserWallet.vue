@@ -2156,8 +2156,7 @@ const openSettlementFlow = (item: MerchantSign) => {
               <button class="btn btn-primary btn-xs" @click="openActivityCreate" style="margin-top: 8px">+ 添加活动</button>
             </div>
           </div>
-        </div>
-        <div class="modal-footer">
+                  <div class="modal-footer">
           <button class="btn btn-default" @click="planEditModal = false">取消</button>
           <button class="btn btn-primary" @click="savePlanEdit">保存方案</button>
         </div>
@@ -2525,6 +2524,34 @@ const openSettlementFlow = (item: MerchantSign) => {
               </select>
               <textarea v-if="freezeForm.reason === 'other'" class="form-textarea" v-model="freezeForm.reasonDetail" rows="2" placeholder="请补充详细描述" style="width: 100%"></textarea>
             </div>
+          </div>
+        </div>
+        <!-- 冻结流水 -->
+          <div style="margin-top: 20px; border-top: 1px solid #E5E6EB; padding-top: 16px;">
+            <div style="font-size: 13px; font-weight: 600; color: #1D2129; margin-bottom: 12px;">冻结流水</div>
+            <table class="bucket-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>流水号</th>
+                  <th>操作</th>
+                  <th>金额</th>
+                  <th>原因</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ftx in mockTransactions.filter(t => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid)" :key="ftx.id">
+                  <td>{{ ftx.transactionNo }}</td>
+                  <td>{{ ftx.amount < 0 ? '冻结' : '解冻' }}</td>
+                  <td :class="ftx.amount < 0 ? 'amount-negative' : 'amount-positive'">¥{{ Math.abs(ftx.amount).toFixed(2) }}</td>
+                  <td>{{ ftx.remark || '-' }}</td>
+                  <td class="time-text">{{ ftx.time }}</td>
+                </tr>
+                <tr v-if="mockTransactions.filter(t => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid).length === 0">
+                  <td colspan="5" style="text-align: center; color: #86909C; padding: 20px;">暂无冻结记录</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="modal-footer">
