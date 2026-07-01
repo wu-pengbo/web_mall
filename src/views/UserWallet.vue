@@ -3091,6 +3091,12 @@ const openSettlementFlow = (item: MerchantSign) => {
 .data-table tbody tr {
   transition: background-color 0.15s ease;
 }
+
+.data-table.table-nowrap th,
+.data-table.table-nowrap td {
+  white-space: nowrap;
+}
+
 .data-table tbody tr:hover {
   background-color: #FAFAFA;
 }
