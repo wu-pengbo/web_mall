@@ -877,14 +877,15 @@ const mockTransactions = ref<WalletTransaction[]>([
   },
 ])
 
-const ledgerSearchForm = reactive({ keyword: '', type: '' })
+const ledgerSearchForm = reactive({ keyword: '', type: '', merchant: '' })
 
 const filteredLedger = computed(() => {
   return mockTransactions.value.filter(tx => {
     const kw = ledgerSearchForm.keyword
     const matchKw = !kw || tx.transactionNo.includes(kw) || tx.uid.includes(kw) || tx.phone.includes(kw)
     const matchType = !ledgerSearchForm.type || tx.type === ledgerSearchForm.type
-    return matchKw && matchType && (tx.type === 'consume' || tx.type === 'refund')
+    const matchMerchant = !ledgerSearchForm.merchant || tx.merchant === ledgerSearchForm.merchant
+    return matchKw && matchType && matchMerchant && (tx.type === 'consume' || tx.type === 'refund')
   })
 })
 
@@ -1942,6 +1943,12 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <option value="">全部</option>
                 <option value="consume">消费</option>
                 <option value="refund">退款</option>
+            </div>
+            <div class="filter-item">
+              <label>商户</label>
+              <select class="form-select" v-model="ledgerSearchForm.merchant" style="width: 140px">
+                <option value=''>全部商户</option>
+                <option v-for='m in merchantOptions' :key='m' :value='m'>{{ m }}</option>
               </select>
             </div>
             <div class="filter-item">
@@ -1956,6 +1963,7 @@ const openSettlementFlow = (item: MerchantSign) => {
               <tr>
                 <th>流水号</th>
                 <th>用户</th>
+                <th>商户</th>
                 <th>交易类型</th>
                 <th>金额</th>
                 <th>余额</th>
