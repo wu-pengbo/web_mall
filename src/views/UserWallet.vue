@@ -2543,7 +2543,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tr v-for="ftx in mockTransactions.filter(t => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid)" :key="ftx.id">
                   <td>{{ ftx.transactionNo }}</td>
                   <td>{{ ftx.amount < 0 ? '冻结' : '解冻' }}</td>
-                  <td :class="ftx.amount &lt; 0 ? 'amount-negative' : 'amount-positive'">¥{{ Math.abs(ftx.amount).toFixed(2) }}</td>
+                  <td class="amount-negative">¥{{ Math.abs(ftx.amount).toFixed(2) }}</td>
                   <td>{{ ftx.remark || '-' }}</td>
                   <td class="time-text">{{ ftx.time }}</td>
                 </tr>
