@@ -2314,7 +2314,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 
     <!-- ==================== 弹窗：用户流水 ==================== -->
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
-      <div class="modal-content modal-lg">
+      <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;">
         <div class="modal-header">
           <h3>{{ userFlowWallet?.walletId }} 流水明细</h3>
           <span class="modal-close" @click="userFlowModal = false">
