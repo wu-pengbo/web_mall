@@ -1777,7 +1777,6 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
                   <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结余额</span>
-                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="showFreezeModal(w, 'unfreeze')" style="margin-left: 8px">解冻余额</span>
                 </td>
               </tr>
               <tr v-if="filteredWallets.length === 0">
