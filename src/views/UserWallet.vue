@@ -552,14 +552,6 @@ const toggleUserFlowBucket = (txId: string) => {
   userFlowExpandedTxId.value = userFlowExpandedTxId.value === txId ? null : txId
 }
 
-
-const rechargeBreakdown: Record<string, { principal: number; bonus: number }> = {
-  'RCH-20260601-001': { principal: 800, bonus: 200 },
-  'RCH-20260520-001': { principal: 400, bonus: 100 },
-  'RCH-20260601-002': { principal: 1200, bonus: 300 },
-  'RCH-20260520-005': { principal: 1600, bonus: 400 },
-}
-
 const userFlowTab = ref<'recharge' | 'withdraw' | 'transaction'>('recharge')
 
 
@@ -1645,7 +1637,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 </td>
               </tr>
               <tr v-if="rechargePlans.length === 0">
-                <td colspan="6" style="text-align: center; color: #86909C; padding: 40px">暂无充值方案，点击上方新增</td>
+                <td colspan="4" style="text-align: center; color: #86909C; padding: 40px">暂无充值方案，点击上方新增</td>
               </tr>
             </tbody>
           </table>
@@ -2346,7 +2338,7 @@ const openSettlementFlow = (item: MerchantSign) => {
             <thead>
               <tr>
                 <th>流水号</th>
-                <th>本金</th><th>赠送</th><th>合计</th>
+                <th>充值金额</th>
                 <th>余额</th>
                 <th>时间</th>
               </tr>
@@ -2354,14 +2346,12 @@ const openSettlementFlow = (item: MerchantSign) => {
             <tbody>
               <tr v-for="tx in userFlowTxs.filter(t => t.type === 'recharge')" :key="tx.id">
                 <td>{{ tx.transactionNo }}</td>
-                <td class="amount-positive">+¥{{ (rechargeBreakdown[tx.relatedRechargeNo]?.principal ?? tx.amount).toFixed(2) }}</td>
-                <td class="amount-positive">+¥{{ (rechargeBreakdown[tx.relatedRechargeNo]?.bonus ?? 0).toFixed(2) }}</td>
                 <td class="amount-positive">+¥{{ tx.amount.toFixed(2) }}</td>
                 <td>¥{{ tx.balance.toFixed(2) }}</td>
                 <td class="time-text">{{ tx.time }}</td>
               </tr>
               <tr v-if="userFlowTxs.filter(t => t.type === 'recharge').length === 0">
-                <td colspan="6" class="empty-text">暂无充值记录</td>
+                <td colspan="4" class="empty-text">暂无充值记录</td>
               </tr>
             </tbody>
           </table>
@@ -2439,7 +2429,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                 </tr>
               </template>
               <tr v-if="userFlowTxs.filter(t => t.type !== 'recharge').length === 0">
-                <td colspan="6" class="empty-text">暂无交易记录</td>
+                <td colspan="4" class="empty-text">暂无交易记录</td>
               </tr>
             </tbody>
           </table>
@@ -4219,6 +4209,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   color: #CF1322;
 }
 </style>
+
 
 
 
