@@ -1772,14 +1772,12 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td class="price-text">¥{{ w.balance.toFixed(2) }}</td>
                 <td>{{ w.frozenAmount > 0 ? '¥' + w.frozenAmount.toFixed(2) : '-' }}</td>
                 <td>¥{{ w.totalRecharge.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span></td>
+                <td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span> <span v-if="w.status === 'normal'" class="action-link danger" @click="freezeWallet(w)" style="margin-left: 8px">冻结钱包</span><span v-if="w.status === 'frozen'" class="action-link primary" @click="unfreezeWallet(w)" style="margin-left: 8px">解冻钱包</span></td>
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
                   <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结余额</span>
-                  <span v-if="w.status === 'normal'" class="action-link danger" @click="freezeWallet(w)" style="margin-left: 8px">冻结钱包</span>
                   <span v-if="w.status === 'frozen'" class="action-link primary" @click="showFreezeModal(w, 'unfreeze')" style="margin-left: 8px">解冻余额</span>
-                  <span v-if="w.status === 'frozen'" class="action-link primary" @click="unfreezeWallet(w)" style="margin-left: 8px">解冻钱包</span>
                 </td>
               </tr>
               <tr v-if="filteredWallets.length === 0">
