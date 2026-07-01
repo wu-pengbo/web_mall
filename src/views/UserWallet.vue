@@ -817,7 +817,7 @@ const mockTransactions = ref<WalletTransaction[]>([
   {
     id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260520-001',
     type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005',
-    merchant: '系统', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
+    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
   },
   {
     id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', relatedRechargeNo: 'RCH-20260520-001',
@@ -865,7 +865,7 @@ const mockTransactions = ref<WalletTransaction[]>([
   {
     id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260515-001',
     type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002',
-    merchant: '系统', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
+    merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
   },
   {
     id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260515-001',
