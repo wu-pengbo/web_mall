@@ -818,6 +818,9 @@ const mockTransactions = ref<WalletTransaction[]>([
     id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260520-001',
     type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005',
     merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
+    bucketLogs: [
+      { bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 200, remainAmount: 200 },
+    ],
   },
   {
     id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', relatedRechargeNo: 'RCH-20260520-001',
