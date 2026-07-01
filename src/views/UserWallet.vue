@@ -1470,13 +1470,13 @@ const openSettlementFlow = (item: MerchantSign) => {
               <div class="form-item">
                 <label class="form-label">备注</label>
                 <textarea class="form-textarea" v-model="signForm.remark" rows="2" placeholder="选填" style="width: 100%"></textarea>
+              </div>
               <div class="form-item">
                 <label class="form-label">签约协议</label>
-                <button class="btn btn-default" style="width: auto; height: 32px; font-size: 13px;" @click="handleAgreementUpload">
-                  上传协议扫描件
-                </button>
-                <span v-if="signForm.agreement" style="margin-left: 8px; font-size: 13px; color: #00A854;">已上传：{{ signForm.agreement }}</span>
-              </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <button class="btn btn-default" style="height: 32px; padding: 0 16px; font-size: 13px; flex-shrink: 0;" @click="handleAgreementUpload">上传协议扫描件</button>
+                  <span v-if="signForm.agreement" style="font-size: 13px; color: #00A854; white-space: nowrap;">已上传：{{ signForm.agreement }}</span>
+                </div>
               </div>
             </div>
             <div class="modal-footer">
