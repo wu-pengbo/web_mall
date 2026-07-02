@@ -4,3 +4,5 @@
 | 2026-07-02 14:43 | commit | feature/wallet-optimization | fix: PointsManagement积分变更流水新增5条mock数据覆盖全类型全原因 | 61d049c |
 
 | 2026-07-02 15:02 | commit | feature/wallet-optimization | feat: 额度管理新增过期回滚类型，表格加备注列 | b302437 |
+
+| 2026-07-02 15:22 | commit | feature/wallet-optimization | feat: 提现设置新增提现方式字段 | 0052e99 |

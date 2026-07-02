@@ -1229,6 +1229,19 @@ const openSettlementFlow = (item: MerchantSign) => {
                     </div>
                     <div class="wcfg-row">
                       <div class="wcfg-field">
+                        <label class="wcfg-label">提现方式</label>
+                        <div class="wcfg-input-group">
+                          <select class="form-select form-input-md" >
+                            <option value="refund_to_recharge" selected>原充值订单退款</option>
+                            <option value="merchant_sub_account" disabled>主商户账户分账</option>
+                          </select>
+                          <span class="wcfg-hint" style="color:#faad14;font-size:12px">暂不可选，仅原充值订单退款可选</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="wcfg-divider"></div>
+                    <div class="wcfg-row">
+                      <div class="wcfg-field">
                         <label class="wcfg-label required">最低提现金额</label>
                         <div class="wcfg-input-group">
                           <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minWithdraw" min="0.01" step="0.01" />
@@ -4328,6 +4341,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   color: #CF1322;
 }
 </style>
+
 
 
 
