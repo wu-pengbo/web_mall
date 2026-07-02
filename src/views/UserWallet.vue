@@ -1904,14 +1904,6 @@ const openSettlementFlow = (item: MerchantSign) => {
               <input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联订单号" style="width: 220px" />
             </div>
             <div class="filter-item">
-              <label>提现类型</label>
-              <select class="form-select" v-model="withdrawSearchForm.refundType" style="width: 120px">
-                <option value="">全部</option>
-                <option value="full">全额提现</option>
-                <option value="partial">部分提现</option>
-              </select>
-            </div>
-            <div class="filter-item">
               <label>状态</label>
               <select class="form-select" v-model="withdrawSearchForm.status" style="width: 140px">
                 <option value="">全部</option>
@@ -1933,11 +1925,9 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <th>提现单号</th>
                 <th>用户</th>
                 <th>提现金额</th>
-                <th>提现类型</th>
-                <th>关联订单</th>
+                                <th>关联订单</th>
                 <th>关联充值</th>
-                <th>到账方式</th>
-                <th>状态</th>
+                                <th>状态</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -1946,11 +1936,9 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td>{{ w.withdrawNo }}</td>
                 <td>{{ w.uid }}<br/><span class="sub-text">{{ w.phone }}</span></td>
                 <td class="price-text">¥{{ w.amount.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="w.refundType">{{ w.refundType === 'full' ? '全额提现' : '部分提现' }}</span></td>
-                <td>{{ w.relatedOrderNo }}</td>
+                                <td>{{ w.relatedOrderNo }}</td>
                 <td>{{ w.relatedRechargeNo || '-' }}</td>
-                <td>{{ payMethodLabel[w.originalPayMethod] }}</td>
-                <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
+                                <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
                 <td>
                   <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
                   <span v-if="w.status === 'pending'" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">审核</span>
@@ -2724,10 +2712,8 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div><label>提现金额</label><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span></div>
             <div><label>手续费</label><span>{{ withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免' }}</span></div>
             <div><label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
-            <div><label>提现类型</label><span>{{ withdrawDetailItem.refundType === 'full' ? '全额提现' : '部分提现' }}</span></div>
-            <div><label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
-            <div><label>到账方式</label><span>{{ payMethodLabel[withdrawDetailItem.originalPayMethod] }}</span></div>
-            <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
+                        <div><label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
+                        <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
             <div><label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span></div>
             <div><label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span></div>
             <div><label>操作人</label><span>{{ withdrawDetailItem.operator || '-' }}</span></div>
