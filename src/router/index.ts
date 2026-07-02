@@ -15,6 +15,15 @@ import VoteResult from '../views/VoteResult.vue'
 import OrderManage from '../views/OrderManage.vue'
 import PointsManagement from '../views/PointsManagement.vue'
 import UserWallet from '../views/UserWallet.vue'
+import WalletLayout from '../layout/WalletLayout.vue'
+import WalletOverview from '../views/wallet/WalletOverview.vue'
+import WalletConfig from '../views/wallet/WalletConfig.vue'
+import MerchantSign from '../views/wallet/MerchantSign.vue'
+import RechargePlan from '../views/wallet/RechargePlan.vue'
+import WalletUser from '../views/wallet/WalletUser.vue'
+import TransactionLedger from '../views/wallet/TransactionLedger.vue'
+import RechargeManage from '../views/wallet/RechargeManage.vue'
+import WithdrawManage from '../views/wallet/WithdrawManage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -95,8 +104,18 @@ const router = createRouter({
         },
         {
           path: 'wallet',
-          name: 'user-wallet',
-          component: UserWallet,
+          component: WalletLayout,
+          children: [
+            { path: '', redirect: { name: 'wallet-overview' } },
+            { path: 'overview', name: 'wallet-overview', component: WalletOverview },
+            { path: 'config', name: 'wallet-config', component: WalletConfig },
+            { path: 'merchant-sign', name: 'wallet-merchant-sign', component: MerchantSign },
+            { path: 'recharge-plan', name: 'wallet-recharge-plan', component: RechargePlan },
+            { path: 'user', name: 'wallet-user', component: WalletUser },
+            { path: 'ledger', name: 'wallet-ledger', component: TransactionLedger },
+            { path: 'recharge', name: 'wallet-recharge', component: RechargeManage },
+            { path: 'withdraw', name: 'wallet-withdraw', component: WithdrawManage },
+          ],
         },
       ],
     },

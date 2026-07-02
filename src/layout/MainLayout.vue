@@ -13,7 +13,7 @@ const menus = [
   { path: '/vote', name: '投票管理', icon: '📊' },
   { path: '/order', name: '订单管理', icon: '📋' },
   { path: '/points', name: '积分管理', icon: '💰' },
-  { path: '/wallet', name: '钱包管理', icon: '💳' },
+  { path: '/wallet/overview', name: '钱包管理', icon: '💳' },
   { path: '/user', name: '用户管理', icon: '👥' },
   { path: '/setting', name: '系统设置', icon: '⚙️' },
 ]
@@ -28,7 +28,7 @@ const goMenu = (path: string) => {
     path === '/vote' ||
     path === '/order' ||
     path === '/points' ||
-    path === '/wallet'
+    path.startsWith('/wallet')
   ) {
     router.push(path)
   } else {
