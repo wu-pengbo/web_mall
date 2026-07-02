@@ -1611,7 +1611,88 @@ const distributeRecordList = ref<FlowRecord[]>([
     expireTime: '2027-05-10',
     time: '2026-05-10 14:00:00',
   },
+  {
+    id: 'DIS-004',
+    type: 'earn',
+    reason: 'activity',
+    reasonDetail: '618大促活动奖励',
+    amount: 2000,
+    balance: 6000,
+    batch: '2026年Q2季度额度',
+    userUid: 'U10004',
+    userPhone: '136****3456',
+    merchant: '总部直营店',
+    operator: '系统自动',
+    orderNo: '',
+    expireTime: '2027-06-15',
+    time: '2026-06-15 10:00:00',
+  },
+  {
+    id: 'DIS-005',
+    type: 'earn',
+    reason: 'refund',
+    reasonDetail: '退款退还积分',
+    amount: 150,
+    balance: 3150,
+    batch: '',
+    userUid: 'U10001',
+    userPhone: '138****1234',
+    merchant: '总部直营店',
+    operator: '系统',
+    orderNo: 'ORD-20260614-005',
+    expireTime: '2027-06-14',
+    time: '2026-06-14 16:30:00',
+  },
+  {
+    id: 'DIS-006',
+    type: 'burn',
+    reason: 'consume',
+    reasonDetail: '订单消费抵扣',
+    amount: -800,
+    balance: 4200,
+    batch: '2026年Q2季度额度',
+    userUid: 'U10002',
+    userPhone: '139****5678',
+    merchant: '总部加盟店',
+    operator: '系统',
+    orderNo: 'ORD-20260613-003',
+    expireTime: '',
+    time: '2026-06-13 14:00:00',
+  },
+  {
+    id: 'DIS-007',
+    type: 'burn',
+    reason: 'expire',
+    reasonDetail: '积分过期自动清零',
+    amount: -300,
+    balance: 2700,
+    batch: '',
+    userUid: 'U10005',
+    userPhone: '135****7890',
+    merchant: '总部直营店',
+    operator: '系统',
+    orderNo: '',
+    expireTime: '2025-12-31',
+    time: '2026-06-16 00:00:00',
+  },
+  {
+    id: 'DIS-008',
+    type: 'burn',
+    reason: 'deduct',
+    reasonDetail: '风控手工扣减',
+    amount: -100,
+    balance: 900,
+    batch: '',
+    userUid: 'U10006',
+    userPhone: '134****2345',
+    merchant: '社区便利店A',
+    operator: '运营小李',
+    orderNo: '',
+    expireTime: '',
+    time: '2026-06-12 11:00:00',
+  },
 ])
+
 
 const filteredDistributeList = computed(() => {
   return distributeRecordList.value.filter((r) => {
@@ -4405,6 +4486,10 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   justify-content: center;
 }
 </style>
+
+
+
+
 
 
 
