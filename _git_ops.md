@@ -14,3 +14,5 @@
 | 2026-07-02 17:23 | commit | feature/wallet-optimization | feat: 查看详情弹窗提现流水表复用提现管理表字段 | 04663a1 |
 
 | 2026-07-02 17:48 | checkout -b | feature/wallet-split | 从 main 创建拆分开发分支，准备 8 模块独立页面重构 | - |
+
+| 2026-07-02 17:52 | commit | feature/wallet-split | feat: 提取共享类型定义到 src/types/wallet.ts | bb11769 |
