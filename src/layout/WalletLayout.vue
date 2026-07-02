@@ -101,4 +101,8 @@ const menuList = [
   padding: 24px;
   min-width: 0;
 }
+
+</style>
+<style>
+@import '../assets/wallet-common.css';
 </style>
