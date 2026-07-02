@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>充值管理</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+/* ==================== 钱包管理 - 共享 UI 样式 ==================== */
+/* 从 UserWallet.vue 抽取，供所有钱包子模块使用 */
+
+/* ===== 右侧内容区 ===== */
+.content-panel { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; }
+.panel-header { padding: 18px 28px; border-bottom: 1px solid #E5E6EB; display: flex; align-items: baseline; gap: 12px; }
+.panel-header h2 { margin: 0; font-size: 17px; font-weight: 700; color: #1D2129; letter-spacing: -0.01em; }
+.panel-subtitle { font-size: 13px; color: #86909C; }
+.panel-body { padding: 24px 28px; }
+
+/* ===== 表单 ===== */
+.form-item { display: flex; align-items: flex-start; margin-bottom: 16px; }
+.form-label { width: 120px; text-align: right; padding-right: 12px; line-height: 32px; font-size: 14px; color: #4E5969; flex-shrink: 0; }
+.form-label.required::before { content: '*'; color: #CF1322; margin-right: 4px; }
+.form-control-row { display: flex; align-items: center; gap: 8px; flex: 1; line-height: 32px; font-size: 14px; color: #86909C; }
+.form-input { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 200px; font-family: inherit; }
+.form-input:focus { border-color: #4F6EF7; }
+.form-input:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-select { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 140px; font-family: inherit; }
+.form-select:focus { border-color: #4F6EF7; }
+.form-select:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-textarea { width: 100%; border: 1px solid #E5E6EB; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; resize: vertical; transition: border-color 0.15s ease; font-family: inherit; }
+.form-textarea:focus { border-color: #4F6EF7; }
+.form-tip { font-size: 12px; color: #86909C; }
+.form-input-xs { width: 80px; }
+.form-input-sm { width: 120px; }
+.form-input-md { width: 190px; flex-shrink: 0; }
+.form-input-lg { width: 320px; }
+.form-input-xl { width: 420px; }
+
+/* ===== 按钮 ===== */
+.btn { height: 32px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; transition: all 0.15s ease; padding: 0 16px; font-weight: 500; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background-color: #4F6EF7; color: #FFFFFF; }
+.btn-primary:hover { background-color: #6B8BF5; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-default { background-color: #FFFFFF; color: #4E5969; border: 1px solid #E5E6EB; }
+.btn-default:hover { border-color: #4E5969; color: #1D2129; }
+.btn-xs { height: 24px; padding: 0 8px; font-size: 12px; border-radius: 4px; }
+
+/* ===== 筛选栏 ===== */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #E5E6EB; }
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-item label { font-size: 14px; color: #86909C; white-space: nowrap; }
+
+/* ===== 数据表格 ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td { border-bottom: 1px solid #E5E6EB; padding: 14px 10px; text-align: left; }
+.data-table th { background-color: #FAFAFA; color: #86909C; font-weight: 600; font-size: 12px; white-space: nowrap; letter-spacing: 0.03em; text-transform: uppercase; }
+.data-table tbody tr { transition: background-color 0.15s ease; }
+.data-table tbody tr:hover { background-color: #FAFAFA; }
+.data-table.table-nowrap th, .data-table.table-nowrap td { white-space: nowrap; }
+
+/* ===== 状态标签 ===== */
+.status-tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; border: none; }
+.status-tag.normal, .status-tag.on, .status-tag.completed, .status-tag.success { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.frozen, .status-tag.off, .status-tag.failed { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.pending, .status-tag.draft { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.paid { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.closed { background-color: #F2F3F5; color: #86909C; }
+.status-tag.approved { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.refunded { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.rejected { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.full { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.partial { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.recharge { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.consume { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.refund { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.withdraw { background-color: #FFF1F0; color: #CF1322; }
+
+/* ===== 操作链接 ===== */
+.action-link { color: #4F6EF7; cursor: pointer; font-size: 13px; transition: color 0.15s ease; }
+.action-link:hover { text-decoration: underline; }
+.action-link.primary { color: #4F6EF7; }
+.action-link.danger { color: #CF1322; }
+
+/* ===== 分页 ===== */
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; font-size: 14px; color: #86909C; }
+.page-btns { display: flex; gap: 6px; }
+.page-btn { height: 28px; padding: 0 12px; border: 1px solid #E5E6EB; background-color: #FFFFFF; border-radius: 6px; cursor: pointer; color: #4E5969; font-size: 13px; transition: all 0.15s ease; font-family: inherit; }
+.page-btn:hover:not(.disabled) { border-color: #4F6EF7; color: #4F6EF7; }
+.page-btn:active:not(.disabled) { transform: scale(0.97); }
+.page-btn.active { background-color: #4F6EF7; color: #FFFFFF; border-color: #4F6EF7; }
+.page-btn.disabled { color: #E5E6EB; background-color: #F2F3F5; cursor: not-allowed; }
+
+/* ===== 弹窗 ===== */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08); max-height: 80vh; display: flex; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.modal-sm { width: 440px; }
+.modal-md { width: 560px; }
+.modal-lg { width: 720px; max-height: 85vh; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid #E5E6EB; }
+.modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #1D2129; letter-spacing: -0.01em; }
+.modal-close { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #86909C; }
+.modal-close:hover { color: #1D2129; background-color: #F2F3F5; }
+.modal-close-icon { width: 16px; height: 16px; }
+.modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 14px 28px; border-top: 1px solid #E5E6EB; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ===== 金额 ===== */
+.amount-positive { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.amount-negative { color: #0E7B3A; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.price-text { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.time-text { color: #86909C; font-size: 13px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.sub-text { font-size: 12px; color: #86909C; }
+.empty-text { text-align: center; padding: 64px 0; color: #86909C; font-size: 14px; }
+
+/* ===== Segmented Control ===== */
+.segmented-control { display: inline-flex; background-color: #F2F3F5; border-radius: 8px; padding: 3px; gap: 2px; }
+.segmented-btn { height: 30px; padding: 0 20px; border: none; border-radius: 6px; background: transparent; color: #4E5969; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+.segmented-btn:hover { color: #1D2129; }
+.segmented-btn.active { background-color: #FFFFFF; color: #4F6EF7; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+/* ===== 开关组件 ===== */
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #E5E6EB; transition: 0.25s ease; border-radius: 22px; }
+.toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: 0.25s ease; border-radius: 50%; }
+.toggle-switch input:checked + .toggle-slider { background-color: #4F6EF7; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+.toggle-switch input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Status Badge (used in MerchantSign & WalletUser) ===== */
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.status-badge.on { background: #E8FFE8; color: #00A854; }
+.status-badge.off { background: #FFF0F0; color: #CF1322; }
+
+/* ===== 子流水/资金桶表格 ===== */
+.bucket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bucket-table th { background-color: #F2F3F5; color: #86909C; font-weight: 500; font-size: 12px; padding: 8px 10px; text-align: left; border-bottom: 1px solid #E5E6EB; }
+.bucket-table td { padding: 8px 10px; border-bottom: 1px solid #E5E6EB; color: #4E5969; }
+.expand-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; cursor: pointer; color: #86909C; font-size: 10px; border-radius: 4px; transition: all 0.15s ease; }
+.expand-btn:hover { color: #4F6EF7; background-color: #E8F3FF; }
+.bucket-row td { background-color: #FAFAFA; }
+.bucket-panel { padding: 12px 16px 16px 24px; }
+.bucket-header { font-size: 12px; font-weight: 600; color: #86909C; margin-bottom: 8px; letter-spacing: 0.03em; }
+.form-section-title { font-size: 13px; font-weight: 700; color: #1D2129; padding: 16px 0 8px; margin-top: 4px; border-bottom: 1px solid #E5E6EB; margin-bottom: 20px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+/* ===== 空态 ===== */
+.empty-block { text-align: center; color: #86909C; padding: 24px 0; background-color: #F2F3F5; border-radius: 6px; margin-top: 8px; font-size: 13px; }
+
+/* ===== 详情表格单元 ===== */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 11px; color: #86909C; letter-spacing: 0.03em; text-transform: uppercase; }
+.detail-grid span { font-size: 14px; color: #4E5969; }
+
+/* ===== 详情段落 ===== */
+.detail-section { margin-top: 24px; }
+.detail-section:first-child { margin-top: 0; }
+.sub-text { font-size: 12px; color: #86909C; }
+.time-text { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 12px; color: #86909C; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 12px; color: #86909C; }
+.detail-grid span { font-size: 14px; color: #1D2129; font-weight: 500; }
+.recharge-flow-modal { max-width: 1200px !important; }
+.flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 36px; margin-bottom: 24px; }
+.flow-summary-row { display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 2; }
+.flow-summary-label { color: #86909c; width: 72px; flex-shrink: 0; }
+.flow-summary-value { color: #1d2129; font-weight: 500; font-size: 15px; }
+.flow-summary-divider { height: 1px; background: #e5e6eb; margin: 14px 0; }
+.flow-summary-amounts { display: flex; gap: 40px; flex-wrap: wrap; }
+.flow-summary-amount-item { display: flex; flex-direction: column; gap: 6px; }
+.flow-summary-amount-label { font-size: 13px; color: #86909c; white-space: nowrap; }
+.flow-summary-amount-value { font-size: 19px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-summary-amount-value.bonus { color: #d46b08; }
+.flow-summary-amount-item.total { margin-left: auto; }
+.flow-summary-amount-value.total { color: #1677ff; font-size: 21px; }
+.flow-buckets-row { display: flex; gap: 20px; }
+.flow-bucket { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.flow-bucket-header { display: flex; align-items: center; gap: 10px; padding: 10px 36px; border-bottom: 1px solid #f2f3f5; font-size: 14px; flex-wrap: wrap; }
+.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.flow-bucket-type.principal { background: #e8f4ff; color: #1677ff; }
+.flow-bucket-type.bonus { background: #fff7e6; color: #d46b08; }
+.flow-bucket-status { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
+.flow-bucket-status.empty { background: #fff0f0; color: #cf1322; }
+.flow-bucket-withdrawable { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
+.flow-bucket-withdrawable.yes { background: #e8ffe8; color: #00a854; }
+.flow-bucket-body { padding: 10px 36px; }
+.flow-bucket-bar-area { margin-bottom: 16px; }
+.flow-bucket-bar { height: 6px; background: #f2f3f5; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.flow-bucket-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0%; }
+.flow-bucket-bar-fill.principal { background: linear-gradient(90deg, #1677ff, #4096ff); }
+.flow-bucket-bar-fill.bonus { background: linear-gradient(90deg, #d46b08, #fa8c16); }
+.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 13px; color: #86909c; }
+.flow-bucket-bar-labels strong { color: #1d2129; font-size: 15px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.flow-detail-label { font-size: 14px; color: #86909c; margin-bottom: 10px; font-weight: 500; }
+.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.flow-consumption-table th { text-align: left; padding: 4px 16px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 13px; }
+.flow-consumption-table td { padding: 4px 16px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; }
+.consume-type-tag { font-size: 13px !important; padding: 1px 5px !important; }
+.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
+</style>
+</head><body>
+<div id="app"><div class="content-panel">
+    <div class="panel-header"><h2>充值管理</h2><span class="panel-subtitle">追踪支付状态与充值入账双状态</span></div>
+    <div class="panel-body">
+      <div class="filter-bar">
+        <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="rechargeSearchForm.keyword" placeholder="充值单号 / UID / 手机号" style="width: 200px" /></div>
+        <div class="filter-item"><label>充值状态</label><select class="form-select" v-model="rechargeSearchForm.rechargeStatus" style="width: 120px"><option value="">全部</option><option value="pending">待入账</option><option value="success">已入账</option><option value="failed">入账失败</option></select></div>
+        <div class="filter-item"><button class="btn btn-primary" @click="">查询</button><button class="btn btn-default" style="margin-left: 8px" @click="rechargeSearchForm.keyword = ''; rechargeSearchForm.rechargeStatus = ''">重置</button></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>充值单号</th><th>支付单号</th><th>用户</th><th>支付金额</th><th>到账金额</th><th>收款商户</th><th>支付状态</th><th>充值状态</th><th>申请时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr v-for="r in filteredRecharges" :key="r.id">
+            <td>{{ r.rechargeNo }}</td><td>{{ r.payOrderNo || '-' }}</td>
+            <td>{{ r.uid }}<br/><span class="sub-text">{{ r.phone }}</span></td>
+            <td class="price-text">¥{{ r.amount.toFixed(2) }}</td><td class="price-text">¥{{ r.receivedAmount.toFixed(2) }}</td>
+            <td>{{ r.receiveMerchantName }}</td>
+            <td><span class="status-tag" :class="r.paymentStatus">{{ paymentStatusLabel[r.paymentStatus] }}</span></td>
+            <td><span class="status-tag" :class="r.rechargeStatus === 'success' ? 'completed' : r.rechargeStatus">{{ rechargeStatusLabel[r.rechargeStatus] }}</span></td>
+            <td class="time-text">{{ r.applyTime }}</td>
+            <td>
+              <span class="action-link primary" @click="showRechargeDetail(r)">详情</span>
+              <span v-if="r.rechargeStatus === 'success'" class="action-link primary" @click="showRechargeFlow(r)" style="margin: 0 8px">查看流水</span>
+              <span v-if="r.paymentStatus === 'paid' && r.rechargeStatus === 'failed'" class="action-link danger" @click="manualRecharge(r)" style="margin-left: 8px">手动入账</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination"><span>共 {{ filteredRecharges.length }} 条记录</span><div class="page-btns"><button class="page-btn disabled">上一页</button><button class="page-btn active">1</button><button class="page-btn disabled">下一页</button></div></div>
+    </div>
+
+    <!-- 充值详情弹窗 -->
+    <div v-if="rechargeDetailModal" class="modal-overlay" @click.self="rechargeDetailModal = false">
+      <div class="modal-content modal-md">
+        <div class="modal-header"><h3>充值详情</h3><span class="modal-close" @click="rechargeDetailModal = false"><svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
+        <div class="modal-body" v-if="rechargeDetailItem">
+          <div class="detail-grid">
+            <div><label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span></div>
+            <div><label>支付单号</label><span>{{ rechargeDetailItem.payOrderNo || '-' }}</span></div>
+            <div><label>用户</label><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span></div>
+            <div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
+            <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div>
+            <div><label>收款商户</label><span>{{ rechargeDetailItem.receiveMerchantName }}</span></div>
+            <div><label>支付状态</label><span class="status-tag" :class="rechargeDetailItem.paymentStatus">{{ paymentStatusLabel[rechargeDetailItem.paymentStatus] }}</span></div>
+            <div><label>充值状态</label><span class="status-tag" :class="rechargeDetailItem.rechargeStatus">{{ rechargeStatusLabel[rechargeDetailItem.rechargeStatus] }}</span></div>
+            <div><label>申请时间</label><span>{{ rechargeDetailItem.applyTime }}</span></div>
+            <div><label>支付时间</label><span>{{ rechargeDetailItem.paymentTime || '-' }}</span></div>
+            <div><label>入账时间</label><span>{{ rechargeDetailItem.rechargeTime || '-' }}</span></div>
+            <div><label>备注</label><span>{{ rechargeDetailItem.remark || '-' }}</span></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-default" @click="rechargeDetailModal = false">关闭</button><button v-if="rechargeDetailItem?.paymentStatus === 'paid' && rechargeDetailItem?.rechargeStatus === 'failed'" class="btn btn-primary" @click="manualRecharge(rechargeDetailItem!)">手动入账</button></div>
+      </div>
+    </div>
+
+    <!-- 充值流水弹窗 -->
+    <div v-if="rechargeFlowModal" class="modal-overlay" @click.self="rechargeFlowModal = false">
+      <div class="modal-content recharge-flow-modal">
+        <div class="modal-header"><h3>充值流水详情</h3><span class="modal-close" @click="rechargeFlowModal = false"><svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
+        <div class="modal-body">
+          <div class="flow-summary" v-if="rechargeFlowItem">
+            <div class="flow-summary-row"><span class="flow-summary-label">用户</span><span class="flow-summary-value">{{ rechargeFlowItem.phone }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">充值单号</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeNo }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">支付单号</span><span class="flow-summary-value">{{ rechargeFlowItem.payOrderNo || '-' }}</span></div>
+            <div class="flow-summary-row"><span class="flow-summary-label">充值时间</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeTime || rechargeFlowItem.applyTime }}</span></div>
+            <div class="flow-summary-divider"></div>
+            <div class="flow-summary-amounts">
+              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">支付金额</span><span class="flow-summary-amount-value">¥{{ rechargeFlowItem.amount.toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item" v-if="(rechargeFlowItem.bonusAmount || 0) > 0"><span class="flow-summary-amount-label">赠送金额</span><span class="flow-summary-amount-value bonus">+¥{{ (rechargeFlowItem.bonusAmount || 0).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">到账金额</span><span class="flow-summary-amount-value">¥{{ (rechargeFlowItem.amount + (rechargeFlowItem.bonusAmount || 0)).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item total"><span class="flow-summary-amount-label">流水剩余总额</span><span class="flow-summary-amount-value total">¥{{ rechargeFlowBuckets.reduce((s, b) => s + b.remainingAmount, 0).toFixed(2) }}</span></div>
+            </div>
+          </div>
+          <div class="flow-buckets-row">
+            <div class="flow-bucket" v-for="bucket in rechargeFlowBuckets" :key="bucket.type">
+              <div class="flow-bucket-header"><span class="flow-bucket-type" :class="bucket.type">{{ bucket.type === 'principal' ? '本金' : '赠送' }}</span><span class="flow-bucket-status" :class="{ empty: bucket.remainingAmount <= 0 }">{{ bucket.remainingAmount <= 0 ? '已耗尽' : '可用' }}</span><span class="flow-bucket-withdrawable" :class="{ yes: bucket.withdrawable }">{{ bucket.withdrawable ? '可提现' : '不可提现' }}</span></div>
+              <div class="flow-bucket-body">
+                <div class="flow-bucket-bar-area"><div class="flow-bucket-bar"><div class="flow-bucket-bar-fill" :class="bucket.type" :style="{ width: ((bucket.originalAmount - bucket.remainingAmount) / bucket.originalAmount * 100) + '%' }"></div></div><div class="flow-bucket-bar-labels"><span>已用 <strong>¥{{ (bucket.originalAmount - bucket.remainingAmount).toFixed(2) }}</strong></span><span>剩余 <strong>¥{{ bucket.remainingAmount.toFixed(2) }}</strong></span></div></div>
+                <div class="flow-detail-label">消耗明细</div>
+                <div v-if="bucket.consumptions.length"><table class="flow-consumption-table"><thead><tr><th>类型</th><th>关联单号</th><th>金额</th><th>时间</th></tr></thead><tbody><tr v-for="(item, ci) in bucket.consumptions" :key="ci"><td><span class="status-tag consume-type-tag" :class="item.type === 'consume' ? 'consume' : 'withdraw'">{{ item.type === 'consume' ? '消费' : item.type === 'withdraw' ? '提现' : item.type === 'refund' ? '退款' : item.type }}</span></td><td class="order-no-cell">{{ item.orderNo }}</td><td class="amount-negative" style="text-align:right; white-space:nowrap">-¥{{ item.amount.toFixed(2) }}</td><td class="time-text">{{ item.time }}</td></tr></tbody></table></div>
+                <div v-else class="flow-no-data">暂无消耗记录</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+<script>
+const { createApp, ref, reactive, computed } = Vue
+
+
+const mockRechargeRecords = ref<RechargeRecord[]>([
+  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1050, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '', bonusAmount: 50, payOrderNo: 'PAY-20260611-001' },
+  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中', payOrderNo: 'PAY-20260611-002' },
+  { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
+  { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
+  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5200, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '', bonusAmount: 200, payOrderNo: 'PAY-20260610-001' },
+  { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
+  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理', payOrderNo: 'PAY-20260609-001' },
+  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1580, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '', bonusAmount: 80, payOrderNo: 'PAY-20260609-002' },
+])
+
+const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
+const filteredRecharges = computed(() => mockRechargeRecords.value.filter(r => {
+  const kw = rechargeSearchForm.keyword
+  return (!kw || r.rechargeNo.includes(kw) || r.uid.includes(kw) || r.phone.includes(kw))
+    && r.paymentStatus === 'paid'
+    && (!rechargeSearchForm.rechargeStatus || r.rechargeStatus === rechargeSearchForm.rechargeStatus)
+}))
+
+const rechargeDetailModal = ref(false)
+const rechargeDetailItem = ref<RechargeRecord | null>(null)
+const showRechargeDetail = (item: RechargeRecord) => { rechargeDetailItem.value = item; rechargeDetailModal.value = true }
+
+const manualRecharge = (item: RechargeRecord) => {
+  if (!confirm('确认手动将 ¥' + item.receivedAmount.toFixed(2) + ' 入账到用户 ' + item.uid + ' 的钱包？')) return
+  item.rechargeStatus = 'success'; item.rechargeTime = new Date().toLocaleString('zh-CN', { hour12: false })
+  alert('充值单 ' + item.rechargeNo + ' 已手动入账成功')
+}
+
+const rechargeFlowModal = ref(false)
+const rechargeFlowItem = ref<RechargeRecord | null>(null)
+const rechargeFlowBuckets = ref<RechargeBucket[]>([])
+const showRechargeFlow = (record: RechargeRecord) => {
+  rechargeFlowItem.value = record
+  const principal = record.amount
+  rechargeFlowBuckets.value = [
+    { type: 'principal', originalAmount: principal, remainingAmount: Math.round(principal * 0.65), withdrawable: true, sourceRule: '用户充值本金，按充值金额入账', consumptions: [{ orderNo: 'ORD-20260615-001', type: 'consume', amount: Math.round(principal * 0.25), time: '2026-06-15 14:30:00' }, { orderNo: 'ORD-20260618-002', type: 'consume', amount: Math.round(principal * 0.10), time: '2026-06-18 09:15:00' }] },
+  ]
+  const bonus = record.bonusAmount || 0
+  if (bonus > 0) {
+    rechargeFlowBuckets.value.push({ type: 'bonus', originalAmount: bonus, remainingAmount: Math.round(bonus * 0.80), withdrawable: false, sourceRule: '充值活动赠送，按活动规则入账', consumptions: [{ orderNo: 'ORD-20260616-003', type: 'consume', amount: Math.round(bonus * 0.20), time: '2026-06-16 11:00:00' }] })
+  }
+  rechargeFlowModal.value = true
+}
+
+const paymentStatusLabel: Record<string, string> = { pending: '待支付', paid: '支付成功', failed: '支付失败', closed: '已关闭' }
+const rechargeStatusLabel: Record<string, string> = { pending: '待入账', success: '已入账', failed: '入账失败' }
+createApp({ setup() { return { mockRechargeRecords, rechargeSearchForm, filteredRecharges, rechargeDetailModal, rechargeDetailItem, showRechargeDetail, manualRecharge, rechargeFlowModal, rechargeFlowItem, rechargeFlowBuckets, showRechargeFlow, paymentStatusLabel, rechargeStatusLabel } } }).mount('#app')
+</script></body></html>

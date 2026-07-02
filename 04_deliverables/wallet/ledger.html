@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交易流水</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+/* ==================== 钱包管理 - 共享 UI 样式 ==================== */
+/* 从 UserWallet.vue 抽取，供所有钱包子模块使用 */
+
+/* ===== 右侧内容区 ===== */
+.content-panel { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; }
+.panel-header { padding: 18px 28px; border-bottom: 1px solid #E5E6EB; display: flex; align-items: baseline; gap: 12px; }
+.panel-header h2 { margin: 0; font-size: 17px; font-weight: 700; color: #1D2129; letter-spacing: -0.01em; }
+.panel-subtitle { font-size: 13px; color: #86909C; }
+.panel-body { padding: 24px 28px; }
+
+/* ===== 表单 ===== */
+.form-item { display: flex; align-items: flex-start; margin-bottom: 16px; }
+.form-label { width: 120px; text-align: right; padding-right: 12px; line-height: 32px; font-size: 14px; color: #4E5969; flex-shrink: 0; }
+.form-label.required::before { content: '*'; color: #CF1322; margin-right: 4px; }
+.form-control-row { display: flex; align-items: center; gap: 8px; flex: 1; line-height: 32px; font-size: 14px; color: #86909C; }
+.form-input { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 200px; font-family: inherit; }
+.form-input:focus { border-color: #4F6EF7; }
+.form-input:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-select { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 140px; font-family: inherit; }
+.form-select:focus { border-color: #4F6EF7; }
+.form-select:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-textarea { width: 100%; border: 1px solid #E5E6EB; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; resize: vertical; transition: border-color 0.15s ease; font-family: inherit; }
+.form-textarea:focus { border-color: #4F6EF7; }
+.form-tip { font-size: 12px; color: #86909C; }
+.form-input-xs { width: 80px; }
+.form-input-sm { width: 120px; }
+.form-input-md { width: 190px; flex-shrink: 0; }
+.form-input-lg { width: 320px; }
+.form-input-xl { width: 420px; }
+
+/* ===== 按钮 ===== */
+.btn { height: 32px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; transition: all 0.15s ease; padding: 0 16px; font-weight: 500; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background-color: #4F6EF7; color: #FFFFFF; }
+.btn-primary:hover { background-color: #6B8BF5; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-default { background-color: #FFFFFF; color: #4E5969; border: 1px solid #E5E6EB; }
+.btn-default:hover { border-color: #4E5969; color: #1D2129; }
+.btn-xs { height: 24px; padding: 0 8px; font-size: 12px; border-radius: 4px; }
+
+/* ===== 筛选栏 ===== */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #E5E6EB; }
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-item label { font-size: 14px; color: #86909C; white-space: nowrap; }
+
+/* ===== 数据表格 ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td { border-bottom: 1px solid #E5E6EB; padding: 14px 10px; text-align: left; }
+.data-table th { background-color: #FAFAFA; color: #86909C; font-weight: 600; font-size: 12px; white-space: nowrap; letter-spacing: 0.03em; text-transform: uppercase; }
+.data-table tbody tr { transition: background-color 0.15s ease; }
+.data-table tbody tr:hover { background-color: #FAFAFA; }
+.data-table.table-nowrap th, .data-table.table-nowrap td { white-space: nowrap; }
+
+/* ===== 状态标签 ===== */
+.status-tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; border: none; }
+.status-tag.normal, .status-tag.on, .status-tag.completed, .status-tag.success { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.frozen, .status-tag.off, .status-tag.failed { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.pending, .status-tag.draft { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.paid { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.closed { background-color: #F2F3F5; color: #86909C; }
+.status-tag.approved { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.refunded { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.rejected { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.full { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.partial { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.recharge { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.consume { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.refund { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.withdraw { background-color: #FFF1F0; color: #CF1322; }
+
+/* ===== 操作链接 ===== */
+.action-link { color: #4F6EF7; cursor: pointer; font-size: 13px; transition: color 0.15s ease; }
+.action-link:hover { text-decoration: underline; }
+.action-link.primary { color: #4F6EF7; }
+.action-link.danger { color: #CF1322; }
+
+/* ===== 分页 ===== */
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; font-size: 14px; color: #86909C; }
+.page-btns { display: flex; gap: 6px; }
+.page-btn { height: 28px; padding: 0 12px; border: 1px solid #E5E6EB; background-color: #FFFFFF; border-radius: 6px; cursor: pointer; color: #4E5969; font-size: 13px; transition: all 0.15s ease; font-family: inherit; }
+.page-btn:hover:not(.disabled) { border-color: #4F6EF7; color: #4F6EF7; }
+.page-btn:active:not(.disabled) { transform: scale(0.97); }
+.page-btn.active { background-color: #4F6EF7; color: #FFFFFF; border-color: #4F6EF7; }
+.page-btn.disabled { color: #E5E6EB; background-color: #F2F3F5; cursor: not-allowed; }
+
+/* ===== 弹窗 ===== */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08); max-height: 80vh; display: flex; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.modal-sm { width: 440px; }
+.modal-md { width: 560px; }
+.modal-lg { width: 720px; max-height: 85vh; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid #E5E6EB; }
+.modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #1D2129; letter-spacing: -0.01em; }
+.modal-close { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #86909C; }
+.modal-close:hover { color: #1D2129; background-color: #F2F3F5; }
+.modal-close-icon { width: 16px; height: 16px; }
+.modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 14px 28px; border-top: 1px solid #E5E6EB; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ===== 金额 ===== */
+.amount-positive { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.amount-negative { color: #0E7B3A; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.price-text { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.time-text { color: #86909C; font-size: 13px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.sub-text { font-size: 12px; color: #86909C; }
+.empty-text { text-align: center; padding: 64px 0; color: #86909C; font-size: 14px; }
+
+/* ===== Segmented Control ===== */
+.segmented-control { display: inline-flex; background-color: #F2F3F5; border-radius: 8px; padding: 3px; gap: 2px; }
+.segmented-btn { height: 30px; padding: 0 20px; border: none; border-radius: 6px; background: transparent; color: #4E5969; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+.segmented-btn:hover { color: #1D2129; }
+.segmented-btn.active { background-color: #FFFFFF; color: #4F6EF7; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+/* ===== 开关组件 ===== */
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #E5E6EB; transition: 0.25s ease; border-radius: 22px; }
+.toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: 0.25s ease; border-radius: 50%; }
+.toggle-switch input:checked + .toggle-slider { background-color: #4F6EF7; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+.toggle-switch input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Status Badge (used in MerchantSign & WalletUser) ===== */
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.status-badge.on { background: #E8FFE8; color: #00A854; }
+.status-badge.off { background: #FFF0F0; color: #CF1322; }
+
+/* ===== 子流水/资金桶表格 ===== */
+.bucket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bucket-table th { background-color: #F2F3F5; color: #86909C; font-weight: 500; font-size: 12px; padding: 8px 10px; text-align: left; border-bottom: 1px solid #E5E6EB; }
+.bucket-table td { padding: 8px 10px; border-bottom: 1px solid #E5E6EB; color: #4E5969; }
+.expand-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; cursor: pointer; color: #86909C; font-size: 10px; border-radius: 4px; transition: all 0.15s ease; }
+.expand-btn:hover { color: #4F6EF7; background-color: #E8F3FF; }
+.bucket-row td { background-color: #FAFAFA; }
+.bucket-panel { padding: 12px 16px 16px 24px; }
+.bucket-header { font-size: 12px; font-weight: 600; color: #86909C; margin-bottom: 8px; letter-spacing: 0.03em; }
+.form-section-title { font-size: 13px; font-weight: 700; color: #1D2129; padding: 16px 0 8px; margin-top: 4px; border-bottom: 1px solid #E5E6EB; margin-bottom: 20px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+/* ===== 空态 ===== */
+.empty-block { text-align: center; color: #86909C; padding: 24px 0; background-color: #F2F3F5; border-radius: 6px; margin-top: 8px; font-size: 13px; }
+
+/* ===== 详情表格单元 ===== */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 11px; color: #86909C; letter-spacing: 0.03em; text-transform: uppercase; }
+.detail-grid span { font-size: 14px; color: #4E5969; }
+
+/* ===== 详情段落 ===== */
+.detail-section { margin-top: 24px; }
+.detail-section:first-child { margin-top: 0; }
+.sub-text { font-size: 12px; color: #86909C; }
+.amount-positive { color: #CF1322; }
+.amount-negative { color: #0E7B3A; }
+.time-text { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 12px; color: #86909C; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 12px; color: #86909C; }
+.detail-grid span { font-size: 14px; color: #1D2129; font-weight: 500; }
+.form-section-title { font-size: 13px; font-weight: 700; color: #1D2129; letter-spacing: 0.02em; margin-bottom: 8px; }
+.bucket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bucket-table th { text-align: left; padding: 8px 12px; font-weight: 500; color: #86909C; border-bottom: 1px solid #E5E6EB; white-space: nowrap; }
+.bucket-table td { padding: 8px 12px; border-bottom: 1px solid #F2F3F5; }
+</style>
+</head><body>
+<div id="app"><div class="content-panel">
+    <div class="panel-header"><h2>交易流水</h2></div>
+    <div class="panel-body">
+      <div class="filter-bar">
+        <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="ledgerSearchForm.keyword" placeholder="流水号 / UID / 手机号" style="width: 200px" /></div>
+        <div class="filter-item"><label>交易类型</label><select class="form-select" v-model="ledgerSearchForm.type" style="width: 120px"><option value="">全部</option><option value="consume">消费</option><option value="refund">退款</option></select></div>
+        <div class="filter-item"><label>商户</label><select class="form-select" v-model="ledgerSearchForm.merchant" style="width: 140px"><option value="">全部商户</option><option v-for="m in merchantOptions" :key="m" :value="m">{{ m }}</option></select></div>
+        <div class="filter-item"><button class="btn btn-primary" @click="">查询</button><button class="btn btn-default" style="margin-left: 8px" @click="ledgerSearchForm.keyword = ''; ledgerSearchForm.type = ''; ledgerSearchForm.merchant = ''">重置</button><button class="btn btn-default" style="margin-left: 8px" @click="alert('已导出 ' + filteredLedger.length + ' 条记录（模拟）')">导出</button></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>流水号</th><th>用户</th><th>商户</th><th>交易类型</th><th>金额</th><th>余额</th><th>关联单号</th><th>关联充值</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <template v-for="tx in filteredLedger" :key="tx.id">
+            <tr>
+              <td>{{ tx.transactionNo }}</td><td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td><td>{{ tx.merchant }}</td>
+              <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
+              <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+              <td>¥{{ tx.balance.toFixed(2) }}</td><td>{{ tx.relatedNo || '-' }}</td><td>{{ tx.relatedRechargeNo || '-' }}</td>
+              <td class="time-text">{{ tx.time }}</td><td><span class="action-link primary" @click="showTxDetail(tx)">详情</span></td>
+            </tr></div>
+<script>
+const { createApp, ref, reactive, computed } = Vue
+
+
+const mockTransactions = ref<WalletTransaction[]>([
+  { id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234', type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001', relatedRechargeNo: 'RCH-20260601-001', merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值' },
+  { id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234', type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费', bucketLogs: [{ bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 100, remainAmount: 0 }, { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 312 }] },
+  { id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678', type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003', merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值' },
+  { id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款', bucketLogs: [{ bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 200, remainAmount: 200 }] },
+  { id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', type: 'withdraw', amount: -800, balance: 4400, relatedNo: 'WDR-20260609-001', merchant: '系统', operator: '张三', time: '2026-06-09 10:00:00', remark: '用户提现', bucketLogs: [{ bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 500, remainAmount: 0 }, { bucketNo: 'RCH-20260525-002', bucketTime: '2026-05-25 14:00:00', deductAmount: 300, remainAmount: 700 }] },
+  { id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123', type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002', merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值' },
+  { id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678', type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002', merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费', bucketLogs: [{ bucketNo: 'RCH-20260601-002', bucketTime: '2026-06-01 14:00:00', deductAmount: 129, remainAmount: 871 }] },
+  { id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012', type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001', merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费', bucketLogs: [{ bucketNo: 'RCH-20260605-003', bucketTime: '2026-06-05 11:00:00', deductAmount: 59, remainAmount: 41 }] },
+  { id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345', type: 'recharge', amount: 2000, balance: 13500, relatedNo: 'RCH-20260605-001', merchant: '平台自营商户', operator: '系统', time: '2026-06-05 14:00:00', remark: '线上充值' },
+  { id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345', type: 'consume', amount: -500, balance: 11500, relatedNo: 'ORD-20260604-003', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-04 18:00:00', remark: '订单消费', bucketLogs: [{ bucketNo: 'RCH-20260520-005', bucketTime: '2026-05-20 16:00:00', deductAmount: 500, remainAmount: 1500 }] },
+  { id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234', type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002', merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款', bucketLogs: [{ bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 400 }, { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 131.50, remainAmount: 131.50 }] },
+  { id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890', type: 'withdraw', amount: -200, balance: 800, relatedNo: 'WDR-20260602-001', merchant: '系统', operator: '系统', time: '2026-06-02 15:00:00', remark: '用户提现', bucketLogs: [{ bucketNo: 'RCH-20260515-001', bucketTime: '2026-05-15 10:00:00', deductAmount: 200, remainAmount: 0 }] },
+])
+
+const txTypeLabel: Record<string, string> = { recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结' }
+
+const ledgerSearchForm = reactive({ keyword: '', type: '', merchant: '' })
+const filteredLedger = computed(() => mockTransactions.value.filter(tx => {
+  const kw = ledgerSearchForm.keyword
+  return (!kw || tx.transactionNo.includes(kw) || tx.uid.includes(kw) || tx.phone.includes(kw))
+    && (!ledgerSearchForm.type || tx.type === ledgerSearchForm.type)
+    && (!ledgerSearchForm.merchant || tx.merchant === ledgerSearchForm.merchant)
+    && (tx.type === 'consume' || tx.type === 'refund')
+}))
+
+const merchantOptions = computed(() => [...new Set(mockTransactions.value.map(tx => tx.merchant))])
+
+const txDetailModal = ref(false)
+const txDetailItem = ref<WalletTransaction | null>(null)
+const showTxDetail = (item: WalletTransaction) => { txDetailItem.value = item; txDetailModal.value = true }
+createApp({ setup() { return { mockTransactions, txTypeLabel, ledgerSearchForm, filteredLedger, merchantOptions, txDetailModal, txDetailItem, showTxDetail } } }).mount('#app')
+</script></body></html>

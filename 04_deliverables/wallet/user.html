@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户钱包</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+/* ==================== 钱包管理 - 共享 UI 样式 ==================== */
+/* 从 UserWallet.vue 抽取，供所有钱包子模块使用 */
+
+/* ===== 右侧内容区 ===== */
+.content-panel { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; }
+.panel-header { padding: 18px 28px; border-bottom: 1px solid #E5E6EB; display: flex; align-items: baseline; gap: 12px; }
+.panel-header h2 { margin: 0; font-size: 17px; font-weight: 700; color: #1D2129; letter-spacing: -0.01em; }
+.panel-subtitle { font-size: 13px; color: #86909C; }
+.panel-body { padding: 24px 28px; }
+
+/* ===== 表单 ===== */
+.form-item { display: flex; align-items: flex-start; margin-bottom: 16px; }
+.form-label { width: 120px; text-align: right; padding-right: 12px; line-height: 32px; font-size: 14px; color: #4E5969; flex-shrink: 0; }
+.form-label.required::before { content: '*'; color: #CF1322; margin-right: 4px; }
+.form-control-row { display: flex; align-items: center; gap: 8px; flex: 1; line-height: 32px; font-size: 14px; color: #86909C; }
+.form-input { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 200px; font-family: inherit; }
+.form-input:focus { border-color: #4F6EF7; }
+.form-input:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-select { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.15s ease; width: 140px; font-family: inherit; }
+.form-select:focus { border-color: #4F6EF7; }
+.form-select:disabled { background-color: #F2F3F5; color: #86909C; cursor: not-allowed; }
+.form-textarea { width: 100%; border: 1px solid #E5E6EB; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; resize: vertical; transition: border-color 0.15s ease; font-family: inherit; }
+.form-textarea:focus { border-color: #4F6EF7; }
+.form-tip { font-size: 12px; color: #86909C; }
+.form-input-xs { width: 80px; }
+.form-input-sm { width: 120px; }
+.form-input-md { width: 190px; flex-shrink: 0; }
+.form-input-lg { width: 320px; }
+.form-input-xl { width: 420px; }
+
+/* ===== 按钮 ===== */
+.btn { height: 32px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; transition: all 0.15s ease; padding: 0 16px; font-weight: 500; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background-color: #4F6EF7; color: #FFFFFF; }
+.btn-primary:hover { background-color: #6B8BF5; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-default { background-color: #FFFFFF; color: #4E5969; border: 1px solid #E5E6EB; }
+.btn-default:hover { border-color: #4E5969; color: #1D2129; }
+.btn-xs { height: 24px; padding: 0 8px; font-size: 12px; border-radius: 4px; }
+
+/* ===== 筛选栏 ===== */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #E5E6EB; }
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-item label { font-size: 14px; color: #86909C; white-space: nowrap; }
+
+/* ===== 数据表格 ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td { border-bottom: 1px solid #E5E6EB; padding: 14px 10px; text-align: left; }
+.data-table th { background-color: #FAFAFA; color: #86909C; font-weight: 600; font-size: 12px; white-space: nowrap; letter-spacing: 0.03em; text-transform: uppercase; }
+.data-table tbody tr { transition: background-color 0.15s ease; }
+.data-table tbody tr:hover { background-color: #FAFAFA; }
+.data-table.table-nowrap th, .data-table.table-nowrap td { white-space: nowrap; }
+
+/* ===== 状态标签 ===== */
+.status-tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; border: none; }
+.status-tag.normal, .status-tag.on, .status-tag.completed, .status-tag.success { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.frozen, .status-tag.off, .status-tag.failed { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.pending, .status-tag.draft { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.paid { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.closed { background-color: #F2F3F5; color: #86909C; }
+.status-tag.approved { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.refunded { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.rejected { background-color: #FFF1F0; color: #CF1322; }
+.status-tag.full { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.partial { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.recharge { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.consume { background-color: #FFF7E6; color: #D46B08; }
+.status-tag.refund { background-color: #E8F8EE; color: #0E7B3A; }
+.status-tag.withdraw { background-color: #FFF1F0; color: #CF1322; }
+
+/* ===== 操作链接 ===== */
+.action-link { color: #4F6EF7; cursor: pointer; font-size: 13px; transition: color 0.15s ease; }
+.action-link:hover { text-decoration: underline; }
+.action-link.primary { color: #4F6EF7; }
+.action-link.danger { color: #CF1322; }
+
+/* ===== 分页 ===== */
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; font-size: 14px; color: #86909C; }
+.page-btns { display: flex; gap: 6px; }
+.page-btn { height: 28px; padding: 0 12px; border: 1px solid #E5E6EB; background-color: #FFFFFF; border-radius: 6px; cursor: pointer; color: #4E5969; font-size: 13px; transition: all 0.15s ease; font-family: inherit; }
+.page-btn:hover:not(.disabled) { border-color: #4F6EF7; color: #4F6EF7; }
+.page-btn:active:not(.disabled) { transform: scale(0.97); }
+.page-btn.active { background-color: #4F6EF7; color: #FFFFFF; border-color: #4F6EF7; }
+.page-btn.disabled { color: #E5E6EB; background-color: #F2F3F5; cursor: not-allowed; }
+
+/* ===== 弹窗 ===== */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content { background-color: #FFFFFF; border-radius: 10px; border: 1px solid #E5E6EB; box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08); max-height: 80vh; display: flex; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.modal-sm { width: 440px; }
+.modal-md { width: 560px; }
+.modal-lg { width: 720px; max-height: 85vh; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid #E5E6EB; }
+.modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #1D2129; letter-spacing: -0.01em; }
+.modal-close { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #86909C; }
+.modal-close:hover { color: #1D2129; background-color: #F2F3F5; }
+.modal-close-icon { width: 16px; height: 16px; }
+.modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 14px 28px; border-top: 1px solid #E5E6EB; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ===== 金额 ===== */
+.amount-positive { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.amount-negative { color: #0E7B3A; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.price-text { color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.time-text { color: #86909C; font-size: 13px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
+.sub-text { font-size: 12px; color: #86909C; }
+.empty-text { text-align: center; padding: 64px 0; color: #86909C; font-size: 14px; }
+
+/* ===== Segmented Control ===== */
+.segmented-control { display: inline-flex; background-color: #F2F3F5; border-radius: 8px; padding: 3px; gap: 2px; }
+.segmented-btn { height: 30px; padding: 0 20px; border: none; border-radius: 6px; background: transparent; color: #4E5969; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+.segmented-btn:hover { color: #1D2129; }
+.segmented-btn.active { background-color: #FFFFFF; color: #4F6EF7; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+/* ===== 开关组件 ===== */
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #E5E6EB; transition: 0.25s ease; border-radius: 22px; }
+.toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: 0.25s ease; border-radius: 50%; }
+.toggle-switch input:checked + .toggle-slider { background-color: #4F6EF7; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+.toggle-switch input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Status Badge (used in MerchantSign & WalletUser) ===== */
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.status-badge.on { background: #E8FFE8; color: #00A854; }
+.status-badge.off { background: #FFF0F0; color: #CF1322; }
+
+/* ===== 子流水/资金桶表格 ===== */
+.bucket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bucket-table th { background-color: #F2F3F5; color: #86909C; font-weight: 500; font-size: 12px; padding: 8px 10px; text-align: left; border-bottom: 1px solid #E5E6EB; }
+.bucket-table td { padding: 8px 10px; border-bottom: 1px solid #E5E6EB; color: #4E5969; }
+.expand-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; cursor: pointer; color: #86909C; font-size: 10px; border-radius: 4px; transition: all 0.15s ease; }
+.expand-btn:hover { color: #4F6EF7; background-color: #E8F3FF; }
+.bucket-row td { background-color: #FAFAFA; }
+.bucket-panel { padding: 12px 16px 16px 24px; }
+.bucket-header { font-size: 12px; font-weight: 600; color: #86909C; margin-bottom: 8px; letter-spacing: 0.03em; }
+.form-section-title { font-size: 13px; font-weight: 700; color: #1D2129; padding: 16px 0 8px; margin-top: 4px; border-bottom: 1px solid #E5E6EB; margin-bottom: 20px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+/* ===== 空态 ===== */
+.empty-block { text-align: center; color: #86909C; padding: 24px 0; background-color: #F2F3F5; border-radius: 6px; margin-top: 8px; font-size: 13px; }
+
+/* ===== 详情表格单元 ===== */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 11px; color: #86909C; letter-spacing: 0.03em; text-transform: uppercase; }
+.detail-grid span { font-size: 14px; color: #4E5969; }
+
+/* ===== 详情段落 ===== */
+.detail-section { margin-top: 24px; }
+.detail-section:first-child { margin-top: 0; }
+.time-text { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 12px; color: #86909C; }
+.amount-positive { color: #CF1322; }
+.amount-negative { color: #0E7B3A; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-grid div { display: flex; flex-direction: column; gap: 4px; }
+.detail-grid label { font-size: 12px; color: #86909C; }
+.detail-grid span { font-size: 14px; color: #1D2129; font-weight: 500; }
+.bucket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bucket-table th { text-align: left; padding: 8px 12px; font-weight: 500; color: #86909C; border-bottom: 1px solid #E5E6EB; }
+.bucket-table td { padding: 8px 12px; border-bottom: 1px solid #F2F3F5; }
+.bucket-panel { padding: 12px 16px; background: #FAFAFA; }
+.bucket-header { font-size: 12px; font-weight: 600; color: #86909C; margin-bottom: 8px; }
+.expand-btn { cursor: pointer; color: #86909C; font-size: 12px; user-select: none; }
+.expand-btn:hover { color: #4F6EF7; }
+.form-tip { font-size: 12px; color: #86909C; }
+</style>
+</head><body>
+<div id="app"><div class="content-panel">
+    <div class="panel-header"><h2>用户钱包</h2></div>
+    <div class="panel-body">
+      <div class="filter-bar">
+        <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="walletSearchForm.keyword" placeholder="钱包ID / UID / 手机号" style="width: 200px" /></div>
+        <div class="filter-item"><label>状态</label><select class="form-select" v-model="walletSearchForm.status" style="width: 120px"><option value="">全部</option><option value="normal">正常</option><option value="frozen">已冻结</option></select></div>
+        <div class="filter-item"><button class="btn btn-primary" @click="">查询</button><button class="btn btn-default" style="margin-left: 8px" @click="walletSearchForm.keyword = ''; walletSearchForm.status = ''">重置</button></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>钱包ID</th><th>用户UID</th><th>手机号</th><th>余额</th><th>冻结金额</th><th>累计充值</th><th>状态</th><th>开通时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr v-for="w in filteredWallets" :key="w.walletId">
+            <td>{{ w.walletId }}</td><td>{{ w.uid }}</td><td>{{ w.phone }}</td>
+            <td class="price-text">¥{{ w.balance.toFixed(2) }}</td><td>{{ w.frozenAmount > 0 ? '¥' + w.frozenAmount.toFixed(2) : '-' }}</td>
+            <td>¥{{ w.totalRecharge.toFixed(2) }}</td><td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span></td>
+            <td class="time-text">{{ w.openTime }}</td>
+            <td><span class="action-link primary" @click="showUserFlow(w)">查看详情</span><span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结余额</span></td>
+          </tr>
+          <tr v-if="filteredWallets.length === 0"><td colspan="9" class="empty-text">暂无符合条件的钱包</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination"><span>共 {{ filteredWallets.length }} 条记录</span><div class="page-btns"><button class="page-btn disabled">上一页</button><button class="page-btn active">1</button><button class="page-btn disabled">下一页</button></div></div>
+    </div>
+
+    <!-- 用户流水弹窗 -->
+    <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
+      <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;">
+        <div class="modal-header"><h3>{{ userFlowWallet?.walletId }} 资金流水 <span :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; margin-left: 8px; vertical-align: middle">{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span></h3><span class="modal-close" @click="userFlowModal = false"><svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
+        <div class="modal-body">
+          <div style="margin-bottom: 12px;" v-if="userFlowWallet">
+            <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px;"><div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">用户</div><div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</div></div>
+              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;"><div><div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">状态</div><span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span></div><label class="toggle-switch" :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'"><input type="checkbox" :checked="userFlowWallet.status === 'normal'" @click.prevent="userFlowWallet.status === 'normal' ? freezeWallet(userFlowWallet) : unfreezeWallet(userFlowWallet)" /><span class="toggle-slider"></span></label></div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+              <div style="flex: 1; background: #F0F5FF; border: 1px solid #D6E4FF; border-radius: 8px; padding: 14px 16px;"><div style="font-size: 12px; color: #4F6EF7; margin-bottom: 6px; letter-spacing: 0.03em;">可用余额</div><div style="font-size: 20px; color: #4F6EF7; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.balance.toFixed(2) }}</div><div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #D6E4FF;"><span style="font-size: 12px; color: #4F6EF7;">本金(可提现)</span><span style="font-size: 13px; color: #4F6EF7; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.principalBalance.toFixed(2) }}</span></div><div style="display: flex; justify-content: space-between; margin-top: 4px;"><span style="font-size: 12px; color: #D46B08;">赠送</span><span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.bonusBalance.toFixed(2) }}</span></div></div>
+              <div style="flex: 1; background: #E8FFE8; border: 1px solid #B7EB8F; border-radius: 8px; padding: 14px 16px;"><div style="font-size: 12px; color: #00A854; margin-bottom: 6px; letter-spacing: 0.03em;">消费金额</div><div style="font-size: 20px; color: #00A854; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.totalConsume - userFlowWallet.totalRefund).toFixed(2) }}</div><div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #B7EB8F;"><span style="font-size: 12px; color: #00A854;">消费总额</span><span style="font-size: 13px; color: #00A854; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalConsume.toFixed(2) }}</span></div><div style="display: flex; justify-content: space-between; margin-top: 4px;"><span style="font-size: 12px; color: #CF1322;">已退款</span><span style="font-size: 13px; color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalRefund.toFixed(2) }}</span></div></div>
+              <div style="flex: 1; background: #FFF7E6; border: 1px solid #FFE0B2; border-radius: 8px; padding: 14px 16px;"><div style="font-size: 12px; color: #D46B08; margin-bottom: 6px; letter-spacing: 0.03em;">冻结金额</div><div style="font-size: 20px; color: #D46B08; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.frozenAmount + userFlowWallet.withdrawFrozenAmount).toFixed(2) }}</div><div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #FFE0B2;"><span style="font-size: 12px; color: #D46B08;">系统冻结</span><span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.frozenAmount.toFixed(2) }}</span></div><div style="display: flex; justify-content: space-between; margin-top: 4px;"><span style="font-size: 12px; color: #86909C;">提现中</span><span style="font-size: 13px; color: #86909C; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.withdrawFrozenAmount.toFixed(2) }}</span></div></div>
+            </div>
+          </div>
+          <div class="segmented-control" style="margin-top: 16px"><button class="segmented-btn" :class="{ active: userFlowTab === 'recharge' }" @click="userFlowTab = 'recharge'">充值流水</button><button class="segmented-btn" :class="{ active: userFlowTab === 'withdraw' }" @click="userFlowTab = 'withdraw'">提现流水</button><button class="segmented-btn" :class="{ active: userFlowTab === 'transaction' }" @click="userFlowTab = 'transaction'">交易流水</button></div>
+          <table class="data-table table-nowrap" style="margin-top: 16px" v-if="userFlowTab === 'recharge'"><thead><tr><th>充值单号</th><th>支付单号</th><th>支付金额</th><th>到账金额</th><th>支付状态</th><th>充值状态</th><th>申请时间</th><th>入账时间</th></tr></thead><tbody><tr v-for="r in mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid)" :key="r.id"><td>{{ r.rechargeNo }}</td><td>{{ r.payOrderNo || '-' }}</td><td class="amount-positive">+¥{{ r.amount.toFixed(2) }}</td><td class="amount-positive">+¥{{ r.receivedAmount.toFixed(2) }}</td><td><span class="status-tag" :class="r.paymentStatus">{{ r.paymentStatus === 'paid' ? '已支付' : r.paymentStatus === 'pending' ? '待支付' : r.paymentStatus === 'failed' ? '支付失败' : '已关闭' }}</span></td><td><span class="status-tag" :class="r.rechargeStatus">{{ r.rechargeStatus === 'success' ? '已入账' : r.rechargeStatus === 'pending' ? '待入账' : '入账失败' }}</span></td><td class="time-text">{{ r.applyTime }}</td><td class="time-text">{{ r.rechargeTime || '-' }}</td></tr><tr v-if="mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid).length === 0"><td colspan="8" class="empty-text">暂无充值记录</td></tr></tbody></table>
+          <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'withdraw'"><thead><tr><th>提现单号</th><th>提现金额</th><th>关联订单</th><th>关联充值</th><th>状态</th><th>申请时间</th></tr></thead><tbody><tr v-for="w in mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid)" :key="w.id"><td>{{ w.withdrawNo }}</td><td class="amount-negative">-¥{{ w.amount.toFixed(2) }}</td><td>{{ w.relatedOrderNo || '-' }}</td><td>{{ w.relatedRechargeNo || '-' }}</td><td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td><td class="time-text">{{ w.applyTime }}</td></tr><tr v-if="mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid).length === 0"><td colspan="6" class="empty-text">暂无提现记录</td></tr></tbody></table>
+          <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'transaction'"><thead><tr><th style="width: 30px"></th><th>流水号</th><th>类型</th><th>金额</th><th>余额</th><th>时间</th></tr></thead><tbody><template v-for="tx in userFlowTxs.filter(t => t.type !== 'recharge')" :key="tx.id"><tr><td><span v-if="tx.bucketLogs && tx.bucketLogs.length" class="expand-btn" @click="toggleUserFlowBucket(tx.id)">{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span></td><td>{{ tx.transactionNo }}</td><td>{{ txTypeLabel[tx.type] }}</td><td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td><td>¥{{ tx.balance.toFixed(2) }}</td><td class="time-text">{{ tx.time }}</td></tr><tr v-if="userFlowExpandedTxId === tx.id && tx.bucketLogs" class="bucket-row"><td></td><td colspan="5" style="padding: 0"><div class="bucket-panel"><div class="bucket-header">{{ tx.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}</div><table class="bucket-table"><thead><tr><th>充值批次</th><th>充值时间</th><th>{{ tx.type === 'refund' ? '回充金额' : '扣减金额' }}</th><th>批次剩余</th></tr></thead><tbody><tr v-for="(bl, idx) in tx.bucketLogs" :key="idx"><td>{{ bl.bucketNo }}</td><td class="time-text">{{ bl.bucketTime }}</td><td :class="tx.type === 'refund' ? 'amount-positive' : 'amount-negative'">{{ tx.type === 'refund' ? '+' : '-' }}¥{{ bl.deductAmount.toFixed(2) }}</td><td>¥{{ bl.remainAmount.toFixed(2) }}</td></tr></tbody></table></div></td></tr></div>
+<script>
+const { createApp, ref, reactive, computed } = Vue
+
+
+// 冻结弹窗
+const freezeModal = ref(false); const freezeWalletTarget = ref<UserWallet | null>(null); const freezeMode = ref<'freeze' | 'unfreeze'>('freeze')
+const freezeForm = reactive({ amount: 0, reason: '', reasonDetail: '' })
+const freezeReasonOptions = [{ value: 'abnormal', label: '异常交易收回' }, { value: 'duplicate', label: '重复发放收回' }, { value: 'manual', label: '手动扣除' }, { value: 'other', label: '其他' }]
+const unfreezeReasonOptions = [{ value: 'risk_cleared', label: '风险解除' }, { value: 'manual', label: '手动解冻' }, { value: 'other', label: '其他' }]
+
+const showFreezeModal = (wallet: UserWallet, mode: 'freeze' | 'unfreeze') => {
+  freezeWalletTarget.value = wallet; freezeMode.value = mode; freezeForm.amount = 0; freezeForm.reason = ''; freezeForm.reasonDetail = ''; freezeModal.value = true
+}
+const confirmFreezeAction = () => {
+  if (!freezeWalletTarget.value || !freezeForm.reason) return
+  const target = mockUserWallets.value.find(w => w.walletId === freezeWalletTarget.value!.walletId)
+  if (!target) return
+  const isFreeze = freezeMode.value === 'freeze'
+  const maxFreeze = target.balance - target.frozenAmount; const maxUnfreeze = target.frozenAmount
+  if (isFreeze) { if (freezeForm.amount <= 0 || freezeForm.amount > maxFreeze) { alert('冻结金额必须在 1 到 ' + maxFreeze.toFixed(2) + ' 之间'); return } }
+  else { if (freezeForm.amount <= 0 || freezeForm.amount > maxUnfreeze) { alert('解冻金额必须在 1 到 ' + maxUnfreeze.toFixed(2) + ' 之间'); return } }
+  const amt = isFreeze ? -freezeForm.amount : freezeForm.amount
+  const reasonObj = (isFreeze ? freezeReasonOptions : unfreezeReasonOptions).find(o => o.value === freezeForm.reason)
+  const reasonText = reasonObj ? reasonObj.label : freezeForm.reason
+  const detailText = freezeForm.reason === 'other' && freezeForm.reasonDetail ? '(' + freezeForm.reasonDetail + ')' : ''
+  if (isFreeze) { target.frozenAmount += freezeForm.amount; target.frozenReason = reasonText + '：冻结 ¥' + freezeForm.amount.toFixed(2) }
+  else { target.frozenAmount -= freezeForm.amount }
+  const nextId = String(Math.max(...mockTransactions.value.map(t => parseInt(t.id))) + 1)
+  mockTransactions.value.push({ id: nextId, transactionNo: 'TXN-FRZ-' + nextId.padStart(3, '0'), uid: target.uid, phone: target.phone, type: 'freeze', amount: amt, balance: target.balance, relatedNo: '', merchant: '系统', operator: '管理员', time: new Date().toISOString().replace('T', ' ').slice(0, 19), remark: (isFreeze ? '冻结' : '解冻') + '：' + reasonText + detailText })
+  freezeModal.value = false; alert('钱包 ' + target.walletId + ' 已' + (isFreeze ? '冻结' : '解冻') + '（金额：¥' + freezeForm.amount.toFixed(2) + '）')
+}
+const freezeWallet = (item: UserWallet) => { if (confirm('确认冻结钱包「' + item.walletId + '」？')) { item.status = 'frozen'; item.frozenReason = '管理员冻结钱包'; alert('钱包已冻结') } }
+const unfreezeWallet = (item: UserWallet) => { if (confirm('确认解冻钱包「' + item.walletId + '」？')) { item.status = 'normal'; item.frozenReason = undefined; alert('钱包已解冻') } }
+createApp({ setup() { return { mockUserWallets, walletSearchForm, filteredWallets, userFlowModal, userFlowWallet, userFlowTxs, userFlowTab, userFlowExpandedTxId, toggleUserFlowBucket, txTypeLabel, mockTransactions, mockRechargeRecords, mockWithdrawRecords, withdrawStatusLabel, showUserFlow, freezeModal, freezeWalletTarget, freezeMode, freezeForm, freezeReasonOptions, unfreezeReasonOptions, showFreezeModal, confirmFreezeAction, freezeWallet, unfreezeWallet } } }).mount('#app')
+</script></body></html>
