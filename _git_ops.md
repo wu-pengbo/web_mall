@@ -22,3 +22,5 @@
 | 2026-07-02 17:59 | commit | feature/wallet-split | feat: 提取钱包概览模块到 WalletOverview.vue | 69a25e9 |
 
 | 2026-07-02 18:01 | commit | feature/wallet-split | feat: 提取钱包设置模块到 WalletConfig.vue | ea58568 |
+
+| 2026-07-02 18:05 | commit | feature/wallet-split | feat: 提取充值方案模块到 RechargePlan.vue | 4d6f6ab |
