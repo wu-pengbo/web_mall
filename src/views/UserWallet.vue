@@ -45,8 +45,9 @@ interface UserWallet {
   balance: number
   principalBalance: number
   bonusBalance: number
-  frozenAmount: number
-  totalRecharge: number
+ frozenAmount: number
+  withdrawFrozenAmount: number
+ totalRecharge: number
   totalConsume: number
   totalRefund: number
   status: 'normal' | 'frozen'
@@ -517,14 +518,14 @@ const maxTrend = computed(() => {
 
 // ==================== 模块3：用户钱包 ====================
 const mockUserWallets = ref<UserWallet[]>([
-  { walletId: 'WLT-00001', uid: 'u10001', phone: '138****1234', balance: 1280.50, principalBalance: 1024, bonusBalance: 256.50, frozenAmount: 200, totalRecharge: 5000, totalConsume: 3500, totalRefund: 219.50, status: 'normal', openTime: '2026-01-15 10:30:00' },
-  { walletId: 'WLT-00002', uid: 'u10002', phone: '139****5678', balance: 3560.00, principalBalance: 2848, bonusBalance: 712, frozenAmount: 0, totalRecharge: 8000, totalConsume: 4400, totalRefund: 40, status: 'normal', openTime: '2026-01-20 14:20:00' },
-  { walletId: 'WLT-00003', uid: 'u10003', phone: '137****9012', balance: 89.50, principalBalance: 72, bonusBalance: 17.50, frozenAmount: 0, totalRecharge: 1000, totalConsume: 910.50, totalRefund: 0, status: 'normal', openTime: '2026-02-03 09:15:00' },
-  { walletId: 'WLT-00004', uid: 'u10004', phone: '136****3456', balance: 5200.00, principalBalance: 4160, bonusBalance: 1040, frozenAmount: 1500, totalRecharge: 10000, totalConsume: 3300, totalRefund: 0, status: 'frozen', openTime: '2026-02-10 16:45:00', frozenReason: '疑似异常交易' },
-  { walletId: 'WLT-00005', uid: 'u10005', phone: '135****7890', balance: 800.00, principalBalance: 640, bonusBalance: 160, frozenAmount: 0, totalRecharge: 2000, totalConsume: 1200, totalRefund: 0, status: 'normal', openTime: '2026-03-01 11:00:00' },
-  { walletId: 'WLT-00006', uid: 'u10006', phone: '134****2345', balance: 12500.00, principalBalance: 10000, bonusBalance: 2500, frozenAmount: 500, totalRecharge: 20000, totalConsume: 7000, totalRefund: 0, status: 'normal', openTime: '2026-03-12 08:30:00' },
-  { walletId: 'WLT-00007', uid: 'u10007', phone: '133****6789', balance: 0, principalBalance: 0, bonusBalance: 0, frozenAmount: 0, totalRecharge: 500, totalConsume: 500, totalRefund: 0, status: 'normal', openTime: '2026-04-05 13:20:00' },
-  { walletId: 'WLT-00008', uid: 'u10008', phone: '132****0123', balance: 6800.00, principalBalance: 5440, bonusBalance: 1360, frozenAmount: 0, totalRecharge: 10000, totalConsume: 3000, totalRefund: 200, status: 'frozen', openTime: '2026-04-18 10:00:00', frozenReason: '用户主动申请冻结' },
+ { walletId: 'WLT-00001', uid: 'u10001', phone: '138****1234', balance: 1280.50, principalBalance: 1024, bonusBalance: 256.50, frozenAmount: 200, withdrawFrozenAmount: 50, totalRecharge: 5000, totalConsume: 3500, totalRefund: 219.50, status: 'normal', openTime: '2026-01-15 10:30:00' },
+  { walletId: 'WLT-00002', uid: 'u10002', phone: '139****5678', balance: 3560.00, principalBalance: 2848, bonusBalance: 712, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 8000, totalConsume: 4400, totalRefund: 40, status: 'normal', openTime: '2026-01-20 14:20:00' },
+  { walletId: 'WLT-00003', uid: 'u10003', phone: '137****9012', balance: 89.50, principalBalance: 72, bonusBalance: 17.50, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 1000, totalConsume: 910.50, totalRefund: 0, status: 'normal', openTime: '2026-02-03 09:15:00' },
+  { walletId: 'WLT-00004', uid: 'u10004', phone: '136****3456', balance: 5200.00, principalBalance: 4160, bonusBalance: 1040, frozenAmount: 1500, withdrawFrozenAmount: 300, totalRecharge: 10000, totalConsume: 3300, totalRefund: 0, status: 'frozen', openTime: '2026-02-10 16:45:00', frozenReason: '疑似异常交易' },
+  { walletId: 'WLT-00005', uid: 'u10005', phone: '135****7890', balance: 800.00, principalBalance: 640, bonusBalance: 160, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 2000, totalConsume: 1200, totalRefund: 0, status: 'normal', openTime: '2026-03-01 11:00:00' },
+  { walletId: 'WLT-00006', uid: 'u10006', phone: '134****2345', balance: 12500.00, principalBalance: 10000, bonusBalance: 2500, frozenAmount: 500, withdrawFrozenAmount: 200, totalRecharge: 20000, totalConsume: 7000, totalRefund: 0, status: 'normal', openTime: '2026-03-12 08:30:00' },
+  { walletId: 'WLT-00007', uid: 'u10007', phone: '133****6789', balance: 0, principalBalance: 0, bonusBalance: 0, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 500, totalConsume: 500, totalRefund: 0, status: 'normal', openTime: '2026-04-05 13:20:00' },
+  { walletId: 'WLT-00008', uid: 'u10008', phone: '132****0123', balance: 6800.00, principalBalance: 5440, bonusBalance: 1360, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 10000, totalConsume: 3000, totalRefund: 200, status: 'frozen', openTime: '2026-04-18 10:00:00', frozenReason: '用户主动申请冻结' },
 ])
 
 const walletSearchForm = reactive({ keyword: '', status: '' })
@@ -2336,30 +2337,65 @@ const openSettlementFlow = (item: MerchantSign) => {
           </span>
         </div>
         <div class="modal-body">
-          <div style="display: flex; gap: 16px; margin-bottom: 16px;" v-if="userFlowWallet">
-            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
-              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">用户</div>
-              <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</div>
-            </div>
-            <div style="flex: 1; background: #F0F5FF; border: 1px solid #D6E4FF; border-radius: 8px; padding: 14px 16px;">
-              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">当前余额</div>
-              <div style="font-size: 20px; color: #4F6EF7; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.balance.toFixed(2) }}</div>
-              <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #D6E4FF;">
-                <span style="font-size: 12px; color: #4F6EF7;">本金(可提现)</span>
-                <span style="font-size: 13px; color: #4F6EF7; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.principalBalance.toFixed(2) }}</span>
+          <div style="margin-bottom: 12px;" v-if="userFlowWallet">
+            <!-- Row 1: 用户信息 + 状态 -->
+            <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px;">
+                <div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">用户</div>
+                <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</div>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                <span style="font-size: 12px; color: #D46B08;">赠送</span>
-                <span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.bonusBalance.toFixed(2) }}</span>
+              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">状态</div>
+                  <span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span>
+                </div>
+                <label class="toggle-switch" :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'">
+                  <input type="checkbox" :checked="userFlowWallet.status === 'normal'" @click.prevent="userFlowWallet.status === 'normal' ? freezeWallet(userFlowWallet) : unfreezeWallet(userFlowWallet)" />
+                  <span class="toggle-slider"></span>
+                </label>
               </div>
             </div>
-            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
-              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">冻结金额</div>
-              <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.frozenAmount > 0 ? '¥' + userFlowWallet.frozenAmount.toFixed(2) : '-' }}</div>
-            </div>
-            <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 14px 16px;">
-              <div style="font-size: 12px; color: #86909C; margin-bottom: 6px; letter-spacing: 0.03em;">状态</div>
-              <div><span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span> <label class="toggle-switch" style="vertical-align: middle; margin-left: 8px;" :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'"><input type="checkbox" :checked="userFlowWallet.status === 'normal'" @click.prevent="userFlowWallet.status === 'normal' ? freezeWallet(userFlowWallet) : unfreezeWallet(userFlowWallet)" /><span class="toggle-slider"></span></label></div>
+            <!-- Row 2: 可用余额 + 消费金额 + 冻结金额 -->
+            <div style="display: flex; gap: 16px;">
+              <!-- 可用余额 -->
+              <div style="flex: 1; background: #F0F5FF; border: 1px solid #D6E4FF; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-size: 12px; color: #4F6EF7; margin-bottom: 6px; letter-spacing: 0.03em;">可用余额</div>
+                <div style="font-size: 20px; color: #4F6EF7; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.balance.toFixed(2) }}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #D6E4FF;">
+                  <span style="font-size: 12px; color: #4F6EF7;">本金(可提现)</span>
+                  <span style="font-size: 13px; color: #4F6EF7; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.principalBalance.toFixed(2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                  <span style="font-size: 12px; color: #D46B08;">赠送</span>
+                  <span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.bonusBalance.toFixed(2) }}</span>
+                </div>
+              </div>
+              <!-- 消费金额 -->
+              <div style="flex: 1; background: #E8FFE8; border: 1px solid #B7EB8F; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-size: 12px; color: #00A854; margin-bottom: 6px; letter-spacing: 0.03em;">消费金额</div>
+                <div style="font-size: 20px; color: #00A854; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.totalConsume - userFlowWallet.totalRefund).toFixed(2) }}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #B7EB8F;">
+                  <span style="font-size: 12px; color: #00A854;">消费总额</span>
+                  <span style="font-size: 13px; color: #00A854; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalConsume.toFixed(2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                  <span style="font-size: 12px; color: #CF1322;">已退款</span>
+                  <span style="font-size: 13px; color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalRefund.toFixed(2) }}</span>
+                </div>
+              </div>
+              <!-- 冻结金额 -->
+              <div style="flex: 1; background: #FFF7E6; border: 1px solid #FFE0B2; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-size: 12px; color: #D46B08; margin-bottom: 6px; letter-spacing: 0.03em;">冻结金额</div>
+                <div style="font-size: 20px; color: #D46B08; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.frozenAmount + userFlowWallet.withdrawFrozenAmount).toFixed(2) }}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #FFE0B2;">
+                  <span style="font-size: 12px; color: #D46B08;">系统冻结</span>
+                  <span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.frozenAmount.toFixed(2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                  <span style="font-size: 12px; color: #86909C;">提现中</span>
+                  <span style="font-size: 13px; color: #86909C; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.withdrawFrozenAmount.toFixed(2) }}</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="segmented-control" style="margin-top: 16px">
@@ -4284,6 +4320,9 @@ const openSettlementFlow = (item: MerchantSign) => {
   color: #CF1322;
 }
 </style>
+
+
+
 
 
 
