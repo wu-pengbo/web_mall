@@ -26,3 +26,5 @@
 | 2026-07-02 18:05 | commit | feature/wallet-split | feat: 提取充值方案模块到 RechargePlan.vue | 4d6f6ab |
 
 | 2026-07-02 18:15 | commit | feature/wallet-split | feat: 路由+WalletLayout+MainLayout适配 | 3b51812 |
+
+| 2026-07-02 18:28 | commit | feature/wallet-split | feat: 生成8个钱包模块的独立静态HTML文件 | 9315fdd |
