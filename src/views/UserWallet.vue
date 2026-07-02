@@ -30,6 +30,7 @@ interface WalletConfig {
   receiveMerchantName: string
   withdrawEnabled: boolean
   withdrawNeedReview: boolean
+  withdrawMethod: string
   feeType: 'fixed' | 'percent'
   feeValue: number
   minWithdraw: number
@@ -168,6 +169,7 @@ const walletConfig = reactive<WalletConfig>({
   receiveMerchantName: '',
   withdrawEnabled: true,
   withdrawNeedReview: true,
+  withdrawMethod: 'refund_to_recharge',
   feeType: 'fixed',
   feeValue: 0,
   minWithdraw: 10,
@@ -208,6 +210,7 @@ interface ConfigSnapshot {
   enabled: boolean
   withdrawEnabled: boolean
   withdrawNeedReview: boolean
+  withdrawMethod: string
   feeType: string
   feeValue: number
   minWithdraw: number
@@ -1324,6 +1327,11 @@ const openSettlementFlow = (item: MerchantSign) => {
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">手续费</span>
+                        <span class="wcfg-view-value">{{ walletConfig.feeType === 'fixed' ? walletConfig.feeValue + ' 元/笔' : walletConfig.feeValue + ' %' }}</span>
+                      </div>
+                      <div class="wcfg-view-field">
+                        <span class="wcfg-view-label">提现方式</span>
+                        <span class="wcfg-view-value">{{ walletConfig.withdrawMethod === 'refund_to_recharge' ? '原充值订单退款' : '主商户账户分账' }}</span>
                         <span class="wcfg-view-value">{{ walletConfig.feeType === 'fixed' ? walletConfig.feeValue + ' 元/笔' : walletConfig.feeValue + ' %' }}</span>
                       </div>
                       <div class="wcfg-view-field">
