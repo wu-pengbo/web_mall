@@ -20,3 +20,5 @@
 | 2026-07-02 17:55 | commit | feature/wallet-split | feat: 提取共享商户列表到 src/data/wallet.ts | a99b7b1 |
 
 | 2026-07-02 17:59 | commit | feature/wallet-split | feat: 提取钱包概览模块到 WalletOverview.vue | 69a25e9 |
+
+| 2026-07-02 18:01 | commit | feature/wallet-split | feat: 提取钱包设置模块到 WalletConfig.vue | ea58568 |
