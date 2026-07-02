@@ -2445,21 +2445,25 @@ const openSettlementFlow = (item: MerchantSign) => {
           <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'withdraw'">
             <thead>
               <tr>
-                <th>流水号</th>
+                <th>提现单号</th>
                 <th>提现金额</th>
-                <th>余额</th>
-                <th>时间</th>
+                <th>关联订单</th>
+                <th>关联充值</th>
+                <th>状态</th>
+                <th>申请时间</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tx in userFlowTxs.filter(t => t.type === 'withdraw')" :key="tx.id">
-                <td>{{ tx.transactionNo }}</td>
-                <td class="amount-negative">-¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
-                <td>¥{{ tx.balance.toFixed(2) }}</td>
-                <td class="time-text">{{ tx.time }}</td>
+              <tr v-for="w in mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid)" :key="w.id">
+                <td>{{ w.withdrawNo }}</td>
+                <td class="amount-negative">-¥{{ w.amount.toFixed(2) }}</td>
+                <td>{{ w.relatedOrderNo || '-' }}</td>
+                <td>{{ w.relatedRechargeNo || '-' }}</td>
+                <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
+                <td class="time-text">{{ w.applyTime }}</td>
               </tr>
-              <tr v-if="userFlowTxs.filter(t => t.type === 'withdraw').length === 0">
-                <td colspan="4" class="empty-text">暂无提现记录</td>
+              <tr v-if="mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid).length === 0">
+                <td colspan="6" class="empty-text">暂无提现记录</td>
               </tr>
             </tbody>
           </table>
@@ -4327,6 +4331,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   color: #CF1322;
 }
 </style>
+
 
 
 

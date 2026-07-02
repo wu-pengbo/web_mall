@@ -8,3 +8,7 @@
 | 2026-07-02 15:22 | commit | feature/wallet-optimization | feat: 提现设置新增提现方式字段 | 0052e99 |
 
 | 2026-07-02 15:29 | commit | feature/wallet-optimization | fix: 提现方式下拉修正，原充值订单退款可选，主商户账户分账disabled | 7ddbb2f |
+
+| 2026-07-02 16:33 | commit | feature/wallet-optimization | feat: 提现管理表头和详情弹窗去掉提现类型、到账方式两列 | 16d1d24 |
+
+| 2026-07-02 17:23 | commit | feature/wallet-optimization | feat: 查看详情弹窗提现流水表复用提现管理表字段 | 04663a1 |
