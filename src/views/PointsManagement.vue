@@ -756,7 +756,7 @@ interface QuotaItem {
   recordNo: string
   merchantName: string
   action: 'recharge' | 'recycle'
-  rechargeType: 'buy' | 'gift'
+  rechargeType: 'buy' | 'gift' | 'expire_rollback'
   amount: number
   payMethod: 'cash' | 'transfer' | 'online' | 'qrcode' | ''
   payAmount: number
@@ -767,7 +767,6 @@ interface QuotaItem {
   operateTime: string
   remark: string
 }
-
 const quotaList = ref<QuotaItem[]>([
   {
     id: '1',
@@ -817,6 +816,22 @@ const quotaList = ref<QuotaItem[]>([
     operateTime: '2026-06-06 11:00:00',
     remark: '回收超额额度',
   },
+  {
+    id: '5',
+    recordNo: 'QUOTA-20260615-001',
+    merchantName: '总部直营店',
+    action: 'recharge',
+    rechargeType: 'expire_rollback',
+    amount: 5000,
+    payMethod: '',
+    payAmount: 0,
+    payStatus: '',
+    changeStatus: 'completed',
+    source: 'platform',
+    operator: '系统自动',
+    operateTime: '2026-06-15 10:00:00',
+    remark: '额度过期回滚-Q1季度未使用额度到期自动回滚',
+  },
 ])
 
 const showQuotaModal = ref(false)
@@ -846,7 +861,7 @@ const getActionText = (action: string) => {
 }
 
 const getRechargeTypeText = (type: string) => {
-  const map: Record<string, string> = { buy: '购买', gift: '赠送' }
+  const map: Record<string, string> = { buy: '购买', gift: '赠送', expire_rollback: '过期回滚' }
   return map[type] || type
 }
 
@@ -2710,6 +2725,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <th>额度变更状态</th>
                 <th>操作人</th>
                 <th>操作时间</th>
+                <th>备注</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -2740,6 +2756,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 </td>
                 <td>{{ item.operator }}</td>
                 <td>{{ item.operateTime }}</td>
+                <td class="cell-wrap">{{ item.remark || '-' }}</td>
                 <td>
                   <a
                     v-if="item.payMethod === 'qrcode' && item.payStatus === 'unpaid'"
@@ -4486,6 +4503,8 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   justify-content: center;
 }
 </style>
+
+
 
 
 
