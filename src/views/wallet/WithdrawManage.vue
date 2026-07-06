@@ -95,7 +95,7 @@ const rejectWithdraw = (item: WithdrawRecord) => {
             <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
             <td>
               <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
-              <span v-if="w.status === 'pending' && w.needsReview" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">审核</span>
+              <span v-if="w.status === 'pending' && w.needsReview" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">通过</span>
               <span v-if="w.status === 'pending' && w.needsReview" class="action-link danger" @click="rejectWithdraw(w)" style="margin-left: 8px">拒绝</span>
               <span v-if="w.status === 'failed'" class="action-link primary" @click="retryWithdraw(w)" style="margin-left: 8px">重新发起</span>
             </td>
