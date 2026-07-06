@@ -28,3 +28,23 @@
 | 2026-07-02 18:15 | commit | feature/wallet-split | feat: 路由+WalletLayout+MainLayout适配 | 3b51812 |
 
 | 2026-07-02 18:28 | commit | feature/wallet-split | feat: 生成8个钱包模块的独立静态HTML文件 | 9315fdd |
+
+| 2026-07-06 | merge | main | git merge feature/wallet-split（Fast-forward, 15 commits, 24 files） | e883f05 |
+
+| 2026-07-06 | push | main | git push origin main（15 commits） | e883f05 |
+
+| 2026-07-02 18:05 | commit | feature/wallet-split | feat: 提取商户签约模块到 MerchantSign.vue（含签约弹窗+收款流水） | 2888e19 |
+
+| 2026-07-02 18:20 | commit | feature/wallet-split | docs: 更新操作日志 | 5cac13b |
+
+| 2026-07-02 18:07 | commit | feature/wallet-split | feat: 提取交易流水模块到 TransactionLedger.vue | 5e5fa97 |
+
+| 2026-07-02 18:08 | commit | feature/wallet-split | feat: 提取充值管理模块到 RechargeManage.vue | d530d55 |
+
+| 2026-07-02 18:22 | commit | feature/wallet-split | fix: 抽取共享UI样式到 wallet-common.css | fd998b1 |
+
+| 2026-07-02 18:28 | commit | feature/wallet-split | chore: 移除测试文件 | e883f05 |
+
+| 2026-07-02 18:12 | commit | feature/wallet-split | feat: 提取用户钱包模块到 WalletUser.vue | e022faa |
+
+| 2026-07-02 18:10 | commit | feature/wallet-split | feat: 提取提现管理模块到 WithdrawManage.vue | 7f64798 |
