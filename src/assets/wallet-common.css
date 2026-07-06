@@ -64,6 +64,8 @@
 .status-tag.full { background-color: #E8F3FF; color: #4F6EF7; }
 .status-tag.partial { background-color: #FFF7E6; color: #D46B08; }
 .status-tag.recharge { background-color: #E8F3FF; color: #4F6EF7; }
+.status-tag.processing { background-color: #F0F5FF; color: #1677FF; }
+.status-tag.failed { background-color: #FFF1F0; color: #CF1322; }
 .status-tag.consume { background-color: #FFF7E6; color: #D46B08; }
 .status-tag.refund { background-color: #E8F8EE; color: #0E7B3A; }
 .status-tag.withdraw { background-color: #FFF1F0; color: #CF1322; }
