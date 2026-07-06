@@ -5,7 +5,7 @@ interface WithdrawRecord {
   id: string; withdrawNo: string; uid: string; phone: string; amount: number
   refundType: 'full' | 'partial'; relatedOrderNo: string; relatedRechargeNo?: string; payOrderNo?: string
   originalPayMethod: 'wechat' | 'alipay' | 'bank'; fee: number; actualAmount: number
-  status: 'pending' | 'approved' | 'processing' | 'success' | 'failed' | 'rejected'; operator: string
+  status: 'pending' | 'processing' | 'success' | 'failed' | 'rejected'; operator: string
   needsReview: boolean
   applyTime: string; completeTime: string; rejectReason?: string; partialRefundReason?: string
 }
@@ -13,8 +13,8 @@ interface WithdrawRecord {
 const mockWithdrawRecords = ref<WithdrawRecord[]>([
   // 场景1：待人工审核
   { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', needsReview: true, operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '', payOrderNo: 'PAY-20260611-001' },
-  // 场景2：待自动提现（无需审核）
-  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'pending', needsReview: false, operator: '', applyTime: '2026-06-11 10:30:00', completeTime: '', payOrderNo: 'PAY-20260611-003', partialRefundReason: '商品部分退货' },
+  // 场景2：自动提现成功（无需审核，提交即自动执行）
+  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'success', needsReview: false, operator: '系统', applyTime: '2026-06-11 10:30:00', completeTime: '2026-06-11 10:30:05', payOrderNo: 'PAY-20260611-003', partialRefundReason: '商品部分退货' },
   // 场景3：审核通过，自动提现成功
   { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'success', needsReview: true, operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00', payOrderNo: 'PAY-20260610-001' },
   // 场景4：人工审核拒绝
@@ -35,7 +35,7 @@ const filteredWithdraws = computed(() => mockWithdrawRecords.value.filter(w => {
 const withdrawDetailModal = ref(false)
 const withdrawDetailItem = ref<WithdrawRecord | null>(null)
 const showWithdrawDetail = (item: WithdrawRecord) => { withdrawDetailItem.value = item; withdrawDetailModal.value = true }
-const withdrawStatusLabel: Record<string, string> = { pending: '待审核', approved: '审核通过', processing: '处理中', success: '提现成功', failed: '提现失败', rejected: '已拒绝' }
+const withdrawStatusLabel: Record<string, string> = { pending: '待审核', processing: '处理中', success: '提现成功', failed: '提现失败', rejected: '已拒绝' }
 
 // 手动审核通过（审核后可自动执行提现）
 const approveWithdraw = (item: WithdrawRecord) => {
@@ -52,21 +52,6 @@ const approveWithdraw = (item: WithdrawRecord) => {
     }
   }, 1500)
   alert('提现单 ' + item.withdrawNo + ' 已审核通过，正在自动执行提现...')
-}
-// 自动执行提现（无需审核的场景）
-const autoProcessWithdraw = (item: WithdrawRecord) => {
-  if (!confirm('确认自动执行提现？\n提现金额：¥' + item.amount.toFixed(2))) return
-  item.status = 'processing'; item.operator = '系统'
-  setTimeout(() => {
-    if (Math.random() > 0.3) {
-      item.status = 'success'; item.completeTime = new Date().toLocaleString('zh-CN', { hour12: false })
-      alert('提现单 ' + item.withdrawNo + ' 自动提现成功')
-    } else {
-      item.status = 'failed'
-      alert('提现单 ' + item.withdrawNo + ' 提现失败，可重新发起')
-    }
-  }, 1500)
-  alert('正在自动执行提现...')
 }
 // 重新发起
 const retryWithdraw = (item: WithdrawRecord) => {
@@ -96,7 +81,7 @@ const rejectWithdraw = (item: WithdrawRecord) => {
     <div class="panel-body">
       <div class="filter-bar">
         <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联充值单号" style="width: 220px" /></div>
-        <div class="filter-item"><label>状态</label><select class="form-select" v-model="withdrawSearchForm.status" style="width: 140px"><option value="">全部</option><option value="pending">待审核</option><option value="approved">审核通过</option><option value="processing">处理中</option><option value="success">提现成功</option><option value="failed">提现失败</option><option value="rejected">已拒绝</option></select></div>
+        <div class="filter-item"><label>状态</label><select class="form-select" v-model="withdrawSearchForm.status" style="width: 140px"><option value="">全部</option><option value="pending">待审核</option><option value="processing">处理中</option><option value="success">提现成功</option><option value="failed">提现失败</option><option value="rejected">已拒绝</option></select></div>
         <div class="filter-item"><button class="btn btn-primary" @click="">查询</button><button class="btn btn-default" style="margin-left: 8px" @click="withdrawSearchForm.keyword = ''; withdrawSearchForm.status = ''">重置</button></div>
       </div>
       <table class="data-table">
@@ -112,7 +97,6 @@ const rejectWithdraw = (item: WithdrawRecord) => {
               <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
               <span v-if="w.status === 'pending' && w.needsReview" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">审核</span>
               <span v-if="w.status === 'pending' && w.needsReview" class="action-link danger" @click="rejectWithdraw(w)" style="margin-left: 8px">拒绝</span>
-              <span v-if="w.status === 'pending' && !w.needsReview" class="action-link primary" @click="autoProcessWithdraw(w)" style="margin-left: 8px">执行提现</span>
               <span v-if="w.status === 'failed'" class="action-link primary" @click="retryWithdraw(w)" style="margin-left: 8px">重新发起</span>
             </td>
           </tr>
