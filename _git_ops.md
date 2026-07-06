@@ -52,3 +52,5 @@
 | 2026-07-06 | merge | main | git merge feature/wallet-split（提现管理表头重命名） | 9a3445e |
 
 | 2026-07-06 | merge | main | git merge feature/wallet-split（提现流程重构：审核方式/自动执行/失败重试） | bf964b2 |
+
+| 2026-07-06 | branch -d | main | 删除 feature/wallet-split（已合并到 main） | bf964b2 |
