@@ -3,18 +3,18 @@ import { ref, reactive, computed } from 'vue'
 
 interface WithdrawRecord {
   id: string; withdrawNo: string; uid: string; phone: string; amount: number
-  refundType: 'full' | 'partial'; relatedOrderNo: string; relatedRechargeNo?: string
+  refundType: 'full' | 'partial'; relatedOrderNo: string; relatedRechargeNo?: string; payOrderNo?: string
   originalPayMethod: 'wechat' | 'alipay' | 'bank'; fee: number; actualAmount: number
   status: 'pending' | 'approved' | 'refunded' | 'rejected'; operator: string
   applyTime: string; completeTime: string; rejectReason?: string; partialRefundReason?: string
 }
 
 const mockWithdrawRecords = ref<WithdrawRecord[]>([
-  { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '' },
-  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', partialRefundReason: '商品部分退货' },
-  { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00' },
-  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '提现申请超出规定期限' },
-  { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00' },
+  { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '', payOrderNo: 'PAY-20260611-001' },
+  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', payOrderNo: 'PAY-20260611-003', partialRefundReason: '商品部分退货' },
+  { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00', payOrderNo: 'PAY-20260610-001' },
+  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', payOrderNo: 'PAY-20260609-001', rejectReason: '提现申请超出规定期限' },
+  { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00', payOrderNo: 'PAY-20260609-002' },
 ])
 
 const withdrawSearchForm = reactive({ keyword: '', status: '' })
@@ -58,7 +58,7 @@ const rejectWithdraw = (item: WithdrawRecord) => {
         <tbody>
           <tr v-for="w in filteredWithdraws" :key="w.id">
             <td>{{ w.withdrawNo }}</td><td>{{ w.uid }}<br/><span class="sub-text">{{ w.phone }}</span></td>
-            <td class="price-text">¥{{ w.amount.toFixed(2) }}</td><td>{{ w.relatedOrderNo }}</td><td>{{ w.relatedRechargeNo || '-' }}</td>
+            <td class="price-text">¥{{ w.amount.toFixed(2) }}</td><td>{{ w.relatedOrderNo }}</td><td>{{ w.payOrderNo || '-' }}</td>
             <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
             <td>
               <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
@@ -84,6 +84,7 @@ const rejectWithdraw = (item: WithdrawRecord) => {
             <div><label>手续费</label><span>{{ withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免' }}</span></div>
             <div><label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
             <div><label>关联充值单号</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
+            <div><label>关联支付单号</label><span>{{ withdrawDetailItem.payOrderNo || '-' }}</span></div>
             <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
             <div><label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span></div>
             <div><label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span></div>
