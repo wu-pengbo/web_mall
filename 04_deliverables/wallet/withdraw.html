@@ -169,12 +169,12 @@
     <div class="panel-header"><h2>提现管理</h2><span class="panel-subtitle">提现审核与打款</span></div>
     <div class="panel-body">
       <div class="filter-bar">
-        <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联订单号" style="width: 220px" /></div>
+        <div class="filter-item"><label>搜索</label><input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联支付单号单号号" style="width: 220px" /></div>
         <div class="filter-item"><label>状态</label><select class="form-select" v-model="withdrawSearchForm.status" style="width: 140px"><option value="">全部</option><option value="pending">待审核</option><option value="approved">审核通过待打款</option><option value="refunded">已打款</option><option value="rejected">已拒绝</option></select></div>
         <div class="filter-item"><button class="btn btn-primary" @click="">查询</button><button class="btn btn-default" style="margin-left: 8px" @click="withdrawSearchForm.keyword = ''; withdrawSearchForm.status = ''">重置</button></div>
       </div>
       <table class="data-table">
-        <thead><tr><th>提现单号</th><th>用户</th><th>提现金额</th><th>关联订单</th><th>关联充值</th><th>状态</th><th>操作</th></tr></thead>
+        <thead><tr><th>提现单号</th><th>用户</th><th>提现金额</th><th>关联支付单号单号</th><th>关联支付单号</th><th>状态</th><th>操作</th></tr></thead>
         <tbody>
           <tr v-for="w in filteredWithdraws" :key="w.id">
             <td>{{ w.withdrawNo }}</td><td>{{ w.uid }}<br/><span class="sub-text">{{ w.phone }}</span></td>
@@ -203,7 +203,7 @@
             <div><label>提现金额</label><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span></div>
             <div><label>手续费</label><span>{{ withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免' }}</span></div>
             <div><label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
-            <div><label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
+            <div><label>关联支付单号单号</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
             <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
             <div><label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span></div>
             <div><label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span></div>
