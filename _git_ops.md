@@ -50,3 +50,5 @@
 | 2026-07-02 18:10 | commit | feature/wallet-split | feat: 提取提现管理模块到 WithdrawManage.vue | 7f64798 |
 
 | 2026-07-06 | merge | main | git merge feature/wallet-split（提现管理表头重命名） | 9a3445e |
+
+| 2026-07-06 | merge | main | git merge feature/wallet-split（提现流程重构：审核方式/自动执行/失败重试） | bf964b2 |
