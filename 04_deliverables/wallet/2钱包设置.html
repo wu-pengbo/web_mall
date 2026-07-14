@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品原型 - 商城后台 · 钱包设置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F7FA; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .proto-element { position: relative; transition: all 0.2s ease; border-radius: 6px; }
+    .proto-element:hover { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.15); background-color: rgba(22,93,255,0.03); }
+    .proto-element.active-highlight { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.2); background-color: rgba(22,93,255,0.05); }
+    .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+    .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+    .proto-desc.active-highlight { background-color: #fde68a; border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+    .proto-desc.hidden-desc { display: none; }
+    #connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    .connection-line { fill: none; stroke: #165DFF; stroke-width: 2; opacity: 0.6; transition: all 0.2s ease; }
+    .connection-line.active { stroke-width: 3; opacity: 1; }
+    .connection-line.hidden-line { display: none; }
+    .connection-label { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    .connection-label-bg { fill: #165DFF; }
+    .sidebar-menu-item { transition: all 0.2s; cursor: pointer; }
+    .sidebar-menu-item:hover { background-color: rgba(22,93,255,0.06); color: #165DFF; }
+    .sidebar-menu-item.active { background-color: rgba(22,93,255,0.10); color: #165DFF; border-right: 3px solid #165DFF; }
+    .sidebar-label { font-size: 11px; color: #86909C; letter-spacing: 0.05em; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .tag-green { background-color: rgba(0,180,42,0.1); color: #00B42A; }
+    .tag-orange { background-color: rgba(212,107,8,0.1); color: #D46B08; }
+    .tag-red { background-color: rgba(207,19,34,0.1); color: #CF1322; }
+    .tag-blue { background-color: rgba(22,93,255,0.1); color: #165DFF; }
+    .tag-gray { background-color: #F5F7FA; color: #666; }
+    .data-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; }
+    .data-table tbody tr { transition: background-color 0.15s; cursor: pointer; }
+    .data-table tbody tr:hover { background-color: rgba(22,93,255,0.04); }
+    .data-table td { font-size: 13px; }
+    .btn-click:active { transform: scale(0.96); }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .price-text { font-family: "SF Mono", "Menlo", monospace; font-weight: 600; }
+    .amount-pos { color: #CF1322; }
+    .amount-neg { color: #0E7B3A; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status-badge.on { background: #E8FFE8; color: #00A854; }
+    .status-badge.off { background: #FFF0F0; color: #CF1322; }
+    .status-badge.pending { background: #FFF7E6; color: #D46B08; }
+    .status-badge.approved { background: #E8FFE8; color: #00A854; }
+    .status-badge.refunded { background: #F0F5FF; color: #165DFF; }
+    .status-badge.rejected { background: #FFF0F0; color: #CF1322; }
+    .status-badge.signed { background: #E8FFE8; color: #00A854; }
+    .status-badge.terminated { background: #F5F5F5; color: #999; }
+    .action-link { font-size: 13px; font-weight: 500; cursor: pointer; transition: color 0.15s; background: none; border: none; padding: 0; font-family: inherit; }
+    .action-link:hover { opacity: 0.8; }
+    .action-link:focus { outline: 2px solid #165DFF; outline-offset: 2px; border-radius: 2px; }
+    .action-link.primary { color: #165DFF; }
+    .action-link.danger { color: #CF1322; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #165DFF; color: #fff; }
+    .btn-primary:hover { background: #0E42D2; }
+    .btn-primary:disabled { background: #C9CDD4; cursor: not-allowed; }
+    .btn-default { background: #F2F3F5; color: #4E5969; }
+    .btn-default:hover { background: #E5E6EB; }
+    .btn-sm { padding: 6px 16px; font-size: 13px; }
+    .btn-xs { padding: 4px 12px; font-size: 13px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #E5E6EB; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 12px; color: #86909C; }
+    .filter-item input, .filter-item select { font-size: 13px; padding: 6px 10px; border: 1px solid #E5E6EB; border-radius: 6px; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #E5E6EB; }
+    .page-btn { padding: 4px 10px; border: 1px solid #E5E6EB; background: #fff; border-radius: 4px; font-size: 12px; color: #4E5969; cursor: pointer; }
+    .page-btn:hover:not(.disabled):not(.active) { background: #F2F3F5; }
+    .page-btn.active { background: #165DFF; color: #fff; border-color: #165DFF; }
+    .page-btn.disabled { color: #C9CDD4; cursor: not-allowed; }
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #left-panel { width: 100% !important; height: 60vh; }
+      #divider { display: none; }
+      #right-panel { width: 100% !important; height: 40vh; border-top: 1px solid #e5e7eb; }
+      #connections { display: none; }
+      .mobile-toggle-btn { display: flex !important; }
+    }
+    .mobile-toggle-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: #165DFF; color: white; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(22,93,255,0.3); cursor: pointer; border: none; }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .modal-content { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; margin: 0 16px; }
+    .modal-content.modal-md { max-width: 560px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #E5E6EB; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: #1D2129; }
+    .modal-close { cursor: pointer; color: #86909C; padding: 4px; background: none; border: none; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid #F2F3F5; background: #FAFAFA; }
+    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #C9CDD4; border-radius: 10px; transition: 0.3s; }
+    .toggle-slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: #165DFF; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+    .form-item { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: #4E5969; margin-bottom: 6px; }
+    .form-input { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 2px rgba(22,93,255,0.1); outline: none; }
+    .form-select { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-select:focus { border-color: #165DFF; box-shadow: 0 0 0 2px rgba(22,93,255,0.1); outline: none; }
+    .form-textarea { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; resize: vertical; }
+    .form-textarea:focus { border-color: #165DFF; box-shadow: 0 0 0 2px rgba(22,93,255,0.1); outline: none; }
+
+    .wcfg-card { background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .wcfg-card-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 14px; font-weight: 600; color: #1D2129; background: #fff; border-bottom: 1px solid #E5E6EB; }
+    .wcfg-card-body { padding: 16px; }
+    .wcfg-view-card { border: 1px solid #E5E6EB; border-radius: 8px; overflow: hidden; background: #fff; }
+    .wcfg-view-card-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 14px; font-weight: 600; color: #1D2129; background: #FAFAFA; border-bottom: 1px solid #E5E6EB; }
+    .wcfg-view-card-body { padding: 12px 16px; }
+    .wcfg-view-field { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F2F3F5; }
+    .wcfg-view-field:last-child { border-bottom: none; }
+    .wcfg-view-label { font-size: 13px; color: #86909C; }
+    .wcfg-view-value { font-size: 14px; color: #1D2129; font-weight: 500; }
+    .wcfg-row { display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+    .wcfg-field { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 200px; }
+    .wcfg-label { font-size: 13px; font-weight: 500; color: #4E5969; }
+    .wcfg-label.required::after { content: ' *'; color: #CF1322; }
+    .wcfg-input-group { display: flex; align-items: center; gap: 6px; }
+    .wcfg-unit { font-size: 13px; color: #86909C; }
+    .wcfg-hint { font-size: 12px; color: #86909C; margin-top: 4px; }
+    .wcfg-divider { height: 1px; background: #E5E6EB; margin: 12px 0; }
+    .wcfg-status-badge.on { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: #E8FFE8; color: #00A854; }
+    .wcfg-status-badge.off { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: #FFF0F0; color: #CF1322; }
+    .history-section { margin-top: 32px; border-top: 1px solid #E5E6EB; padding-top: 20px; }
+    .history-header { display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; user-select: none; }
+    .history-title { font-size: 13px; font-weight: 700; color: #1D2129; }
+    .history-count { font-size: 12px; color: #86909C; font-family: monospace; }
+    .history-detail { display: none; }
+    .history-detail.expanded { display: table-row; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <button class="mobile-toggle-btn" id="mobileToggle"><i class="fas fa-info"></i></button>
+  <div id="app" class="flex h-screen relative">
+    <div id="left-panel" class="w-[80%] overflow-y-auto bg-gray-50 relative">
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#165DFF] rounded-lg flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-store"></i></div><h1 class="text-lg font-semibold text-gray-800">商城后台管理系统</h1></div>
+        <div class="flex items-center gap-4"><span class="text-sm text-gray-500"><i class="far fa-bell mr-1"></i></span><span class="text-sm text-gray-600"><i class="fas fa-user-circle mr-1"></i> admin</span></div>
+      </header>
+      <div class="flex">
+        <aside class="w-52 bg-white border-r border-gray-200 min-h-[calc(100vh-56px)] flex-shrink-0">
+          <nav class="py-4">
+            <div class="px-4 mb-2 sidebar-label font-semibold uppercase">钱包管理</div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-chart-pie w-5 text-center"></i><span>钱包概览</span></div>
+            <div class="proto-element sidebar-menu-item active px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm" data-proto-id="1"><i class="fas fa-cog w-5 text-center"></i><span>钱包设置</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-file-signature w-5 text-center"></i><span>商户签约</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-gift w-5 text-center"></i><span>充值方案</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-wallet w-5 text-center"></i><span>用户钱包</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-exchange-alt w-5 text-center"></i><span>交易流水</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-credit-card w-5 text-center"></i><span>充值管理</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-hand-holding-usd w-5 text-center"></i><span>提现管理</span></div>
+          </nav>
+        </aside>
+        <main class="flex-1 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">钱包设置</h2>
+              <p class="text-sm text-gray-500 mt-1">全局钱包功能开关及业务规则配置</p>
+            </div>
+            <button id="editBtn" class="btn btn-primary btn-xs" onclick="enterEditMode()">编辑</button>
+          </div>
+
+          <!-- 视图模式 -->
+          <div id="viewMode">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+              <!-- 基础设置卡片 -->
+              <div class="proto-element wcfg-view-card" data-proto-id="2">
+                <div class="wcfg-view-card-header"><i class="fas fa-sliders-h text-[#4F6EF7]"></i><span>基础设置</span></div>
+                <div class="wcfg-view-card-body">
+                  <div class="wcfg-view-field"><span class="wcfg-view-label">钱包开关</span><span class="wcfg-status-badge on" id="vws">已开启</span></div>
+                  <div class="wcfg-view-field" id="vfName"><span class="wcfg-view-label">钱包名称</span><span class="wcfg-view-value" id="vwn">我的钱包</span></div>
+                </div>
+              </div>
+              <!-- 充值设置卡片 -->
+              <div class="proto-element wcfg-view-card" data-proto-id="3" id="vcRecharge">
+                <div class="wcfg-view-card-header"><i class="fas fa-clock text-[#4F6EF7]"></i><span>充值设置</span></div>
+                <div class="wcfg-view-card-body">
+                  <div class="wcfg-view-field"><span class="wcfg-view-label">最低充值金额</span><span class="price-text wcfg-view-value">¥1.00</span></div>
+                  <div class="wcfg-view-field"><span class="wcfg-view-label">最高充值金额</span><span class="price-text wcfg-view-value">¥50,000.00</span></div>
+                  <div class="wcfg-view-field"><span class="wcfg-view-label">收款商户</span><span class="wcfg-view-value" id="vwm">平台自营商户</span></div>
+                </div>
+              </div>
+              <!-- 提现设置卡片 -->
+              <div class="proto-element wcfg-view-card" data-proto-id="4" id="vcWithdraw">
+                <div class="wcfg-view-card-header"><i class="fas fa-money-bill-wave text-[#4F6EF7]"></i><span>提现设置</span></div>
+                <div class="wcfg-view-card-body">
+                  <div class="wcfg-view-field"><span class="wcfg-view-label">提现开关</span><span class="wcfg-status-badge on" id="vwws">已开启</span></div>
+                  <div class="wcfg-view-field" id="vfReview"><span class="wcfg-view-label">提现审核</span><span class="wcfg-status-badge on" id="vwwr">开启</span></div>
+                  <div class="wcfg-view-field" id="vfFee"><span class="wcfg-view-label">手续费</span><span class="wcfg-view-value" id="vwf">0 元/笔</span></div>
+                  <div class="wcfg-view-field" id="vfMin"><span class="wcfg-view-label">最低提现金额</span><span class="price-text wcfg-view-value">¥10.00</span></div>
+                  <div class="wcfg-view-field" id="vfMax"><span class="wcfg-view-label">最高提现金额</span><span class="price-text wcfg-view-value">¥50,000.00</span></div>
+                  <div class="wcfg-view-field" id="vfDaily"><span class="wcfg-view-label">日提现限额</span><span class="price-text wcfg-view-value">¥100,000.00</span></div>
+                  <div class="wcfg-view-field" id="vfBalance"><span class="wcfg-view-label">提现后余额下限</span><span class="price-text wcfg-view-value">¥0.00</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 编辑模式 -->
+          <div id="editMode" style="display:none">
+            <!-- 基础设置 -->
+            <div class="proto-element wcfg-card" data-proto-id="5">
+              <div class="wcfg-card-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg><span>基础设置</span></div>
+              <div class="wcfg-card-body">
+                <div class="wcfg-row">
+                  <div class="wcfg-field">
+                    <label class="wcfg-label">钱包开关</label>
+                    <label class="toggle-switch"><input type="checkbox" id="iw" checked onchange="onWalletToggle()" /><span class="toggle-slider"></span></label>
+                  </div>
+                  <div class="wcfg-field" id="efName">
+                    <label class="wcfg-label required">钱包名称</label>
+                    <input id="in" type="text" class="form-input" value="我的钱包" style="width:240px" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 充值设置 -->
+            <div class="proto-element wcfg-card" data-proto-id="6" id="ecRecharge">
+              <div class="wcfg-card-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>充值设置</span></div>
+              <div class="wcfg-card-body">
+                <div class="wcfg-row">
+                  <div class="wcfg-field">
+                    <label class="wcfg-label required">最低充值金额</label>
+                    <div class="wcfg-input-group"><input type="number" class="form-input" value="1" style="width:120px" /><span class="wcfg-unit">元</span></div>
+                  </div>
+                  <div class="wcfg-field">
+                    <label class="wcfg-label required">最高充值金额</label>
+                    <div class="wcfg-input-group"><input type="number" class="form-input" value="50000" style="width:120px" /><span class="wcfg-unit">元</span></div>
+                  </div>
+                </div>
+                <div class="wcfg-field" style="max-width:360px">
+                  <label class="wcfg-label required">收款商户</label>
+                  <select id="imh" class="form-select" style="width:100%" onchange="onMerchantChange()">
+                    <option value="">请选择商户</option>
+                    <option value="m001" selected>平台自营商户</option>
+                    <option value="m002">XX数码旗舰店</option>
+                    <option value="m003">XX服饰专营店</option>
+                  </select>
+                  <span class="wcfg-hint">用户充值时资金打入该商户账户</span>
+                </div>
+              </div>
+            </div>
+            <!-- 提现设置 -->
+            <div class="proto-element wcfg-card" data-proto-id="7" id="ecWithdraw">
+              <div class="wcfg-card-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>提现设置</span></div>
+              <div class="wcfg-card-body">
+                <div class="wcfg-row">
+                  <div class="wcfg-field">
+                    <label class="wcfg-label">是否支持提现</label>
+                    <label class="toggle-switch"><input id="iwd" type="checkbox" checked onchange="onWithdrawToggle()" /><span class="toggle-slider"></span></label>
+                  </div>
+                  <div class="wcfg-field" id="efReview">
+                    <label class="wcfg-label">提现审核</label>
+                    <label class="toggle-switch"><input id="iwr" type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    <span id="rh" class="wcfg-hint">开启（人工审批）</span>
+                  </div>
+                </div>
+                <div id="withdrawFields">
+                  <div class="wcfg-divider"></div>
+                  <div class="wcfg-row">
+                    <div class="wcfg-field">
+                      <label class="wcfg-label">手续费</label>
+                      <div class="wcfg-input-group">
+                        <select class="form-select"><option selected>固定</option><option>比例</option></select>
+                        <input type="number" class="form-input" value="0" style="width:80px" /><span class="wcfg-unit">元/笔</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="wcfg-row">
+                    <div class="wcfg-field">
+                      <label class="wcfg-label">提现方式</label>
+                      <div class="wcfg-input-group">
+                        <select class="form-select"><option selected>原充值订单退款</option><option disabled>主商户账户分账</option></select>
+                        <span class="wcfg-hint" style="color:#faad14;">暂不可选</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="wcfg-divider"></div>
+                  <div class="wcfg-row">
+                    <div class="wcfg-field"><label class="wcfg-label required">最低提现金额</label><div class="wcfg-input-group"><input type="number" class="form-input" value="10" style="width:120px" /><span class="wcfg-unit">元</span></div></div>
+                    <div class="wcfg-field"><label class="wcfg-label required">最高提现金额</label><div class="wcfg-input-group"><input type="number" class="form-input" value="50000" style="width:120px" /><span class="wcfg-unit">元</span></div></div>
+                  </div>
+                  <div class="wcfg-row">
+                    <div class="wcfg-field"><label class="wcfg-label">日提现限额</label><div class="wcfg-input-group"><input type="number" class="form-input" value="100000" style="width:120px" /><span class="wcfg-unit">元</span></div></div>
+                    <div class="wcfg-field"><label class="wcfg-label">提现后余额下限</label><div class="wcfg-input-group"><input type="number" class="form-input" value="0" style="width:120px" /><span class="wcfg-unit">元（0=不限制）</span></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:24px">
+              <button id="sb" class="btn btn-primary" onclick="sc()">保存配置</button>
+              <button class="btn btn-default" onclick="ce()">取消</button>
+            </div>
+          </div>
+
+          <!-- 历史记录 -->
+          <div class="history-section proto-element" data-proto-id="8">
+            <div class="history-header" onclick="toggleHistorySection()">
+              <span id="historyArrow" style="font-size:12px;color:#86909C;min-width:12px">▼</span>
+              <span class="history-title">修改记录</span>
+              <span class="history-count">共 2 条</span>
+            </div>
+            <div id="hb">
+              <table class="data-table" style="width:100%;margin-top:8px">
+                <thead>
+                  <tr>
+                    <th style="padding:8px 12px;width:60px">序号</th>
+                    <th style="padding:8px 12px;width:100px">修改人</th>
+                    <th style="padding:8px 12px;width:160px">修改时间</th>
+                    <th style="padding:8px 12px;width:120px">操作类型</th>
+                    <th style="padding:8px 12px;width:80px">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding:8px 12px">1</td>
+                    <td style="padding:8px 12px">张三</td>
+                    <td style="padding:8px 12px">2026-06-10 14:30</td>
+                    <td style="padding:8px 12px"><span class="tag tag-blue">修改配置</span></td>
+                    <td style="padding:8px 12px"><button class="action-link primary" onclick="toggleHistoryDetail(this,1)">展开</button></td>
+                  </tr>
+                  <tr class="history-detail" id="s1">
+                    <td colspan="5" style="padding:0;background:#FAFAFA">
+                      <div style="padding:16px">
+                        <div style="font-size:12px;font-weight:600;color:#86909C;margin-bottom:12px">完整配置快照（只读）</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                          <div><span style="font-size:12px;color:#86909C">钱包名称</span><div style="font-size:14px;color:#4E5969">我的钱包</div></div>
+                          <div><span style="font-size:12px;color:#86909C">钱包开关</span><div style="font-size:14px;color:#4E5969">开启</div></div>
+                          <div><span style="font-size:12px;color:#86909C">收款商户</span><div style="font-size:14px;color:#4E5969">平台自营商户</div></div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 12px">2</td>
+                    <td style="padding:8px 12px">李四</td>
+                    <td style="padding:8px 12px">2026-06-09 10:00</td>
+                    <td style="padding:8px 12px"><span class="tag tag-blue">修改配置</span></td>
+                    <td style="padding:8px 12px"><button class="action-link primary" onclick="toggleHistoryDetail(this,2)">展开</button></td>
+                  </tr>
+                  <tr class="history-detail" id="s2">
+                    <td colspan="5" style="padding:0;background:#FAFAFA">
+                      <div style="padding:16px">
+                        <div style="font-size:12px;font-weight:600;color:#86909C;margin-bottom:12px">完整配置快照（只读）</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                          <div><span style="font-size:12px;color:#86909C">钱包名称</span><div style="font-size:14px;color:#4E5969">零钱</div></div>
+                          <div><span style="font-size:12px;color:#86909C">钱包开关</span><div style="font-size:14px;color:#4E5969">关闭</div></div>
+                          <div><span style="font-size:12px;color:#86909C">收款商户</span><div style="font-size:14px;color:#4E5969">-</div></div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div id="divider" class="w-px bg-gray-300"></div>
+
+    <div id="right-panel" class="w-[20%] overflow-y-auto bg-amber-50 border-l-2 border-dashed border-amber-300">
+      <div class="p-4">
+        <div class="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded uppercase tracking-wide">Prototype</span>
+            <span class="text-xs font-semibold text-amber-800">原型说明</span>
+          </div>
+          <p class="text-[11px] text-amber-700 leading-relaxed">悬停左侧元素可高亮对应连线。点击"编辑"进入编辑模式，体验配置联动逻辑。组件隐藏时对应说明和连线自动隐藏。</p>
+        </div>
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-amber-200">
+          <i class="fas fa-map-signs text-amber-600"></i>
+          <h2 class="text-sm font-bold text-amber-900">功能说明</h2>
+        </div>
+        <div class="space-y-3">
+          <div class="proto-desc p-3 active-highlight" data-proto-id="1">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">1</span>
+              <div>
+                <h3 class="text-sm font-semibold">钱包设置 · 入口</h3>
+                <p class="text-xs text-gray-500 mt-1">全局钱包功能配置入口，包含基础设置、充值设置和提现设置三组配置卡片。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="2">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">2</span>
+              <div>
+                <h3 class="text-sm font-semibold">基础设置 · 视图</h3>
+                <p class="text-xs text-gray-500 mt-1">展示钱包开关状态和钱包名称。钱包开关 = 关闭时，钱包名称字段隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="3" id="descRecharge">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">3</span>
+              <div>
+                <h3 class="text-sm font-semibold">充值设置 · 视图</h3>
+                <p class="text-xs text-gray-500 mt-1">展示充值金额限制和收款商户。钱包开关关闭时，本卡片及说明隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="4" id="descWithdraw">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">4</span>
+              <div>
+                <h3 class="text-sm font-semibold">提现设置 · 视图</h3>
+                <p class="text-xs text-gray-500 mt-1">展示提现开关、审核状态、手续费及金额限制。钱包开关关闭时，本卡片及说明隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="5">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">5</span>
+              <div>
+                <h3 class="text-sm font-semibold">编辑模式 · 基础设置</h3>
+                <p class="text-xs text-gray-500 mt-1">可修改钱包开关和名称。关闭钱包开关后，钱包名称字段、充值和提现设置卡片自动隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="6" id="descEditRecharge">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">6</span>
+              <div>
+                <h3 class="text-sm font-semibold">编辑模式 · 充值设置</h3>
+                <p class="text-xs text-gray-500 mt-1">设置充值金额上下限和收款商户。商户为必选项，未选择时保存按钮禁用。钱包开关关闭时隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="7" id="descEditWithdraw">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">7</span>
+              <div>
+                <h3 class="text-sm font-semibold">编辑模式 · 提现设置</h3>
+                <p class="text-xs text-gray-500 mt-1">设置提现开关、审核、手续费及金额限制。关闭提现开关后，提现审核及下方字段自动隐藏。钱包开关关闭时整个卡片隐藏。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="8">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">8</span>
+              <div>
+                <h3 class="text-sm font-semibold">修改记录</h3>
+                <p class="text-xs text-gray-500 mt-1">记录每次配置变更的操作人、时间和操作类型。点击"展开"可查看该次修改的完整配置快照。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <svg id="connections" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+
+  <script>
+    // 配置数据 - 与视图保持一致
+    var cfg = {
+      enabled: true,
+      name: "我的钱包",
+      minRecharge: 1,
+      maxRecharge: 50000,
+      merchantId: "m001",
+      merchantName: "平台自营商户",
+      withdrawEnabled: true,
+      withdrawNeedReview: true,
+      feeType: "fixed",
+      feeValue: 0,
+      minWithdraw: 10,
+      maxWithdraw: 50000,
+      dailyWithdrawLimit: 100000,
+      minBalanceAfterWithdraw: 0
+    };
+
+    // 连线绘制 - 只绘制可见元素的连线
+    var svg = document.getElementById("connections"), connections = [];
+    function drawConnections() {
+      svg.innerHTML = "";
+      connections.length = 0;
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        // 跳过隐藏的元素
+        if (e.offsetParent === null) return;
+
+        var pid = e.getAttribute("data-proto-id"),
+            re = document.querySelector('.proto-desc[data-proto-id="' + pid + '" ]');
+        if (!re) return;
+        // 跳过隐藏的说明
+        if (re.offsetParent === null) return;
+
+        var lr = e.getBoundingClientRect(),
+            rr = re.getBoundingClientRect(),
+            sr = svg.getBoundingClientRect(),
+            x1 = lr.right - sr.left,
+            y1 = lr.top + lr.height / 2 - sr.top,
+            x2 = rr.left - sr.left,
+            y2 = rr.top + rr.height / 2 - sr.top,
+            cx = x1 + (x2 - x1) * .5;
+        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "M " + x1 + " " + y1 + " C " + cx + " " + y1 + ", " + cx + " " + y2 + ", " + x2 + " " + y2);
+        p.setAttribute("class", "connection-line");
+        p.setAttribute("data-proto-id", pid);
+        svg.appendChild(p);
+        var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        var bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bg.setAttribute("cx", mx); bg.setAttribute("cy", my); bg.setAttribute("r", 11);
+        bg.setAttribute("class", "connection-label-bg");
+        svg.appendChild(bg);
+        var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", mx); t.setAttribute("y", my); t.setAttribute("dy", "0.05em");
+        t.setAttribute("class", "connection-label");
+        t.textContent = pid;
+        svg.appendChild(t);
+        connections.push({ protoId: pid, path: p, leftEl: e, rightEl: re });
+      });
+    }
+    function highlightConnection(pid, a) {
+      var c = connections.find(function(c) { return c.protoId === pid; });
+      if (!c) return;
+      if (a) {
+        c.path.classList.add("active");
+        c.leftEl.classList.add("active-highlight");
+        c.rightEl.classList.add("active-highlight");
+      } else {
+        c.path.classList.remove("active");
+        c.leftEl.classList.remove("active-highlight");
+        c.rightEl.classList.remove("active-highlight");
+      }
+    }
+    function bindHoverEvents() {
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+      document.querySelectorAll(".proto-desc[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+    }
+
+    // 移动端切换
+    var m = !1;
+    document.getElementById("mobileToggle").addEventListener("click", function() {
+      m = !m;
+      var lp = document.getElementById("left-panel"), rp = document.getElementById("right-panel"), btn = document.getElementById("mobileToggle");
+      if (m) {
+        lp.style.display = "none"; rp.style.height = "100vh";
+        btn.innerHTML = '<i class="fas fa-desktop"></i>';
+      } else {
+        lp.style.display = ""; rp.style.height = "";
+        btn.innerHTML = '<i class="fas fa-info"></i>';
+      }
+    });
+
+    // 初始化
+    function init() {
+      drawConnections();
+      bindHoverEvents();
+      updateSaveButtonState();
+    }
+    document.addEventListener("DOMContentLoaded", function() { setTimeout(init, 100); });
+    var resizeTimer;
+    window.addEventListener("resize", function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 150); });
+    document.getElementById("left-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+    document.getElementById("right-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+
+    // ESC 退出编辑模式
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var editMode = document.getElementById("editMode");
+        if (editMode && editMode.style.display !== 'none') {
+          ce();
+        }
+      }
+    });
+
+    // 编辑模式切换
+    function enterEditMode() {
+      document.getElementById("editBtn").style.display = "none";
+      document.getElementById("viewMode").style.display = "none";
+      document.getElementById("editMode").style.display = "block";
+      syncEditForm();
+      setTimeout(drawConnections, 50);
+    }
+    function ce() {
+      document.getElementById("editMode").style.display = "none";
+      document.getElementById("viewMode").style.display = "block";
+      document.getElementById("editBtn").style.display = "";
+      setTimeout(drawConnections, 50);
+    }
+
+    // 同步编辑表单数据
+    function syncEditForm() {
+      document.getElementById("iw").checked = cfg.enabled;
+      document.getElementById("in").value = cfg.name;
+      document.getElementById("iwd").checked = cfg.withdrawEnabled;
+      document.getElementById("iwr").checked = cfg.withdrawNeedReview;
+      document.getElementById("imh").value = cfg.merchantId;
+      onWalletToggle();
+      onWithdrawToggle();
+      updateSaveButtonState();
+    }
+
+    // 钱包开关联动 - 控制卡片和说明的显示/隐藏
+    function onWalletToggle() {
+      var enabled = document.getElementById("iw").checked;
+
+      // 编辑模式：隐藏钱包名称字段
+      var efName = document.getElementById("efName");
+      if (efName) efName.style.display = enabled ? "flex" : "none";
+
+      // 编辑模式：隐藏充值设置卡片
+      var ecRecharge = document.getElementById("ecRecharge");
+      if (ecRecharge) ecRecharge.style.display = enabled ? "block" : "none";
+
+      // 编辑模式：隐藏提现设置卡片
+      var ecWithdraw = document.getElementById("ecWithdraw");
+      if (ecWithdraw) ecWithdraw.style.display = enabled ? "block" : "none";
+
+      // 视图模式：隐藏钱包名称字段
+      var vfName = document.getElementById("vfName");
+      if (vfName) vfName.style.display = enabled ? "flex" : "none";
+
+      // 视图模式：隐藏充值设置卡片
+      var vcRecharge = document.getElementById("vcRecharge");
+      if (vcRecharge) vcRecharge.style.display = enabled ? "block" : "none";
+
+      // 视图模式：隐藏提现设置卡片
+      var vcWithdraw = document.getElementById("vcWithdraw");
+      if (vcWithdraw) vcWithdraw.style.display = enabled ? "block" : "none";
+
+      // 右侧说明联动隐藏
+      var descRecharge = document.getElementById("descRecharge");
+      if (descRecharge) descRecharge.style.display = enabled ? "block" : "none";
+
+      var descWithdraw = document.getElementById("descWithdraw");
+      if (descWithdraw) descWithdraw.style.display = enabled ? "block" : "none";
+
+      var descEditRecharge = document.getElementById("descEditRecharge");
+      if (descEditRecharge) descEditRecharge.style.display = enabled ? "block" : "none";
+
+      var descEditWithdraw = document.getElementById("descEditWithdraw");
+      if (descEditWithdraw) descEditWithdraw.style.display = enabled ? "block" : "none";
+
+      // 重新绘制连线（只绘制可见元素）
+      setTimeout(drawConnections, 50);
+    }
+
+    // 提现开关联动 - 控制审核开关和字段的显示/隐藏
+    function onWithdrawToggle() {
+      var enabled = document.getElementById("iwd").checked;
+
+      // 编辑模式：隐藏提现审核开关
+      var efReview = document.getElementById("efReview");
+      if (efReview) efReview.style.display = enabled ? "flex" : "none";
+
+      // 编辑模式：隐藏下方字段
+      var fields = document.getElementById("withdrawFields");
+      if (fields) fields.style.display = enabled ? "block" : "none";
+
+      // 视图模式：隐藏提现审核
+      var vfReview = document.getElementById("vfReview");
+      if (vfReview) vfReview.style.display = enabled ? "flex" : "none";
+
+      // 视图模式：隐藏手续费及以下字段
+      var vfFee = document.getElementById("vfFee");
+      if (vfFee) vfFee.style.display = enabled ? "flex" : "none";
+
+      var vfMin = document.getElementById("vfMin");
+      if (vfMin) vfMin.style.display = enabled ? "flex" : "none";
+
+      var vfMax = document.getElementById("vfMax");
+      if (vfMax) vfMax.style.display = enabled ? "flex" : "none";
+
+      var vfDaily = document.getElementById("vfDaily");
+      if (vfDaily) vfDaily.style.display = enabled ? "flex" : "none";
+
+      var vfBalance = document.getElementById("vfBalance");
+      if (vfBalance) vfBalance.style.display = enabled ? "flex" : "none";
+
+      // 重新绘制连线
+      setTimeout(drawConnections, 50);
+    }
+
+    // 商户选择变更
+    function onMerchantChange() {
+      updateSaveButtonState();
+    }
+
+    // 更新保存按钮状态
+    function updateSaveButtonState() {
+      var merchantId = document.getElementById("imh").value;
+      var sb = document.getElementById("sb");
+      if (sb) {
+        sb.disabled = !merchantId;
+      }
+    }
+
+    // 保存配置
+    function sc() {
+      var merchantId = document.getElementById("imh").value;
+      if (!merchantId) {
+        alert("请选择收款商户");
+        return;
+      }
+      cfg.enabled = document.getElementById("iw").checked;
+      cfg.name = document.getElementById("in").value;
+      cfg.merchantId = merchantId;
+      cfg.merchantName = document.getElementById("imh").options[document.getElementById("imh").selectedIndex].text;
+      cfg.withdrawEnabled = document.getElementById("iwd").checked;
+      cfg.withdrawNeedReview = document.getElementById("iwr").checked;
+      updateViewMode();
+      ce();
+      setTimeout(function() { alert("钱包配置保存成功！"); }, 50);
+    }
+
+    // 更新视图模式显示
+    function updateViewMode() {
+      var vws = document.getElementById("vws");
+      if (vws) {
+        vws.textContent = cfg.enabled ? "已开启" : "已关闭";
+        vws.className = "wcfg-status-badge " + (cfg.enabled ? "on" : "off");
+      }
+      var vwn = document.getElementById("vwn");
+      if (vwn) vwn.textContent = cfg.name;
+      var vwm = document.getElementById("vwm");
+      if (vwm) vwm.textContent = cfg.merchantName || "-";
+      var vwws = document.getElementById("vwws");
+      if (vwws) {
+        vwws.textContent = cfg.withdrawEnabled ? "已开启" : "已关闭";
+        vwws.className = "wcfg-status-badge " + (cfg.withdrawEnabled ? "on" : "off");
+      }
+      var vwwr = document.getElementById("vwwr");
+      if (vwwr) {
+        vwwr.textContent = cfg.withdrawNeedReview ? "开启" : "关闭";
+        vwwr.className = "wcfg-status-badge " + (cfg.withdrawNeedReview ? "on" : "off");
+      }
+      // 触发联动
+      onWalletToggle();
+      onWithdrawToggle();
+    }
+
+    // 历史记录展开/收起
+    var ho = true;
+    function toggleHistorySection() {
+      var b = document.getElementById("hb"), tg = document.getElementById("historyArrow");
+      ho = !ho;
+      if (b) b.style.display = ho ? "block" : "none";
+      if (tg) tg.textContent = ho ? "▼" : "▶";
+    }
+
+    // 历史详情展开/收起
+    var ei = {};
+    function toggleHistoryDetail(el, id) {
+      var sn = document.getElementById("s" + id);
+      if (!sn) return;
+      if (ei[id]) {
+        delete ei[id];
+        sn.style.display = "none";
+        el.textContent = "展开";
+      } else {
+        // 收起其他
+        for (var key in ei) {
+          var other = document.getElementById("s" + key);
+          if (other) other.style.display = "none";
+        }
+        document.querySelectorAll('.history-detail').forEach(function(row) {
+          row.style.display = "none";
+        });
+        document.querySelectorAll('.action-link.primary').forEach(function(a) {
+          if (a.getAttribute('onclick') && a.getAttribute('onclick').includes('toggleHistoryDetail')) {
+            a.textContent = "展开";
+          }
+        });
+        ei = {};
+        ei[id] = true;
+        sn.style.display = "table-row";
+        el.textContent = "收起";
+      }
+    }
+  </script>
+</body>
+</html>

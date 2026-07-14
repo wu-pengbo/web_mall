@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品原型 - 商城后台 · 用户钱包</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F7FA; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .proto-element { position: relative; transition: all 0.2s ease; border-radius: 6px; }
+    .proto-element:hover { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.15); background-color: rgba(22,93,255,0.03); }
+    .proto-element.active-highlight { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.2); background-color: rgba(22,93,255,0.05); }
+    .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+    .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+    .proto-desc.active-highlight { background-color: #fde68a; border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+    #connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    .connection-line { fill: none; stroke: #165DFF; stroke-width: 2; opacity: 0.6; transition: all 0.2s ease; }
+    .connection-line.active { stroke-width: 3; opacity: 1; }
+    .connection-label { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    .connection-label-bg { fill: #165DFF; }
+    .sidebar-menu-item { transition: all 0.2s; cursor: pointer; }
+    .sidebar-menu-item:hover { background-color: rgba(22,93,255,0.06); color: #165DFF; }
+    .sidebar-menu-item.active { background-color: rgba(22,93,255,0.10); color: #165DFF; border-right: 3px solid #165DFF; }
+    .sidebar-label { font-size: 11px; color: #86909C; letter-spacing: 0.05em; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .tag-green { background-color: rgba(0,180,42,0.1); color: #00B42A; }
+    .tag-orange { background-color: rgba(212,107,8,0.1); color: #D46B08; }
+    .tag-red { background-color: rgba(207,19,34,0.1); color: #CF1322; }
+    .tag-blue { background-color: rgba(22,93,255,0.1); color: #165DFF; }
+    .tag-gray { background-color: #F5F7FA; color: #666; }
+    .data-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; }
+    .data-table tbody tr { transition: background-color 0.15s; cursor: pointer; }
+    .data-table tbody tr:hover { background-color: rgba(22,93,255,0.04); }
+    .data-table td { font-size: 13px; }
+    .btn-click:active { transform: scale(0.96); }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .price-text { font-family: "SF Mono", "Menlo", monospace; font-weight: 600; }
+    .amount-pos { color: #0E7B3A; }
+    .amount-neg { color: #CF1322; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status-badge.on { background: #E8FFE8; color: #00A854; }
+    .status-badge.off { background: #FFF0F0; color: #CF1322; }
+    .status-badge.pending { background: #FFF7E6; color: #D46B08; }
+    .status-badge.approved { background: #E8FFE8; color: #00A854; }
+    .status-badge.refunded { background: #F0F5FF; color: #165DFF; }
+    .status-badge.rejected { background: #FFF0F0; color: #CF1322; }
+    .status-badge.signed { background: #E8FFE8; color: #00A854; }
+    .status-badge.terminated { background: #F5F5F5; color: #999; }
+    .action-link { font-size: 13px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+    .action-link:hover { opacity: 0.8; }
+    .action-link.primary { color: #165DFF; }
+    .action-link.danger { color: #CF1322; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #165DFF; color: #fff; }
+    .btn-primary:hover { background: #0E42D2; }
+    .btn-default { background: #F2F3F5; color: #4E5969; }
+    .btn-default:hover { background: #E5E6EB; }
+    .btn-sm { padding: 6px 16px; font-size: 13px; }
+    .btn-xs { padding: 4px 12px; font-size: 13px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #E5E6EB; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 12px; color: #86909C; }
+    .filter-item input, .filter-item select { font-size: 13px; padding: 6px 10px; border: 1px solid #E5E6EB; border-radius: 6px; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #E5E6EB; }
+    .page-btn { padding: 4px 10px; border: 1px solid #E5E6EB; background: #fff; border-radius: 4px; font-size: 12px; color: #4E5969; cursor: pointer; }
+    .page-btn:hover:not(.disabled):not(.active) { background: #F2F3F5; }
+    .page-btn.active { background: #165DFF; color: #fff; border-color: #165DFF; }
+    .page-btn.disabled { color: #C9CDD4; cursor: not-allowed; }
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #left-panel { width: 100% !important; height: 60vh; }
+      #divider { display: none; }
+      #right-panel { width: 100% !important; height: 40vh; border-top: 1px solid #e5e7eb; }
+      #connections { display: none; }
+      .mobile-toggle-btn { display: flex !important; }
+    }
+    .mobile-toggle-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: #165DFF; color: white; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(22,93,255,0.3); cursor: pointer; border: none; }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .modal-content { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; margin: 0 16px; }
+    .modal-content.modal-lg { max-width: 800px; }
+    .modal-content.modal-md { max-width: 560px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #E5E6EB; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: #1D2129; }
+    .modal-close { cursor: pointer; color: #86909C; padding: 4px; }
+    .modal-close:hover { color: #4E5969; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid #F2F3F5; background: #FAFAFA; }
+
+    .form-item { margin-bottom: 16px; }
+    .form-item:last-child { margin-bottom: 0; }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: #4E5969; margin-bottom: 6px; }
+    .form-label.required::after { content: " *"; color: #CF1322; }
+    .form-input { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 2px rgba(22,93,255,0.1); outline: none; }
+    .form-select { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-textarea { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; resize: vertical; }
+
+    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #C9CDD4; border-radius: 10px; transition: 0.3s; }
+    .toggle-slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: #165DFF; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <button class="mobile-toggle-btn" id="mobileToggle"><i class="fas fa-info"></i></button>
+  <div id="app" class="flex h-screen relative">
+    <div id="left-panel" class="w-[80%] overflow-y-auto bg-gray-50 relative">
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#165DFF] rounded-lg flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-store"></i></div><h1 class="text-lg font-semibold text-gray-800">商城后台管理系统</h1></div>
+        <div class="flex items-center gap-4"><span class="text-sm text-gray-500"><i class="far fa-bell mr-1"></i></span><span class="text-sm text-gray-600"><i class="fas fa-user-circle mr-1"></i> admin</span></div>
+      </header>
+      <div class="flex">
+        <aside class="w-52 bg-white border-r border-gray-200 min-h-[calc(100vh-56px)] flex-shrink-0">
+          <nav class="py-4">
+            <div class="px-4 mb-2 sidebar-label font-semibold uppercase">钱包管理</div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-chart-pie w-5 text-center"></i><span>钱包概览</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-cog w-5 text-center"></i><span>钱包设置</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-file-signature w-5 text-center"></i><span>商户签约</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-gift w-5 text-center"></i><span>充值方案</span></div>
+            <div class="proto-element sidebar-menu-item active px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm" data-proto-id="1"><i class="fas fa-wallet w-5 text-center"></i><span>用户钱包</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-exchange-alt w-5 text-center"></i><span>交易流水</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-credit-card w-5 text-center"></i><span>充值管理</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-hand-holding-usd w-5 text-center"></i><span>提现管理</span></div>
+          </nav>
+        </aside>
+        <main class="flex-1 p-6">
+          <div class="flex items-center justify-between mb-6"><div><h2 class="text-xl font-bold text-gray-800">用户钱包</h2><p class="text-sm text-gray-500 mt-1">管理平台用户的钱包账户信息及资金流水</p></div></div>
+          <div class="filter-bar"><div class="filter-item"><label>搜索</label><input type="text" placeholder="钱包ID / UID / 手机号" style="width:200px" /></div><div class="filter-item"><label>状态</label><select style="width:120px"><option>全部状态</option><option>正常</option><option>已冻结</option></select></div><div class="filter-item" style="flex-direction:row;gap:8px;align-items:flex-end"><button class="btn btn-primary btn-sm">查询</button><button class="btn btn-default btn-sm">重置</button></div></div>
+          <div class="proto-element bg-white rounded-lg border border-gray-200 overflow-hidden" data-proto-id="2">
+            <table class="data-table" style="width:100%">
+          <thead><tr>
+            <th style="padding:10px 12px">钱包ID</th>
+<th style="padding:10px 12px">用户UID</th>
+<th style="padding:10px 12px">手机号</th>
+<th style="padding:10px 12px">余额</th>
+<th style="padding:10px 12px">冻结金额</th>
+<th style="padding:10px 12px">累计充值</th>
+<th style="padding:10px 12px">状态</th>
+<th style="padding:10px 12px">开通时间</th>
+<th style="padding:10px 12px">操作</th>
+          </tr></thead>
+          <tbody><tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00001</td><td style="padding:10px 14px">u10001</td><td style="padding:10px 14px">138****1234</td><td class="price-text" style="padding:10px 14px">¥1,280.50</td><td style="padding:10px 14px">¥200.00</td><td class="price-text" style="padding:10px 14px">¥5,000.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-01-15 10:30:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00001','u10001','138****1234','正常','1280.50','1024.00','256.50','200.00','50.00','3500.00','219.50')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00001','u10001','138****1234','正常','1280.50','200.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00002</td><td style="padding:10px 14px">u10002</td><td style="padding:10px 14px">139****5678</td><td class="price-text" style="padding:10px 14px">¥3,560.00</td><td style="padding:10px 14px">-</td><td class="price-text" style="padding:10px 14px">¥8,000.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-01-20 14:20:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00002','u10002','139****5678','正常','3560.00','2848.00','712.00','0.00','0.00','4400.00','40.00')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00002','u10002','139****5678','正常','3560.00','0.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00003</td><td style="padding:10px 14px">u10003</td><td style="padding:10px 14px">137****9012</td><td class="price-text" style="padding:10px 14px">¥89.50</td><td style="padding:10px 14px">-</td><td class="price-text" style="padding:10px 14px">¥1,000.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-02-03 09:15:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00003','u10003','137****9012','正常','89.50','72.00','17.50','0.00','0.00','910.50','0.00')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00003','u10003','137****9012','正常','89.50','0.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00004</td><td style="padding:10px 14px">u10004</td><td style="padding:10px 14px">136****3456</td><td class="price-text" style="padding:10px 14px">¥5,200.00</td><td style="padding:10px 14px">¥1,500.00</td><td class="price-text" style="padding:10px 14px">¥10,000.00</td><td style="padding:10px 14px"><span class="status-badge terminated">已冻结</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-02-10 16:45:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00004','u10004','136****3456','已冻结','5200.00','4160.00','1040.00','1500.00','300.00','3300.00','0.00')">查看详情</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00005</td><td style="padding:10px 14px">u10005</td><td style="padding:10px 14px">135****7890</td><td class="price-text" style="padding:10px 14px">¥800.00</td><td style="padding:10px 14px">-</td><td class="price-text" style="padding:10px 14px">¥2,000.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-03-01 11:00:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00005','u10005','135****7890','正常','800.00','640.00','160.00','0.00','0.00','1200.00','0.00')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00005','u10005','135****7890','正常','800.00','0.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00006</td><td style="padding:10px 14px">u10006</td><td style="padding:10px 14px">134****2345</td><td class="price-text" style="padding:10px 14px">¥12,500.00</td><td style="padding:10px 14px">¥500.00</td><td class="price-text" style="padding:10px 14px">¥20,000.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-03-12 08:30:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00006','u10006','134****2345','正常','12500.00','10000.00','2500.00','500.00','200.00','7000.00','0.00')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00006','u10006','134****2345','正常','12500.00','500.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00007</td><td style="padding:10px 14px">u10007</td><td style="padding:10px 14px">133****6789</td><td class="price-text" style="padding:10px 14px">¥0.00</td><td style="padding:10px 14px">-</td><td class="price-text" style="padding:10px 14px">¥500.00</td><td style="padding:10px 14px"><span class="status-badge signed">正常</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-04-05 13:20:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00007','u10007','133****6789','正常','0.00','0.00','0.00','0.00','0.00','500.00','0.00')">查看详情</span><span class="action-link danger" style="margin-left:8px" onclick="openFreezeModal('WLT-00007','u10007','133****6789','正常','0.00','0.00')">冻结余额</span></td></tr>
+<tr><td style="padding:10px 14px;color:#165DFF;font-family:monospace;font-size:12px">WLT-00008</td><td style="padding:10px 14px">u10008</td><td style="padding:10px 14px">132****0123</td><td class="price-text" style="padding:10px 14px">¥6,800.00</td><td style="padding:10px 14px">-</td><td class="price-text" style="padding:10px 14px">¥10,000.00</td><td style="padding:10px 14px"><span class="status-badge terminated">已冻结</span></td><td style="padding:10px 14px;font-size:12px;color:#86909C;font-family:monospace">2026-04-18 10:00:00</td><td style="padding:10px 14px"><span class="action-link primary" onclick="openFlowModal('WLT-00008','u10008','132****0123','已冻结','6800.00','5440.00','1360.00','0.00','0.00','3000.00','200.00')">查看详情</span></td></tr>
+</tbody>
+        </table>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid #E5E6EB"><span style="font-size:12px;color:#86909C">共 8 条</span><div style="display:flex;gap:4px"><button class="page-btn disabled">上一页</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">下一页</button></div></div>
+          </div>
+
+        <!-- 连线 3：资金流水弹窗 -->
+        <div class="proto-element" data-proto-id="3" style="margin-top:16px;padding:12px;border:1px dashed #D6E4FF;border-radius:8px;background:#F0F5FF">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#165DFF"><i class="fas fa-wallet"></i><span>点击「查看详情」弹出资金流水弹窗</span></div>
+          <div style="margin-top:8px;display:flex;gap:8px;font-size:12px;color:#666;flex-wrap:wrap">
+            <span class="tag tag-green" style="background:rgba(0,180,42,0.1);color:#00B42A">可用余额 = 本金 + 赠送金</span>
+            <span class="tag tag-blue" style="background:rgba(22,93,255,0.1);color:#165DFF">三段切换：充值/提现/交易</span>
+            <span class="tag tag-orange" style="background:rgba(212,107,8,0.1);color:#D46B08">冻结金额 = 系统冻结 + 提现中</span>
+            <span class="tag tag-gray">状态 toggle 冻结/解冻</span>
+          </div>
+        </div>
+        <!-- 连线 4：冻结余额弹窗 -->
+        <div class="proto-element" data-proto-id="4" style="margin-top:12px;padding:12px;border:1px dashed #D6E4FF;border-radius:8px;background:#F0F5FF">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#165DFF"><i class="fas fa-snowflake"></i><span>点击「冻结余额」弹出冻结/解冻余额弹窗</span></div>
+          <div style="margin-top:8px;display:flex;gap:8px;font-size:12px;color:#666;flex-wrap:wrap">
+            <span class="tag tag-gray">金额输入 + 原因下拉选择</span>
+            <span class="tag tag-gray">可冻结 = 当前余额 − 已冻结</span>
+            <span class="tag tag-gray">冻结流水历史表格</span>
+          </div>
+        </div>
+</main>
+      </div>
+    </div>
+    <div id="divider" class="w-px bg-gray-300"></div>
+    <div id="right-panel" class="w-[20%] overflow-y-auto bg-amber-50 border-l-2 border-dashed border-amber-300">
+      <div class="p-4">
+        <div class="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded uppercase tracking-wide">Prototype</span><span class="text-xs font-semibold text-amber-800">原型说明</span></div><p class="text-[11px] text-amber-700 leading-relaxed">悬停左侧元素可高亮对应连线。</p></div>
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-amber-200"><i class="fas fa-map-signs text-amber-600"></i><h2 class="text-sm font-bold text-amber-900">功能说明</h2></div>
+        <div class="space-y-3">
+          <div class="proto-desc p-3 active-highlight" data-proto-id="1"><div class="flex items-start gap-2"><span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">1</span><div><h3 class="text-sm font-semibold">用户钱包 · 入口</h3><p class="text-xs text-gray-500 mt-1">钱包管理子菜单，查看和管理所有用户的钱包账户信息及资金流水。</p></div></div></div>
+          <div class="proto-desc p-3" data-proto-id="2"><div class="flex items-start gap-2"><span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">2</span><div><h3 class="text-sm font-semibold">用户钱包 · 核心字段</h3><p class="text-xs text-gray-500 mt-1">余额拆分：<span style="color:#00A854">当前余额 = 本金 + 赠送金</span>。冻结金额 = 系统冻结 + 提现中。</p></div></div></div>
+          <div class="proto-desc p-3" data-proto-id="3"><div class="flex items-start gap-2"><span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">3</span><div><h3 class="text-sm font-semibold">资金流水 · 弹窗说明</h3><p class="text-xs text-gray-500 mt-1">弹窗内容：顶部用户信息卡（UID/手机号 + 状态 toggle 开关），三张统计卡片（可用余额=本金+赠送、消费金额=消费−退款、冻结金额=系统冻结+提现中），三段切换标签（充值流水/提现流水/交易流水表格）。交易流水行可展开查看Bucket扣减日志。</p></div></div></div>
+          <div class="proto-desc p-3" data-proto-id="4"><div class="flex items-start gap-2"><span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">4</span><div><h3 class="text-sm font-semibold">冻结余额 · 弹窗说明</h3><p class="text-xs text-gray-500 mt-1">弹窗内容：钱包信息卡（ID/用户/余额/冻结/可冻结金额）、冻结/解冻模式切换、金额输入 + 原因下拉选择（其他可展开详情）、冻结流水历史表格。</p></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <svg id="connections" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+  <script>
+    var svg=document.getElementById("connections"),connections=[];
+    function drawConnections(){svg.innerHTML="";connections.length=0;document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e){var pid=e.getAttribute("data-proto-id"),re=document.querySelector('.proto-desc[data-proto-id="'+pid+'"]');if(!re)return;var lr=e.getBoundingClientRect(),rr=re.getBoundingClientRect(),sr=svg.getBoundingClientRect(),x1=lr.right-sr.left,y1=lr.top+lr.height/2-sr.top,x2=rr.left-sr.left,y2=rr.top+rr.height/2-sr.top,cx=x1+(x2-x1)*.5;var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M "+x1+" "+y1+" C "+cx+" "+y1+", "+cx+" "+y2+", "+x2+" "+y2);p.setAttribute("class","connection-line");p.setAttribute("data-proto-id",pid);svg.appendChild(p);var mx=(x1+x2)/2,my=(y1+y2)/2;var bg=document.createElementNS("http://www.w3.org/2000/svg","circle");bg.setAttribute("cx",mx);bg.setAttribute("cy",my);bg.setAttribute("r",11);bg.setAttribute("class","connection-label-bg");svg.appendChild(bg);var t=document.createElementNS("http://www.w3.org/2000/svg","text");t.setAttribute("x",mx);t.setAttribute("y",my);t.setAttribute("dy","0.05em");t.setAttribute("class","connection-label");t.textContent=pid;svg.appendChild(t);connections.push({protoId:pid,path:p,leftEl:e,rightEl:re})})}
+    function highlightConnection(pid,a){var c=connections.find(function(c){return c.protoId===pid});if(!c)return;a?(c.path.classList.add("active"),c.leftEl.classList.add("active-highlight"),c.rightEl.classList.add("active-highlight")):(c.path.classList.remove("active"),c.leftEl.classList.remove("active-highlight"),c.rightEl.classList.remove("active-highlight"))}
+    function bindHoverEvents(){document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e){e.addEventListener("mouseenter",function(){highlightConnection(e.getAttribute("data-proto-id"),!0)});e.addEventListener("mouseleave",function(){highlightConnection(e.getAttribute("data-proto-id"),!1)})});document.querySelectorAll(".proto-desc[data-proto-id]").forEach(function(e){e.addEventListener("mouseenter",function(){highlightConnection(e.getAttribute("data-proto-id"),!0)});e.addEventListener("mouseleave",function(){highlightConnection(e.getAttribute("data-proto-id"),!1)})})}
+    var m=!1;document.getElementById("mobileToggle").addEventListener("click",function(){m=!m;var lp=document.getElementById("left-panel"),rp=document.getElementById("right-panel"),btn=document.getElementById("mobileToggle");m?(lp.style.display="none",rp.style.height="100vh",btn.innerHTML='<i class="fas fa-desktop"></i>'):(lp.style.display="",rp.style.height="",btn.innerHTML='<i class="fas fa-info"></i>')});
+    document.querySelectorAll(".data-table tbody tr").forEach(function(r){r.addEventListener("click",function(){document.querySelectorAll(".data-table tbody tr").forEach(function(x){x.classList.remove("selected")});r.classList.add("selected")})});
+    function init(){drawConnections();bindHoverEvents()}
+    var resizeTimer;window.addEventListener("resize",function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(init,150)});
+    document.getElementById("left-panel").addEventListener("scroll",function(){requestAnimationFrame(drawConnections)});document.getElementById("right-panel").addEventListener("scroll",function(){requestAnimationFrame(drawConnections)});
+
+    /* ===== 资金流水弹窗 ===== */
+    var flowData = {};
+    function openFlowModal(id, uid, phone, status, balance, principal, bonus, sysFrozen, wdrFrozen, consume, refund) {
+      document.getElementById("flowWalletId").textContent = id;
+      var badge = document.getElementById("flowStatusBadge");
+      badge.textContent = status === "正常" ? "正常" : "已冻结";
+      badge.style.cssText = "display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;margin-left:8px;vertical-align:middle;background:" + (status === "正常" ? "#E8FFE8" : "#FFF0F0") + ";color:" + (status === "正常" ? "#00A854" : "#CF1322");
+      document.getElementById("flowUser").textContent = uid + " / " + phone;
+      document.getElementById("flowStatusText").textContent = status === "正常" ? "正常" : "已冻结";
+      document.getElementById("flowToggleInput").checked = status === "正常";
+      document.getElementById("flowToggle").title = status === "正常" ? "冻结钱包" : "解冻钱包";
+      document.getElementById("flowStatusText").style.cssText = "font-size:12px;padding:2px 10px;border-radius:12px;font-weight:500;background:" + (status === "正常" ? "#E8FFE8" : "#FFF0F0") + ";color:" + (status === "正常" ? "#00A854" : "#CF1322");
+      document.getElementById("flowBalance").textContent = "¥" + parseFloat(balance).toFixed(2);
+      document.getElementById("flowPrincipal").textContent = "¥" + parseFloat(principal).toFixed(2);
+      document.getElementById("flowBonus").textContent = "¥" + parseFloat(bonus).toFixed(2);
+      var netConsume = parseFloat(consume) - parseFloat(refund);
+      document.getElementById("flowConsume").textContent = "¥" + netConsume.toFixed(2);
+      document.getElementById("flowConsumeTotal").textContent = "¥" + parseFloat(consume).toFixed(2);
+      document.getElementById("flowRefund").textContent = "¥" + parseFloat(refund).toFixed(2);
+      var totalFrozen = parseFloat(sysFrozen) + parseFloat(wdrFrozen);
+      document.getElementById("flowFrozen").textContent = "¥" + totalFrozen.toFixed(2);
+      document.getElementById("flowSysFrozen").textContent = "¥" + parseFloat(sysFrozen).toFixed(2);
+      document.getElementById("flowWdrFrozen").textContent = "¥" + parseFloat(wdrFrozen).toFixed(2);
+      document.getElementById("flowUserInfo").style.display = "block";
+      flowData = { id: id, uid: uid, phone: phone, status: status, balance: balance };
+      switchFlowTab("recharge");
+      document.getElementById("userFlowModal").style.display = "flex";
+    }
+    function closeFlowModal() {
+      document.getElementById("userFlowModal").style.display = "none";
+    }
+    var flowRechargeData = [
+      {no:"RCH-20260611-001",payNo:"PAY-20260611-001",amt:1000,recvAmt:1050,payStatus:"已支付",rchStatus:"已入账",applyTime:"2026-06-11 10:30:00",rchTime:"2026-06-11 10:30:18",bonus:50},
+      {no:"RCH-20260610-001",payNo:"PAY-20260610-001",amt:5000,recvAmt:5200,payStatus:"已支付",rchStatus:"已入账",applyTime:"2026-06-10 09:19:50",rchTime:"2026-06-10 09:20:05",bonus:200}
+    ];
+    var flowWithdrawData = [
+      {no:"WDR-20260611-001",amt:200,orderNo:"ORD-20260610-001",withdrawType:"全额退款",status:"待审核",applyTime:"2026-06-11 09:00:00"},
+      {no:"WDR-20260611-002",amt:500,orderNo:"ORD-20260608-003",withdrawType:"部分退款",status:"审核通过待打款",applyTime:"2026-06-11 10:30:00"}
+    ];
+    var flowTxData = [
+      {no:"TXN-20260611-002",type:"消费",amt:-188,bal:2092.50,time:"2026-06-11 14:20:00",buckets:[{no:"RCH-20260601-001",amt:100,remain:0},{no:"RCH-20260608-002",amt:88,remain:312}]},
+      {no:"TXN-20260610-002",type:"退款",amt:200,bal:1000,time:"2026-06-10 14:30:00",buckets:[{no:"RCH-20260520-001",amt:200,remain:200}]},
+      {no:"TXN-20260608-001",type:"消费",amt:-129,bal:3560,time:"2026-06-08 11:30:00",buckets:[{no:"RCH-20260601-002",amt:129,remain:871}]}
+    ];
+    var expandedTxId = null;
+    function switchFlowTab(tab) {
+      var tabs = {recharge:"flowTabR", withdraw:"flowTabW", transaction:"flowTabT"};
+      for (var t in tabs) {
+        var btn = document.getElementById(tabs[t]);
+        btn.style.background = t === tab ? "#165DFF" : "#fff";
+        btn.style.color = t === tab ? "#fff" : "#4E5969";
+      }
+      var container = document.getElementById("flowTableContainer");
+      var i, h = "";
+      if (tab === "recharge") {
+        h += '<table class="data-table" style="width:100%"><thead><tr><th style="padding:8px 12px">充值单号</th><th style="padding:8px 12px">支付单号</th><th style="padding:8px 12px">支付金额</th><th style="padding:8px 12px">赠送</th><th style="padding:8px 12px">到账金额</th><th style="padding:8px 12px">支付状态</th><th style="padding:8px 12px">充值状态</th><th style="padding:8px 12px">申请时间</th><th style="padding:8px 12px">入账时间</th></tr></thead><tbody>';
+        for (i = 0; i < flowRechargeData.length; i++) {
+          var r = flowRechargeData[i];
+          h += '<tr><td style="padding:8px 12px;color:#165DFF;font-size:12px;font-family:monospace">' + r.no + '</td><td style="padding:8px 12px;font-size:12px;font-family:monospace">' + r.payNo + '</td><td style="padding:8px 12px;font-size:12px" class="amount-pos">+¥' + r.amt.toFixed(2) + '</td><td style="padding:8px 12px;font-size:12px" class="amount-pos">+¥' + (r.bonus||0).toFixed(2) + '</td><td style="padding:8px 12px;font-size:12px" class="amount-pos">+¥' + r.recvAmt.toFixed(2) + '</td><td style="padding:8px 12px"><span class="tag tag-green">' + r.payStatus + '</span></td><td style="padding:8px 12px"><span class="tag tag-green">' + r.rchStatus + '</span></td><td style="padding:8px 12px;font-size:12px;color:#86909C;font-family:monospace">' + r.applyTime + '</td><td style="padding:8px 12px;font-size:12px;color:#86909C;font-family:monospace">' + r.rchTime + '</td></tr>';
+        }
+        h += '</tbody></table>';
+      } else if (tab === "withdraw") {
+        h += '<table class="data-table" style="width:100%"><thead><tr><th style="padding:8px 12px">提现单号</th><th style="padding:8px 12px">提现金额</th><th style="padding:8px 12px">关联订单</th><th style="padding:8px 12px">退款类型</th><th style="padding:8px 12px">状态</th><th style="padding:8px 12px">申请时间</th></tr></thead><tbody>';
+        for (i = 0; i < flowWithdrawData.length; i++) {
+          var w = flowWithdrawData[i];
+          h += '<tr><td style="padding:8px 12px;color:#165DFF;font-size:12px;font-family:monospace">' + w.no + '</td><td style="padding:8px 12px;font-size:12px" class="amount-neg">-' + w.amt.toFixed(2) + '</td><td style="padding:8px 12px;font-size:12px">' + w.orderNo + '</td><td style="padding:8px 12px;font-size:12px">' + w.withdrawType + '</td><td style="padding:8px 12px"><span class="status-badge pending" style="font-size:12px">' + w.status + '</span></td><td style="padding:8px 12px;font-size:12px;color:#86909C;font-family:monospace">' + w.applyTime + '</td></tr>';
+        }
+        h += '</tbody></table>';
+      } else {
+        h += '<table class="data-table" style="width:100%"><thead><tr><th style="padding:8px 12px"></th><th style="padding:8px 12px">流水号</th><th style="padding:8px 12px">类型</th><th style="padding:8px 12px">金额</th><th style="padding:8px 12px">余额</th><th style="padding:8px 12px">时间</th></tr></thead><tbody>';
+        for (i = 0; i < flowTxData.length; i++) {
+          var tx = flowTxData[i];
+          var expandArrow = (tx.buckets && tx.buckets.length > 0) ? '<span id="txExpand_' + i + '" style="cursor:pointer;color:#165DFF;font-size:12px" onclick="toggleTxBucket(' + i + ')">&#9654;</span>' : '';
+          var sign = tx.amt > 0 ? "+" : "";
+          var cls = tx.amt > 0 ? "amount-pos" : "amount-neg";
+          h += '<tr><td style="padding:8px 12px;text-align:center">' + expandArrow + '</td><td style="padding:8px 12px;font-size:12px;color:#165DFF;font-family:monospace">' + tx.no + '</td><td style="padding:8px 12px"><span class="tag tag-' + (tx.type==='消费'?'orange':'red') + '">' + tx.type + '</span></td><td style="padding:8px 12px;font-size:12px" class="price-text ' + cls + '">' + sign + '¥' + Math.abs(tx.amt).toFixed(2) + '</td><td style="padding:8px 12px;font-size:12px" class="price-text">¥' + tx.bal.toFixed(2) + '</td><td style="padding:8px 12px;font-size:12px;color:#86909C;font-family:monospace">' + tx.time + '</td></tr>';
+          if (tx.buckets && tx.buckets.length > 0) {
+            h += '<tr id="txBucketRow_' + i + '" style="display:none"><td></td><td colspan="5" style="padding:0"><div style="padding:12px;background:#FAFAFA"><div style="font-size:12px;font-weight:600;color:#1D2129;margin-bottom:8px">资金来源（先进先出）</div><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:6px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">充值批次</th><th style="text-align:left;padding:6px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">扣减金额</th><th style="text-align:left;padding:6px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">批次剩余</th></tr></thead><tbody>';
+            for (var j = 0; j < tx.buckets.length; j++) {
+              var b = tx.buckets[j];
+              h += '<tr><td style="padding:6px 10px;font-family:monospace">' + b.no + '</td><td style="padding:6px 10px" class="amount-neg">-¥' + b.amt.toFixed(2) + '</td><td style="padding:6px 10px;font-family:monospace">¥' + b.remain.toFixed(2) + '</td></tr>';
+            }
+            h += '</tbody></table></div></td></tr>';
+          }
+        }
+        h += '</tbody></table>';
+      }
+      container.innerHTML = h;
+    }
+    function toggleTxBucket(idx) {
+      var row = document.getElementById("txBucketRow_" + idx);
+      if (row) row.style.display = row.style.display === "none" ? "table-row" : "none";
+      var arrow = document.getElementById("txExpand_" + idx);
+      if (arrow) arrow.textContent = row.style.display === "none" ? "&#9654;" : "&#9660;";
+    }
+
+    /* ===== 冻结/解冻弹窗 ===== */
+    var freezeWalletId = "", freezeUid = "", freezePhone = "", freezeStatus = "";
+    var freezeBalance = 0, freezeFrozenAmt = 0;
+    var freezeMode = "freeze";
+    var freezeReasons = {freeze: [{v:"abnormal",l:"异常交易收回"},{v:"duplicate",l:"重复发放收回"},{v:"manual",l:"手动扣除"},{v:"other",l:"其他"}], unfreeze: [{v:"risk_cleared",l:"风险解除"},{v:"manual",l:"手动解冻"},{v:"other",l:"其他"}]};
+
+    function openFreezeModal(id, uid, phone, status, balance, frozen) {
+      freezeWalletId = id; freezeUid = uid; freezePhone = phone; freezeStatus = status;
+      freezeBalance = parseFloat(balance); freezeFrozenAmt = parseFloat(frozen);
+      document.getElementById("frWalletId").textContent = id;
+      document.getElementById("frUser").textContent = uid + " / " + phone;
+      document.getElementById("frBalance").textContent = "¥" + freezeBalance.toFixed(2);
+      document.getElementById("frFrozen").textContent = "¥" + freezeFrozenAmt.toFixed(2);
+      setFreezeMode("freeze");
+      document.getElementById("freezeModal").style.display = "flex";
+    }
+    function closeFreezeModal() {
+      document.getElementById("freezeModal").style.display = "none";
+    }
+    function setFreezeMode(mode) {
+      freezeMode = mode;
+      var fBtn = document.getElementById("frModeF");
+      var uBtn = document.getElementById("frModeU");
+      fBtn.style.background = mode === "freeze" ? "#165DFF" : "#fff";
+      fBtn.style.color = mode === "freeze" ? "#fff" : "#4E5969";
+      uBtn.style.background = mode === "unfreeze" ? "#165DFF" : "#fff";
+      uBtn.style.color = mode === "unfreeze" ? "#fff" : "#4E5969";
+      document.getElementById("freezeTitle").textContent = mode === "freeze" ? "冻结余额" : "解冻余额";
+      document.getElementById("frAvailLabel").textContent = mode === "freeze" ? "可冻结金额" : "可解冻金额";
+      var avail = mode === "freeze" ? freezeBalance - freezeFrozenAmt : freezeFrozenAmt;
+      document.getElementById("frAvail").textContent = "¥" + avail.toFixed(2);
+      document.getElementById("frAvailHint").textContent = "(可" + (mode === "freeze" ? "冻结" : "解冻") + "：¥" + avail.toFixed(2) + ")";
+      var sel = document.getElementById("frReason");
+      var opts = freezeReasons[mode];
+      sel.innerHTML = '<option value="">请选择原因</option>';
+      for (var i = 0; i < opts.length; i++) {
+        sel.innerHTML += '<option value="' + opts[i].v + '">' + opts[i].l + '</option>';
+      }
+      document.getElementById("frReasonDetail").style.display = "none";
+      document.getElementById("frConfirmBtn").disabled = false;
+    }
+    function confirmFreezeAction() {
+      var avail = freezeMode === "freeze" ? freezeBalance - freezeFrozenAmt : freezeFrozenAmt;
+      var amt = parseFloat(document.getElementById("frAmount").value) || 0;
+      if (amt <= 0 || amt > avail) { alert("金额必须在 0.01 到 " + avail.toFixed(2) + " 之间"); return; }
+      alert(freezeWalletId + " 已" + (freezeMode === "freeze" ? "冻结" : "解冻") + " ¥" + amt.toFixed(2));
+      closeFreezeModal();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      setTimeout(init,100);
+      document.getElementById("frReason").addEventListener("change", function() {
+        document.getElementById("frReasonDetail").style.display = this.value === "other" ? "block" : "none";
+      });
+
+      var toggle = document.getElementById("flowToggle");
+      if (toggle) {
+        toggle.addEventListener("click", function(e) {
+          e.preventDefault();
+          var status = flowData.status;
+          if (status === "正常") {
+            if (confirm("确认冻结钱包 " + flowData.id + "？")) {
+              alert("钱包 " + flowData.id + " 已冻结");
+              flowData.status = "已冻结";
+              document.getElementById("flowStatusText").textContent = "已冻结";
+              document.getElementById("flowStatusText").style.cssText = "font-size:12px;padding:2px 10px;border-radius:12px;font-weight:500;background:#FFF0F0;color:#CF1322";
+              document.getElementById("flowToggleInput").checked = false;
+            }
+          } else {
+            if (confirm("确认解冻钱包 " + flowData.id + "？")) {
+              alert("钱包 " + flowData.id + " 已解冻");
+              flowData.status = "正常";
+              document.getElementById("flowStatusText").textContent = "正常";
+              document.getElementById("flowStatusText").style.cssText = "font-size:12px;padding:2px 10px;border-radius:12px;font-weight:500;background:#E8FFE8;color:#00A854";
+              document.getElementById("flowToggleInput").checked = true;
+            }
+          }
+        });
+      }
+    });
+</script>
+
+  <!-- 资金流水弹窗 -->
+  <div id="userFlowModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFlowModal()">
+    <div class="modal-content" style="width:auto;min-width:720px;max-width:90vw" onclick="event.stopPropagation()">
+      <div class="modal-header"><h3><span id="flowWalletId"></span> 资金流水 <span id="flowStatusBadge"></span></h3><span class="modal-close" onclick="closeFlowModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
+      <div class="modal-body">
+        <div id="flowUserInfo" style="display:none">
+          <div style="display:flex;gap:16px;margin-bottom:16px">
+            <div style="flex:1;background:#F7F8FA;border:1px solid #E5E6EB;border-radius:8px;padding:12px 16px"><div style="font-size:12px;color:#86909C;margin-bottom:4px;letter-spacing:0.03em">用户</div><div id="flowUser" style="font-size:14px;color:#1D2129;font-weight:500"></div></div>
+            <div style="flex:1;background:#F7F8FA;border:1px solid #E5E6EB;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;color:#86909C;margin-bottom:4px;letter-spacing:0.03em">状态</div><span id="flowStatusText" style="font-size:12px;padding:2px 10px;border-radius:12px;font-weight:500"></span></div><div><label class="toggle-switch" title="冻结/解冻钱包" id="flowToggle"><input type="checkbox" id="flowToggleInput" /><span class="toggle-slider"></span></label></div></div>
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:16px">
+            <div style="flex:1;background:#F0F5FF;border:1px solid #D6E4FF;border-radius:8px;padding:14px 16px">
+              <div style="font-size:12px;color:#4F6EF7;margin-bottom:6px;letter-spacing:0.03em">可用余额</div>
+              <div id="flowBalance" style="font-size:20px;color:#4F6EF7;font-weight:700;font-family:monospace"></div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #D6E4FF"><span style="font-size:12px;color:#4F6EF7">本金（可提现）</span><span id="flowPrincipal" style="font-size:13px;color:#4F6EF7;font-weight:600;font-family:monospace"></span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:12px;color:#D46B08">赠送</span><span id="flowBonus" style="font-size:13px;color:#D46B08;font-weight:600;font-family:monospace"></span></div>
+            </div>
+            <div style="flex:1;background:#E8FFE8;border:1px solid #B7EB8F;border-radius:8px;padding:14px 16px">
+              <div style="font-size:12px;color:#00A854;margin-bottom:6px;letter-spacing:0.03em">消费金额</div>
+              <div id="flowConsume" style="font-size:20px;color:#00A854;font-weight:700;font-family:monospace"></div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #B7EB8F"><span style="font-size:12px;color:#00A854">消费总额</span><span id="flowConsumeTotal" style="font-size:13px;color:#00A854;font-weight:600;font-family:monospace"></span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:12px;color:#CF1322">已退款</span><span id="flowRefund" style="font-size:13px;color:#CF1322;font-weight:600;font-family:monospace"></span></div>
+            </div>
+            <div style="flex:1;background:#FFF7E6;border:1px solid #FFE0B2;border-radius:8px;padding:14px 16px">
+              <div style="font-size:12px;color:#D46B08;margin-bottom:6px;letter-spacing:0.03em">冻结金额</div>
+              <div id="flowFrozen" style="font-size:20px;color:#D46B08;font-weight:700;font-family:monospace"></div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #FFE0B2"><span style="font-size:12px;color:#D46B08">系统冻结</span><span id="flowSysFrozen" style="font-size:13px;color:#D46B08;font-weight:600;font-family:monospace"></span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:12px;color:#86909C">提现中</span><span id="flowWdrFrozen" style="font-size:13px;color:#86909C;font-weight:600;font-family:monospace"></span></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;border:1px solid #E5E6EB;border-radius:6px;overflow:hidden;width:fit-content">
+          <button id="flowTabR" style="padding:6px 16px;border:none;background:#165DFF;color:#fff;font-size:13px;cursor:pointer" onclick="switchFlowTab('recharge')">充值流水</button>
+          <button id="flowTabW" style="padding:6px 16px;border:none;background:#fff;color:#4E5969;font-size:13px;cursor:pointer" onclick="switchFlowTab('withdraw')">提现流水</button>
+          <button id="flowTabT" style="padding:6px 16px;border:none;background:#fff;color:#4E5969;font-size:13px;cursor:pointer" onclick="switchFlowTab('transaction')">交易流水</button>
+        </div>
+        <div id="flowTableContainer" style="margin-top:16px;overflow-x:auto"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-default" onclick="closeFlowModal()">关闭</button></div>
+    </div>
+  </div>
+
+  <!-- 冻结/解冻余额弹窗 -->
+  <div id="freezeModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFreezeModal()">
+    <div class="modal-content modal-md" onclick="event.stopPropagation()">
+      <div class="modal-header"><h3 id="freezeTitle">冻结余额</h3><span class="modal-close" onclick="closeFreezeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;padding:12px;background:#F7F8FA;border-radius:8px">
+          <div><label style="font-size:12px;color:#86909C">钱包ID</label><span id="frWalletId" style="display:block;font-size:14px;color:#1D2129;font-family:monospace"></span></div>
+          <div><label style="font-size:12px;color:#86909C">用户</label><span id="frUser" style="display:block;font-size:14px;color:#1D2129"></span></div>
+          <div><label style="font-size:12px;color:#86909C">当前余额</label><span id="frBalance" style="display:block;font-size:14px;color:#1D2129;font-family:monospace"></span></div>
+          <div><label style="font-size:12px;color:#86909C">冻结金额</label><span id="frFrozen" style="display:block;font-size:14px;color:#1D2129;font-family:monospace"></span></div>
+          <div><label style="font-size:12px;color:#86909C" id="frAvailLabel">可冻结金额</label><span id="frAvail" style="display:block;font-size:14px;color:#4F6EF7;font-weight:600;font-family:monospace"></span></div>
+        </div>
+        <div style="display:flex;justify-content:center;margin-bottom:16px">
+          <div style="display:flex;border:1px solid #E5E6EB;border-radius:6px;overflow:hidden">
+            <button id="frModeF" style="padding:6px 24px;border:none;background:#165DFF;color:#fff;font-size:13px;cursor:pointer;font-family:inherit" onclick="setFreezeMode('freeze')">冻结</button>
+            <button id="frModeU" style="padding:6px 24px;border:none;background:#fff;color:#4E5969;font-size:13px;cursor:pointer;font-family:inherit" onclick="setFreezeMode('unfreeze')">解冻</button>
+          </div>
+        </div>
+        <div id="frAmountRow" class="form-item"><label class="form-label required">金额</label><div style="display:flex;align-items:center;gap:8px"><input type="number" id="frAmount" class="form-input" style="width:200px" min="0.01" step="0.01" placeholder="请输入金额" /><span id="frAvailHint" style="font-size:13px;color:#86909C">（可冻结：¥0.00）</span></div></div>
+        <div class="form-item"><label class="form-label required">原因备注</label><div style="flex:1"><select id="frReason" class="form-select" style="width:100%;margin-bottom:8px"><option value="">请选择原因</option></select><textarea id="frReasonDetail" class="form-textarea" style="width:100%;display:none" rows="2" placeholder="请补充详细描述"></textarea></div></div>
+        <div style="margin-top:20px;border-top:1px solid #E5E6EB;padding-top:16px">
+          <div style="font-size:13px;font-weight:600;color:#1D2129;margin-bottom:12px">冻结流水</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr><th style="text-align:left;padding:8px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">流水号</th><th style="text-align:left;padding:8px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">操作</th><th style="text-align:left;padding:8px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">金额</th><th style="text-align:left;padding:8px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">原因</th><th style="text-align:left;padding:8px 10px;font-weight:500;color:#86909C;border-bottom:1px solid #E5E6EB">时间</th></tr></thead>
+            <tbody id="frHistoryBody"><tr><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace;font-size:12px;color:#165DFF">TXN-FRZ-001</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5"><span style="color:#CF1322">冻结</span></td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace" class="amount-neg">-¥1,500.00</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-size:12px;color:#666">异常交易收回</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace;font-size:12px;color:#86909C">2026-03-15 14:30</td></tr><tr><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace;font-size:12px;color:#165DFF">TXN-FRZ-002</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5"><span style="color:#00A854">解冻</span></td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace" class="amount-pos">+¥500.00</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-size:12px;color:#666">风险解除</td><td style="padding:8px 10px;border-bottom:1px solid #F2F3F5;font-family:monospace;font-size:12px;color:#86909C">2026-04-01 09:00</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeFreezeModal()">取消</button>
+        <button class="btn btn-primary" id="frConfirmBtn" onclick="confirmFreezeAction()">确认冻结</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

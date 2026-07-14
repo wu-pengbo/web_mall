@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品原型 - 商城后台 · 商户签约</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F7FA; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .proto-element { position: relative; transition: all 0.2s ease; border-radius: 6px; }
+    .proto-element:hover { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.15); background-color: rgba(22,93,255,0.03); }
+    .proto-element.active-highlight { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.2); background-color: rgba(22,93,255,0.05); }
+    .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+    .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+    .proto-desc.active-highlight { background-color: #fde68a; border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+    #connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    .connection-line { fill: none; stroke: #165DFF; stroke-width: 2; opacity: 0.6; transition: all 0.2s ease; }
+    .connection-line.active { stroke-width: 3; opacity: 1; }
+    .connection-label { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    .connection-label-bg { fill: #165DFF; }
+    .sidebar-menu-item { transition: all 0.2s; cursor: pointer; }
+    .sidebar-menu-item:hover { background-color: rgba(22,93,255,0.06); color: #165DFF; }
+    .sidebar-menu-item.active { background-color: rgba(22,93,255,0.10); color: #165DFF; border-right: 3px solid #165DFF; }
+    .sidebar-label { font-size: 11px; color: #86909C; letter-spacing: 0.05em; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .tag-green { background-color: rgba(0,180,42,0.1); color: #00B42A; }
+    .tag-orange { background-color: rgba(212,107,8,0.1); color: #D46B08; }
+    .tag-red { background-color: rgba(207,19,34,0.1); color: #CF1322; }
+    .tag-blue { background-color: rgba(22,93,255,0.1); color: #165DFF; }
+    .tag-gray { background-color: #F5F7FA; color: #666; }
+    .data-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; }
+    .data-table tbody tr { transition: background-color 0.15s; cursor: pointer; }
+    .data-table tbody tr:hover { background-color: rgba(22,93,255,0.04); }
+    .data-table tbody tr.selected { background-color: rgba(22,93,255,0.08); }
+    .data-table td { font-size: 13px; }
+    .btn-click:active { transform: scale(0.96); }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .price-text { font-family: "SF Mono", "Menlo", monospace; font-weight: 600; }
+    .amount-pos { color: #CF1322; }
+    .amount-neg { color: #0E7B3A; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status-badge.on { background: #E8FFE8; color: #00A854; }
+    .status-badge.off { background: #FFF0F0; color: #CF1322; }
+    .status-badge.pending { background: #FFF7E6; color: #D46B08; }
+    .status-badge.approved { background: #E8FFE8; color: #00A854; }
+    .status-badge.refunded { background: #F0F5FF; color: #165DFF; }
+    .status-badge.rejected { background: #FFF0F0; color: #CF1322; }
+    .status-badge.signed { background: #E8FFE8; color: #00A854; }
+    .status-badge.terminated { background: #F5F5F5; color: #999; }
+    .action-link { font-size: 13px; font-weight: 500; cursor: pointer; transition: color 0.15s; background: none; border: none; padding: 0; font-family: inherit; }
+    .action-link:hover { opacity: 0.8; }
+    .action-link:focus { outline: 2px solid #165DFF; outline-offset: 2px; border-radius: 2px; }
+    .action-link.primary { color: #165DFF; }
+    .action-link.danger { color: #CF1322; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #165DFF; color: #fff; }
+    .btn-primary:hover { background: #0E42D2; }
+    .btn-default { background: #F2F3F5; color: #4E5969; }
+    .btn-default:hover { background: #E5E6EB; }
+    .btn-sm { padding: 6px 16px; font-size: 13px; }
+    .btn-xs { padding: 4px 12px; font-size: 13px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #E5E6EB; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 12px; color: #86909C; }
+    .filter-item input, .filter-item select { font-size: 13px; padding: 6px 10px; border: 1px solid #E5E6EB; border-radius: 6px; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #E5E6EB; }
+    .page-btn { padding: 4px 10px; border: 1px solid #E5E6EB; background: #fff; border-radius: 4px; font-size: 12px; color: #4E5969; cursor: pointer; }
+    .page-btn:hover:not(.disabled):not(.active) { background: #F2F3F5; }
+    .page-btn.active { background: #165DFF; color: #fff; border-color: #165DFF; }
+    .page-btn.disabled { color: #C9CDD4; cursor: not-allowed; }
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #left-panel { width: 100% !important; height: 60vh; }
+      #divider { display: none; }
+      #right-panel { width: 100% !important; height: 40vh; border-top: 1px solid #e5e7eb; }
+      #connections { display: none; }
+      .mobile-toggle-btn { display: flex !important; }
+    }
+    .mobile-toggle-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: #165DFF; color: white; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(22,93,255,0.3); cursor: pointer; border: none; }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .modal-content { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; margin: 0 16px; }
+    .modal-content.modal-lg { max-width: 800px; }
+    .modal-content.modal-md { max-width: 560px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #E5E6EB; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: #1D2129; }
+    .modal-close { cursor: pointer; color: #86909C; padding: 4px; background: none; border: none; }
+    .modal-close:hover { color: #4E5969; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid #F2F3F5; background: #FAFAFA; }
+    .form-item { margin-bottom: 16px; }
+    .form-item:last-child { margin-bottom: 0; }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: #4E5969; margin-bottom: 6px; }
+    .form-label.required::after { content: " *"; color: #CF1322; }
+    .form-input { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 2px rgba(22,93,255,0.1); outline: none; }
+    .form-select { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .form-textarea { border: 1px solid #E5E6EB; border-radius: 6px; padding: 6px 10px; font-size: 13px; resize: vertical; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item label { font-size: 12px; color: #86909C; display: block; margin-bottom: 2px; }
+    .info-item span { font-size: 14px; color: #1D2129; font-weight: 500; }
+    .info-item .mono { font-family: "SF Mono", "Menlo", monospace; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <button class="mobile-toggle-btn" id="mobileToggle"><i class="fas fa-info"></i></button>
+  <div id="app" class="flex h-screen relative">
+    <div id="left-panel" class="w-[80%] overflow-y-auto bg-gray-50 relative">
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#165DFF] rounded-lg flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-store"></i></div><h1 class="text-lg font-semibold text-gray-800">商城后台管理系统</h1></div>
+        <div class="flex items-center gap-4"><span class="text-sm text-gray-500"><i class="far fa-bell mr-1"></i></span><span class="text-sm text-gray-600"><i class="fas fa-user-circle mr-1"></i> admin</span></div>
+      </header>
+      <div class="flex">
+        <aside class="w-52 bg-white border-r border-gray-200 min-h-[calc(100vh-56px)] flex-shrink-0">
+          <nav class="py-4">
+            <div class="px-4 mb-2 sidebar-label font-semibold uppercase">钱包管理</div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-chart-pie w-5 text-center"></i><span>钱包概览</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-cog w-5 text-center"></i><span>钱包设置</span></div>
+            <div class="proto-element sidebar-menu-item active px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm" data-proto-id="1"><i class="fas fa-file-signature w-5 text-center"></i><span>商户签约</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-gift w-5 text-center"></i><span>充值方案</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-wallet w-5 text-center"></i><span>用户钱包</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-exchange-alt w-5 text-center"></i><span>交易流水</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-credit-card w-5 text-center"></i><span>充值管理</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-hand-holding-usd w-5 text-center"></i><span>提现管理</span></div>
+          </nav>
+        </aside>
+        <main class="flex-1 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">商户签约</h2>
+              <p class="text-sm text-gray-500 mt-1">管理签约商户的签约、编辑、解约及收款流水查询</p>
+            </div>
+            <button id="addSignBtn" class="btn btn-primary btn-sm proto-element" data-proto-id="2" onclick="openSignModal()"><i class="fas fa-plus"></i> 新增签约</button>
+          </div>
+
+          <!-- 筛选区域 -->
+          <div class="proto-element filter-bar" data-proto-id="3">
+            <div class="filter-item">
+              <label>商户名称</label>
+              <input type="text" placeholder="商户名称/联系人/电话" style="width:200px" />
+            </div>
+            <div class="filter-item">
+              <label>签约状态</label>
+              <select style="width:120px">
+                <option>全部状态</option>
+                <option>已签约</option>
+                <option>已解约</option>
+              </select>
+            </div>
+            <div class="filter-item" style="flex-direction:row;gap:8px;align-items:flex-end">
+              <button class="btn btn-primary btn-sm" onclick="alert('查询完成（模拟）')">查询</button>
+              <button class="btn btn-default btn-sm" onclick="resetFilter()">重置</button>
+            </div>
+          </div>
+
+          <!-- 签约列表 -->
+          <div class="proto-element bg-white rounded-lg border border-gray-200 overflow-hidden" data-proto-id="4">
+            <table class="data-table" style="width:100%">
+              <thead>
+                <tr>
+                  <th style="padding:10px 14px">商户名称</th>
+                  <th style="padding:10px 14px">联系人</th>
+                  <th style="padding:10px 14px">联系电话</th>
+                  <th style="padding:10px 14px">签约状态</th>
+                  <th style="padding:10px 14px">签约时间</th>
+                  <th style="padding:10px 14px">解约时间</th>
+                  <th style="padding:10px 14px">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:10px 14px;font-weight:500">平台自营商户</td>
+                  <td style="padding:10px 14px">张三</td>
+                  <td style="padding:10px 14px">138****0001</td>
+                  <td style="padding:10px 14px"><span class="status-badge signed">已签约</span></td>
+                  <td style="padding:10px 14px">2026-01-15</td>
+                  <td style="padding:10px 14px">-</td>
+                  <td style="padding:10px 14px">
+                    <button class="action-link primary" onclick="openEditModal('平台自营商户','张三','138****0001','已签约')">编辑</button>
+                    <button class="action-link primary" style="margin-left:8px" onclick="openSettlementModal('平台自营商户')">收款流水</button>
+                    <button class="action-link danger" style="margin-left:8px" onclick="terminateSign('平台自营商户')">解约</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 14px;font-weight:500">XX数码旗舰店</td>
+                  <td style="padding:10px 14px">李四</td>
+                  <td style="padding:10px 14px">139****0002</td>
+                  <td style="padding:10px 14px"><span class="status-badge signed">已签约</span></td>
+                  <td style="padding:10px 14px">2026-03-20</td>
+                  <td style="padding:10px 14px">-</td>
+                  <td style="padding:10px 14px">
+                    <button class="action-link primary" onclick="openEditModal('XX数码旗舰店','李四','139****0002','已签约')">编辑</button>
+                    <button class="action-link primary" style="margin-left:8px" onclick="openSettlementModal('XX数码旗舰店')">收款流水</button>
+                    <button class="action-link danger" style="margin-left:8px" onclick="terminateSign('XX数码旗舰店')">解约</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 14px;font-weight:500">XX服饰专营店</td>
+                  <td style="padding:10px 14px">王五</td>
+                  <td style="padding:10px 14px">137****0003</td>
+                  <td style="padding:10px 14px"><span class="status-badge terminated">已解约</span></td>
+                  <td style="padding:10px 14px">2025-11-01</td>
+                  <td style="padding:10px 14px">2026-04-30</td>
+                  <td style="padding:10px 14px">
+                    <button class="action-link primary" onclick="openEditModal('XX服饰专营店','王五','137****0003','已解约')">编辑</button>
+                    <button class="action-link primary" style="margin-left:8px" onclick="openSettlementModal('XX服饰专营店')">收款流水</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="pagination">
+              <span style="padding:12px 14px;font-size:12px;color:#86909C">共 3 条</span>
+              <div style="padding:12px 14px;display:flex;gap:4px">
+                <button class="page-btn disabled">上一页</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn disabled">下一页</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div id="divider" class="w-px bg-gray-300"></div>
+
+    <div id="right-panel" class="w-[20%] overflow-y-auto bg-amber-50 border-l-2 border-dashed border-amber-300">
+      <div class="p-4">
+        <div class="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded uppercase tracking-wide">Prototype</span>
+            <span class="text-xs font-semibold text-amber-800">原型说明</span>
+          </div>
+          <p class="text-[11px] text-amber-700 leading-relaxed">悬停左侧元素可高亮对应连线。点击操作按钮查看交互流程。</p>
+        </div>
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-amber-200">
+          <i class="fas fa-map-signs text-amber-600"></i>
+          <h2 class="text-sm font-bold text-amber-900">功能说明</h2>
+        </div>
+        <div class="space-y-3">
+          <div class="proto-desc p-3 active-highlight" data-proto-id="1">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">1</span>
+              <div>
+                <h3 class="text-sm font-semibold">商户签约 · 入口</h3>
+                <p class="text-xs text-gray-500 mt-1">钱包管理子菜单，管理所有签约商户的信息和状态。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="2">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">2</span>
+              <div>
+                <h3 class="text-sm font-semibold">新增签约</h3>
+                <p class="text-xs text-gray-500 mt-1">点击弹出签约表单，选择商户、填写联系人/电话/备注，上传签约协议扫描件后确认签约。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="3">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">3</span>
+              <div>
+                <h3 class="text-sm font-semibold">筛选搜索区</h3>
+                <p class="text-xs text-gray-500 mt-1">支持按商户名称、联系人、电话搜索；按签约状态（全部/已签约/已解约）筛选。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="4">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">4</span>
+              <div>
+                <h3 class="text-sm font-semibold">签约列表 · 状态枚举</h3>
+                <p class="text-xs text-gray-500 mt-1">表格展示所有签约商户：名称、联系人、电话、状态、签约/解约时间。</p>
+                <p class="text-xs text-gray-500 mt-1"><strong>状态枚举：</strong>「已签约」= 合作有效，可查看收款流水和解约；「已解约」= 合作到期或提前终止，仅保留历史数据查看权限。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="5">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">5</span>
+              <div>
+                <h3 class="text-sm font-semibold">签约编辑弹窗</h3>
+                <p class="text-xs text-gray-500 mt-1">新增/编辑共用表单：商户（必填下拉）、联系人、联系电话、备注、签约协议上传。编辑时商户不可修改。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="6">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">6</span>
+              <div>
+                <h3 class="text-sm font-semibold">解约操作</h3>
+                <p class="text-xs text-gray-500 mt-1">点击"解约"弹出二次确认框，确认后状态变为"已解约"，记录解约时间，该商户不再接收新的消费订单。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="7">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">7</span>
+              <div>
+                <h3 class="text-sm font-semibold">收款流水弹窗</h3>
+                <p class="text-xs text-gray-500 mt-1">弹窗顶部三张统计卡片：消费总额（蓝色）、退款总额（橙色）、净结算（绿色）。下部为分段控件切换「消费流水」/「退款流水」，展示对应流水明细表格。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <svg id="connections" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+
+  <!-- 签约编辑弹窗 -->
+  <div id="signModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeSignModal()">
+    <div class="modal-content modal-md" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="signModalTitle">新增签约</h3>
+        <button class="modal-close" onclick="closeSignModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-item">
+          <label class="form-label required">商户</label>
+          <select id="signFormMerchant" class="form-select" style="width:100%">
+            <option value="">请选择商户</option>
+            <option value="平台自营商户">平台自营商户</option>
+            <option value="XX数码旗舰店">XX数码旗舰店</option>
+            <option value="XX服饰专营店">XX服饰专营店</option>
+            <option value="XX食品店">XX食品店</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label class="form-label">联系人</label>
+          <input id="signFormContact" type="text" class="form-input" placeholder="选填" style="width:100%" />
+        </div>
+        <div class="form-item">
+          <label class="form-label">联系电话</label>
+          <input id="signFormPhone" type="text" class="form-input" placeholder="选填" style="width:100%" />
+        </div>
+        <div class="form-item">
+          <label class="form-label">备注</label>
+          <textarea id="signFormRemark" class="form-textarea" rows="2" placeholder="选填" style="width:100%"></textarea>
+        </div>
+        <div class="form-item">
+          <label class="form-label">签约协议</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn btn-default" style="height:32px;padding:0 16px;font-size:13px" onclick="uploadAgreement()">上传协议扫描件</button>
+            <span id="signFormAgreement" style="font-size:13px;color:#00A854;white-space:nowrap"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeSignModal()">取消</button>
+        <button class="btn btn-primary" onclick="submitSign()">确认签约</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收款流水弹窗 -->
+  <div id="settlementModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeSettlementModal()">
+    <div class="modal-content modal-lg" style="max-width:800px;width:auto;max-width:90vw" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>收款流水 - <span id="settlementMerchantName"></span></h3>
+        <button class="modal-close" onclick="closeSettlementModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:16px;margin-bottom:20px">
+          <div style="flex:1;background:#F0F5FF;border:1px solid #D6E4FF;border-radius:8px;padding:16px 20px">
+            <div style="font-size:12px;color:#86909C;margin-bottom:8px;text-transform:uppercase">消费总额</div>
+            <div style="font-size:20px;font-weight:700;color:#4F6EF7;font-family:monospace" id="settleConsume">¥0.00</div>
+          </div>
+          <div style="flex:1;background:#FFF7E6;border:1px solid #FFE0B2;border-radius:8px;padding:16px 20px">
+            <div style="font-size:12px;color:#86909C;margin-bottom:8px;text-transform:uppercase">退款总额</div>
+            <div style="font-size:20px;font-weight:700;color:#D46B08;font-family:monospace" id="settleRefund">¥0.00</div>
+          </div>
+          <div style="flex:1;background:#E8FFE8;border:1px solid #B7EB8F;border-radius:8px;padding:16px 20px">
+            <div style="font-size:12px;color:#86909C;margin-bottom:8px;text-transform:uppercase">净结算</div>
+            <div style="font-size:20px;font-weight:700;color:#00A854;font-family:monospace" id="settleNet">¥0.00</div>
+          </div>
+        </div>
+        <div style="display:flex;border:1px solid #E5E6EB;border-radius:6px;overflow:hidden;margin-bottom:16px">
+          <button style="flex:1;padding:8px;border:none;background:#165DFF;color:#fff;font-size:13px;cursor:pointer" id="settleTabConsume" onclick="switchSettleTab('consume')">消费流水</button>
+          <button style="flex:1;padding:8px;border:none;background:#fff;color:#4E5969;font-size:13px;cursor:pointer" id="settleTabRefund" onclick="switchSettleTab('refund')">退款流水</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" style="width:100%">
+            <thead>
+              <tr>
+                <th style="padding:8px 12px">流水号</th>
+                <th style="padding:8px 12px">用户ID</th>
+                <th style="padding:8px 12px">手机号</th>
+                <th style="padding:8px 12px">金额</th>
+                <th style="padding:8px 12px">关联订单</th>
+                <th style="padding:8px 12px">时间</th>
+              </tr>
+            </thead>
+            <tbody id="settleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeSettlementModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 解约确认弹窗 -->
+  <div id="terminateModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeTerminateModal()">
+    <div class="modal-content modal-md" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>确认解约</h3>
+        <button class="modal-close" onclick="closeTerminateModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#FFF0F0;display:flex;align-items:center;justify-content:center">
+            <i class="fas fa-exclamation-triangle" style="color:#CF1322;font-size:18px"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#1D2129">确认与「<span id="terminateMerchantName"></span>」解约？</div>
+            <div style="font-size:12px;color:#86909C;margin-top:4px">解约后该商户将不再接收新的消费订单，已产生的交易流水仍可查询。</div>
+          </div>
+        </div>
+        <div class="form-item">
+          <label class="form-label">解约原因（选填）</label>
+          <textarea id="terminateReason" class="form-textarea" rows="2" placeholder="请输入解约原因" style="width:100%"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeTerminateModal()">取消</button>
+        <button class="btn btn-primary" style="background:#CF1322" onclick="confirmTerminate()">确认解约</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var svg = document.getElementById("connections"), connections = [];
+    function drawConnections() {
+      svg.innerHTML = "";
+      connections.length = 0;
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        if (e.offsetParent === null && getComputedStyle(e).display !== 'contents') return;
+        var rect = e.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        var pid = e.getAttribute("data-proto-id"),
+            re = document.querySelector('.proto-desc[data-proto-id="' + pid + '" ]');
+        if (!re) return;
+        if (re.offsetParent === null) return;
+        var reRect = re.getBoundingClientRect();
+        if (reRect.width === 0 || reRect.height === 0) return;
+
+        var lr = e.getBoundingClientRect(),
+            rr = re.getBoundingClientRect(),
+            sr = svg.getBoundingClientRect(),
+            x1 = lr.right - sr.left,
+            y1 = lr.top + lr.height / 2 - sr.top,
+            x2 = rr.left - sr.left,
+            y2 = rr.top + rr.height / 2 - sr.top,
+            cx = x1 + (x2 - x1) * .5;
+        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "M " + x1 + " " + y1 + " C " + cx + " " + y1 + ", " + cx + " " + y2 + ", " + x2 + " " + y2);
+        p.setAttribute("class", "connection-line");
+        p.setAttribute("data-proto-id", pid);
+        svg.appendChild(p);
+        var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        var bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bg.setAttribute("cx", mx); bg.setAttribute("cy", my); bg.setAttribute("r", 11);
+        bg.setAttribute("class", "connection-label-bg");
+        svg.appendChild(bg);
+        var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", mx); t.setAttribute("y", my); t.setAttribute("dy", "0.05em");
+        t.setAttribute("class", "connection-label");
+        t.textContent = pid;
+        svg.appendChild(t);
+        connections.push({ protoId: pid, path: p, leftEl: e, rightEl: re });
+      });
+    }
+    function highlightConnection(pid, a) {
+      var c = connections.find(function(c) { return c.protoId === pid; });
+      if (!c) return;
+      if (a) {
+        c.path.classList.add("active");
+        c.leftEl.classList.add("active-highlight");
+        c.rightEl.classList.add("active-highlight");
+      } else {
+        c.path.classList.remove("active");
+        c.leftEl.classList.remove("active-highlight");
+        c.rightEl.classList.remove("active-highlight");
+      }
+    }
+    function bindHoverEvents() {
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+      document.querySelectorAll(".proto-desc[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+    }
+    var m = !1;
+    document.getElementById("mobileToggle").addEventListener("click", function() {
+      m = !m;
+      var lp = document.getElementById("left-panel"), rp = document.getElementById("right-panel"), btn = document.getElementById("mobileToggle");
+      if (m) {
+        lp.style.display = "none"; rp.style.height = "100vh";
+        btn.innerHTML = '<i class="fas fa-desktop"></i>';
+      } else {
+        lp.style.display = ""; rp.style.height = "";
+        btn.innerHTML = '<i class="fas fa-info"></i>';
+      }
+    });
+    document.querySelectorAll(".data-table tbody tr").forEach(function(r) {
+      r.addEventListener("click", function() {
+        document.querySelectorAll(".data-table tbody tr").forEach(function(x) { x.classList.remove("selected"); });
+        r.classList.add("selected");
+      });
+    });
+    function init() { drawConnections(); bindHoverEvents(); }
+    document.addEventListener("DOMContentLoaded", function() { setTimeout(init, 100); });
+    var resizeTimer;
+    window.addEventListener("resize", function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 150); });
+    document.getElementById("left-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+    document.getElementById("right-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeSignModal();
+        closeSettlementModal();
+        closeTerminateModal();
+      }
+    });
+
+    function resetFilter() {
+      var inputs = document.querySelectorAll(".filter-bar input");
+      var selects = document.querySelectorAll(".filter-bar select");
+      inputs.forEach(function(i) { i.value = ""; });
+      selects.forEach(function(s) { s.selectedIndex = 0; });
+      alert("筛选条件已重置");
+    }
+
+    var isEditMode = false;
+    function openSignModal() {
+      isEditMode = false;
+      document.getElementById("signModalTitle").textContent = "新增签约";
+      document.getElementById("signFormMerchant").value = "";
+      document.getElementById("signFormMerchant").disabled = false;
+      document.getElementById("signFormContact").value = "";
+      document.getElementById("signFormPhone").value = "";
+      document.getElementById("signFormRemark").value = "";
+      document.getElementById("signFormAgreement").textContent = "";
+      document.getElementById("signModal").style.display = "flex";
+    }
+    function openEditModal(name, contact, phone, status) {
+      isEditMode = true;
+      document.getElementById("signModalTitle").textContent = "编辑签约 - " + name;
+      document.getElementById("signFormMerchant").value = name;
+      document.getElementById("signFormMerchant").disabled = true;
+      document.getElementById("signFormContact").value = contact;
+      document.getElementById("signFormPhone").value = phone;
+      document.getElementById("signFormRemark").value = "";
+      document.getElementById("signFormAgreement").textContent = "";
+      document.getElementById("signModal").style.display = "flex";
+    }
+    function closeSignModal() {
+      document.getElementById("signModal").style.display = "none";
+    }
+    function uploadAgreement() {
+      var name = "agreement_" + Date.now() + ".pdf";
+      document.getElementById("signFormAgreement").textContent = "已上传：" + name;
+    }
+    function submitSign() {
+      var merchant = document.getElementById("signFormMerchant").value;
+      if (!merchant) { alert("请选择商户"); return; }
+      alert(isEditMode ? "签约信息已更新" : "签约成功");
+      closeSignModal();
+    }
+
+    var terminateTarget = "";
+    function terminateSign(name) {
+      terminateTarget = name;
+      document.getElementById("terminateMerchantName").textContent = name;
+      document.getElementById("terminateReason").value = "";
+      document.getElementById("terminateModal").style.display = "flex";
+    }
+    function closeTerminateModal() {
+      document.getElementById("terminateModal").style.display = "none";
+      terminateTarget = "";
+    }
+    function confirmTerminate() {
+      var reason = document.getElementById("terminateReason").value;
+      alert("已与「" + terminateTarget + "」解约" + (reason ? "，原因：" + reason : ""));
+      closeTerminateModal();
+    }
+
+    var settleData = {
+      "平台自营商户": { consume: [{no:"TXN-001",uid:"u10001",phone:"138****1234",amount:-188,order:"ORD-001",time:"2026-06-11 14:20"},{no:"TXN-002",uid:"u10002",phone:"139****5678",amount:-59,order:"ORD-002",time:"2026-06-07 09:15"}], refund: [{no:"TXN-003",uid:"u10003",phone:"137****9012",amount:200,order:"ORD-003",time:"2026-06-10 14:30"}] },
+      "XX数码旗舰店": { consume: [{no:"TXN-004",uid:"u10002",phone:"139****5678",amount:-129,order:"ORD-004",time:"2026-06-08 11:30"},{no:"TXN-005",uid:"u10004",phone:"136****3456",amount:-500,order:"ORD-005",time:"2026-06-04 18:00"}], refund: [{no:"TXN-006",uid:"u10001",phone:"138****1234",amount:219.50,order:"ORD-006",time:"2026-06-03 10:00"}] },
+      "XX服饰专营店": { consume: [{no:"TXN-007",uid:"u10005",phone:"135****7890",amount:-188,order:"ORD-007",time:"2026-06-11 14:20"},{no:"TXN-008",uid:"u10006",phone:"134****2345",amount:-500,order:"ORD-008",time:"2026-06-04 18:00"}], refund: [{no:"TXN-009",uid:"u10005",phone:"135****7890",amount:200,order:"ORD-009",time:"2026-06-10 14:30"}] }
+    };
+    function openSettlementModal(name) {
+      document.getElementById("settlementMerchantName").textContent = name;
+      document.getElementById("settlementModal").style.display = "flex";
+      if (!settleData[name]) settleData[name] = { consume: [], refund: [] };
+      updateSettleStats(name, "consume");
+      renderSettleTable(name, "consume");
+    }
+    function closeSettlementModal() {
+      document.getElementById("settlementModal").style.display = "none";
+    }
+    function switchSettleTab(tab) {
+      var name = document.getElementById("settlementMerchantName").textContent;
+      var btnC = document.getElementById("settleTabConsume");
+      var btnR = document.getElementById("settleTabRefund");
+      btnC.style.background = tab === "consume" ? "#165DFF" : "#fff";
+      btnC.style.color = tab === "consume" ? "#fff" : "#4E5969";
+      btnR.style.background = tab === "refund" ? "#165DFF" : "#fff";
+      btnR.style.color = tab === "refund" ? "#fff" : "#4E5969";
+      renderSettleTable(name, tab);
+    }
+    function updateSettleStats(name, tab) {
+      var data = settleData[name] || { consume: [], refund: [] };
+      var totalConsume = data.consume.reduce(function(s, r) { return s + Math.abs(r.amount); }, 0);
+      var totalRefund = data.refund.reduce(function(s, r) { return s + Math.abs(r.amount); }, 0);
+      document.getElementById("settleConsume").textContent = "¥" + totalConsume.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      document.getElementById("settleRefund").textContent = "¥" + totalRefund.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      var net = totalConsume - totalRefund;
+      document.getElementById("settleNet").textContent = (net >= 0 ? "+" : "") + "¥" + Math.abs(net).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    function renderSettleTable(name, tab) {
+      var data = settleData[name] || { consume: [], refund: [] };
+      var records = tab === "consume" ? data.consume : data.refund;
+      var tbody = document.getElementById("settleTableBody");
+      if (records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#86909C;padding:40px">暂无' + (tab === "consume" ? "消费" : "退款") + '流水</td></tr>';
+        return;
+      }
+      var html = "";
+      records.forEach(function(r) {
+        var cls = r.amount > 0 ? "amount-pos" : "amount-neg";
+        var sign = r.amount > 0 ? "+" : "";
+        html += '<tr><td style="padding:8px 12px;font-family:monospace;font-size:12px;color:#165DFF">' + r.no + '</td><td style="padding:8px 12px">' + r.uid + '</td><td style="padding:8px 12px">' + r.phone + '</td><td style="padding:8px 12px" class="price-text ' + cls + '">' + sign + "¥" + Math.abs(r.amount).toFixed(2) + '</td><td style="padding:8px 12px">' + r.order + '</td><td style="padding:8px 12px;font-family:monospace;font-size:12px;color:#86909C">' + r.time + '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

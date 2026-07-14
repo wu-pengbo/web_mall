@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品原型 - 商城后台 · 充值管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F7FA; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .proto-element { position: relative; transition: all 0.2s ease; border-radius: 6px; }
+    .proto-element:hover { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.15); background-color: rgba(22,93,255,0.03); }
+    .proto-element.active-highlight { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.2); background-color: rgba(22,93,255,0.05); }
+    .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+    .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+    .proto-desc.active-highlight { background-color: #fde68a; border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+    #connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    .connection-line { fill: none; stroke: #165DFF; stroke-width: 2; opacity: 0.6; transition: all 0.2s ease; }
+    .connection-line.active { stroke-width: 3; opacity: 1; }
+    .connection-label { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    .connection-label-bg { fill: #165DFF; }
+    .sidebar-menu-item { transition: all 0.2s; cursor: pointer; }
+    .sidebar-menu-item:hover { background-color: rgba(22,93,255,0.06); color: #165DFF; }
+    .sidebar-menu-item.active { background-color: rgba(22,93,255,0.10); color: #165DFF; border-right: 3px solid #165DFF; }
+    .sidebar-label { font-size: 11px; color: #86909C; letter-spacing: 0.05em; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .tag-green { background-color: rgba(0,180,42,0.1); color: #00B42A; }
+    .tag-orange { background-color: rgba(212,107,8,0.1); color: #D46B08; }
+    .tag-red { background-color: rgba(207,19,34,0.1); color: #CF1322; }
+    .tag-blue { background-color: rgba(22,93,255,0.1); color: #165DFF; }
+    .tag-gray { background-color: #F5F7FA; color: #666; }
+    .data-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; }
+    .data-table tbody tr { transition: background-color 0.15s; cursor: pointer; }
+    .data-table tbody tr:hover { background-color: rgba(22,93,255,0.04); }
+    .data-table tbody tr.selected { background-color: rgba(22,93,255,0.08); box-shadow: inset 3px 0 0 #165DFF; }
+    .data-table td { font-size: 13px; }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .price-text { font-family: "SF Mono", "Menlo", monospace; font-weight: 600; }
+    .action-link { font-size: 13px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+    .action-link:hover { opacity: 0.8; }
+    .action-link.primary { color: #165DFF; }
+    .action-link.danger { color: #CF1322; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #165DFF; color: #fff; }
+    .btn-primary:hover { background: #0E42D2; }
+    .btn-default { background: #F2F3F5; color: #4E5969; }
+    .btn-default:hover { background: #E5E6EB; }
+    .btn-sm { padding: 6px 16px; font-size: 13px; }
+    .btn-xs { padding: 4px 12px; font-size: 13px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #E5E6EB; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 12px; color: #86909C; }
+    .filter-item input, .filter-item select { font-size: 13px; padding: 6px 10px; border: 1px solid #E5E6EB; border-radius: 6px; }
+    .filter-actions { display: flex; flex-direction: row; gap: 8px; align-items: flex-end; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #E5E6EB; }
+    .page-btn { padding: 4px 10px; border: 1px solid #E5E6EB; background: #fff; border-radius: 4px; font-size: 12px; color: #4E5969; cursor: pointer; }
+    .page-btn:hover:not(.disabled):not(.active) { background: #F2F3F5; }
+    .page-btn.active { background: #165DFF; color: #fff; border-color: #165DFF; }
+    .page-btn.disabled { color: #C9CDD4; cursor: not-allowed; }
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #left-panel { width: 100% !important; height: 60vh; }
+      #divider { display: none; }
+      #right-panel { width: 100% !important; height: 40vh; border-top: 1px solid #e5e7eb; }
+      #connections { display: none; }
+      .mobile-toggle-btn { display: flex !important; }
+    }
+    .mobile-toggle-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: #165DFF; color: white; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(22,93,255,0.3); cursor: pointer; border: none; }
+    .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .modal-content { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; margin: 0 16px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #E5E6EB; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: #1D2129; }
+    .modal-close { cursor: pointer; color: #86909C; padding: 4px; }
+    .modal-close:hover { color: #4E5969; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid #F2F3F5; background: #FAFAFA; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title { font-size: 14px; font-weight: 600; color: #1D2129; margin-bottom: 12px; }
+    .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid #F2F3F5; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { width: 100px; color: #86909C; font-size: 13px; flex-shrink: 0; }
+    .detail-value { flex: 1; font-size: 13px; color: #1D2129; font-weight: 500; }
+    .detail-value.mono { font-family: "SF Mono", "Menlo", monospace; }
+    .amount-summary { display: flex; gap: 32px; padding: 16px; background: #FAFAFA; border-radius: 8px; margin-bottom: 20px; }
+    .amount-item { text-align: center; }
+    .amount-item-label { font-size: 12px; color: #86909C; margin-bottom: 4px; }
+    .amount-item-value { font-size: 18px; font-weight: 700; font-family: "SF Mono", "Menlo", monospace; }
+    .amount-item-value.primary { color: #1D2129; }
+    .amount-item-value.bonus { color: #D46B08; }
+    .amount-item-value.total { color: #165DFF; }
+    .fund-card { border: 1px solid #E5E6EB; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .fund-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .fund-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+    .fund-tag-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .fund-tag-dot.principal { background: #165DFF; }
+    .fund-tag-dot.bonus { background: #D46B08; }
+    .fund-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+    .fund-status.available { background: rgba(0,180,42,0.1); color: #00B42A; }
+    .fund-status.withdrawable { background: rgba(22,93,255,0.1); color: #165DFF; }
+    .fund-status.non-withdrawable { background: rgba(102,102,102,0.1); color: #666; }
+    .fund-progress { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .fund-progress-bar { flex: 1; height: 6px; background: #F2F3F5; border-radius: 3px; overflow: hidden; margin: 0 12px; }
+    .fund-progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .fund-progress-fill.principal { background: #165DFF; }
+    .fund-progress-fill.bonus { background: #D46B08; }
+    .fund-progress-text { font-size: 12px; color: #86909C; white-space: nowrap; }
+    .fund-progress-text strong { color: #1D2129; font-weight: 600; }
+    .consume-table { width: 100%; border-collapse: collapse; }
+    .consume-table th { text-align: left; padding: 8px 0; font-size: 12px; color: #86909C; font-weight: 500; border-bottom: 1px solid #F2F3F5; }
+    .consume-table td { padding: 8px 0; font-size: 12px; color: #1D2129; border-bottom: 1px solid #F2F3F5; }
+    .consume-table tr:last-child td { border-bottom: none; }
+    .consume-type { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+    .consume-type.consume { background: rgba(0,180,42,0.1); color: #00B42A; }
+    .consume-type.refund { background: rgba(22,93,255,0.1); color: #165DFF; }
+    .consume-amount { font-family: "SF Mono", "Menlo", monospace; font-weight: 600; }
+    .consume-amount.neg { color: #00B42A; }
+    .consume-amount.pos { color: #CF1322; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <button class="mobile-toggle-btn" id="mobileToggle"><i class="fas fa-info"></i></button>
+  <div id="app" class="flex h-screen relative">
+    <div id="left-panel" class="w-[80%] overflow-y-auto bg-gray-50 relative">
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#165DFF] rounded-lg flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-store"></i></div><h1 class="text-lg font-semibold text-gray-800">商城后台管理系统</h1></div>
+        <div class="flex items-center gap-4"><span class="text-sm text-gray-500"><i class="far fa-bell mr-1"></i></span><span class="text-sm text-gray-600"><i class="fas fa-user-circle mr-1"></i> admin</span></div>
+      </header>
+      <div class="flex">
+        <aside class="w-52 bg-white border-r border-gray-200 min-h-[calc(100vh-56px)] flex-shrink-0">
+          <nav class="py-4">
+            <div class="px-4 mb-2 sidebar-label font-semibold uppercase">钱包管理</div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-chart-pie w-5 text-center"></i><span>钱包概览</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-cog w-5 text-center"></i><span>钱包设置</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-file-signature w-5 text-center"></i><span>商户签约</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-gift w-5 text-center"></i><span>充值方案</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-wallet w-5 text-center"></i><span>用户钱包</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-exchange-alt w-5 text-center"></i><span>交易流水</span></div>
+            <div class="proto-element sidebar-menu-item active px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm" data-proto-id="1"><i class="fas fa-credit-card w-5 text-center"></i><span>充值管理</span></div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm"><i class="fas fa-hand-holding-usd w-5 text-center"></i><span>提现管理</span></div>
+          </nav>
+        </aside>
+        <main class="flex-1 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">充值管理</h2>
+              <p class="text-sm text-gray-500 mt-1">管理用户充值记录，跟踪充值状态和到账情况</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-default btn-sm" onclick="exportData()"><i class="fas fa-download"></i> 导出</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <div class="filter-item">
+              <label>搜索</label>
+              <input type="text" placeholder="充值单号 / UID / 手机号" style="width:200px" />
+            </div>
+            <div class="filter-item">
+              <label>充值状态</label>
+              <select style="width:120px">
+                <option>全部</option>
+                <option>充值成功</option>
+                <option>充值中</option>
+                <option>充值失败</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label>时间范围</label>
+              <select style="width:120px">
+                <option>全部</option>
+                <option>今天</option>
+                <option>近7天</option>
+                <option>近30天</option>
+                <option>自定义</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary btn-sm">查询</button>
+              <button class="btn btn-default btn-sm">重置</button>
+            </div>
+          </div>
+          <div class="proto-element bg-white rounded-lg border border-gray-200 overflow-hidden" data-proto-id="2">
+            <div style="overflow-x:auto">
+              <table class="data-table" style="width:100%">
+                <thead>
+                  <tr>
+                    <th style="padding:10px 12px">充值单号</th>
+                    <th style="padding:10px 12px">用户</th>
+                    <th style="padding:10px 12px">充值金额</th>
+                    <th style="padding:10px 12px">赠送金额</th>
+                    <th style="padding:10px 12px">实收金额</th>
+                    <th style="padding:10px 12px">收款商户</th>
+                    <th style="padding:10px 12px">充值状态</th>
+                    <th style="padding:10px 12px">时间</th>
+                    <th style="padding:10px 12px">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr onclick="selectRow(this)">
+                    <td style="padding:10px 12px;color:#165DFF;font-family:monospace;font-size:12px">RCH-20260611-001</td>
+                    <td style="padding:10px 12px">u10001<br><span style="font-size:12px;color:#86909C">138****1234</span></td>
+                    <td class="price-text" style="padding:10px 12px">¥1,000.00</td>
+                    <td class="price-text" style="padding:10px 12px;color:#D46B08">¥50.00</td>
+                    <td class="price-text" style="padding:10px 12px">¥1,050.00</td>
+                    <td style="padding:10px 12px">平台自营商户</td>
+                    <td style="padding:10px 12px"><span class="tag tag-green">充值成功</span></td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#86909C">2026-06-11 10:30</td>
+                    <td style="padding:10px 12px">
+                      <span class="action-link primary" onclick="event.stopPropagation();showDetail('RCH-20260611-001')">查看</span>
+                    </td>
+                  </tr>
+                  <tr onclick="selectRow(this)">
+                    <td style="padding:10px 12px;color:#165DFF;font-family:monospace;font-size:12px">RCH-20260611-002</td>
+                    <td style="padding:10px 12px">u10002<br><span style="font-size:12px;color:#86909C">139****5678</span></td>
+                    <td class="price-text" style="padding:10px 12px">¥500.00</td>
+                    <td class="price-text" style="padding:10px 12px;color:#86909C">-</td>
+                    <td class="price-text" style="padding:10px 12px">¥500.00</td>
+                    <td style="padding:10px 12px">平台自营商户</td>
+                    <td style="padding:10px 12px"><span class="tag tag-green">充值成功</span></td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#86909C">2026-06-11 11:00</td>
+                    <td style="padding:10px 12px">
+                      <span class="action-link primary" onclick="event.stopPropagation();showDetail('RCH-20260611-002')">查看</span>
+                    </td>
+                  </tr>
+                  <tr onclick="selectRow(this)">
+                    <td style="padding:10px 12px;color:#165DFF;font-family:monospace;font-size:12px">RCH-20260611-003</td>
+                    <td style="padding:10px 12px">u10005<br><span style="font-size:12px;color:#86909C">135****7890</span></td>
+                    <td class="price-text" style="padding:10px 12px">¥200.00</td>
+                    <td class="price-text" style="padding:10px 12px;color:#86909C">-</td>
+                    <td class="price-text" style="padding:10px 12px">¥200.00</td>
+                    <td style="padding:10px 12px">XX数码旗舰店</td>
+                    <td style="padding:10px 12px"><span class="tag tag-orange">充值中</span></td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#86909C">2026-06-11 11:15</td>
+                    <td style="padding:10px 12px">
+                      <span class="action-link primary" onclick="event.stopPropagation();showDetail('RCH-20260611-003')">查看</span>
+                    </td>
+                  </tr>
+                  <tr onclick="selectRow(this)">
+                    <td style="padding:10px 12px;color:#165DFF;font-family:monospace;font-size:12px">RCH-20260611-004</td>
+                    <td style="padding:10px 12px">u10003<br><span style="font-size:12px;color:#86909C">137****9012</span></td>
+                    <td class="price-text" style="padding:10px 12px">¥3,000.00</td>
+                    <td class="price-text" style="padding:10px 12px;color:#86909C">-</td>
+                    <td class="price-text" style="padding:10px 12px">¥3,000.00</td>
+                    <td style="padding:10px 12px">平台自营商户</td>
+                    <td style="padding:10px 12px"><span class="tag tag-orange">充值中</span></td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#86909C">2026-06-11 12:00</td>
+                    <td style="padding:10px 12px">
+                      <span class="action-link primary" onclick="event.stopPropagation();showDetail('RCH-20260611-004')">查看</span>
+                    </td>
+                  </tr>
+                  <tr onclick="selectRow(this)">
+                    <td style="padding:10px 12px;color:#165DFF;font-family:monospace;font-size:12px">RCH-20260611-005</td>
+                    <td style="padding:10px 12px">u10004<br><span style="font-size:12px;color:#86909C">136****2468</span></td>
+                    <td class="price-text" style="padding:10px 12px">¥800.00</td>
+                    <td class="price-text" style="padding:10px 12px;color:#D46B08">¥40.00</td>
+                    <td class="price-text" style="padding:10px 12px">¥840.00</td>
+                    <td style="padding:10px 12px">平台自营商户</td>
+                    <td style="padding:10px 12px"><span class="tag tag-red">充值失败</span></td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#86909C">2026-06-11 12:30</td>
+                    <td style="padding:10px 12px">
+                      <span class="action-link primary" onclick="event.stopPropagation();showDetail('RCH-20260611-005')">查看</span>
+                      <span class="action-link danger ml-2" onclick="event.stopPropagation();retryRecharge('RCH-20260611-005')">重试</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid #E5E6EB">
+              <span style="font-size:12px;color:#86909C">共 5 条</span>
+              <div style="display:flex;gap:4px">
+                <button class="page-btn disabled">上一页</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn disabled">下一页</button>
+              </div>
+            </div>
+          </div>
+          <div class="proto-element" data-proto-id="3" style="margin-top:16px;padding:12px;border:1px solid #E5E6EB;border-radius:8px;background:#fff">
+            <div style="font-size:13px;font-weight:600;color:#1D2129;margin-bottom:8px"><i class="fas fa-info-circle text-[#165DFF] mr-1"></i>充值状态说明</div>
+            <div style="display:flex;gap:16px;font-size:12px;color:#666;flex-wrap:wrap">
+              <span><span class="tag tag-green" style="display:inline-block;margin-right:4px">充值成功</span>充值完成，已入账</span>
+              <span><span class="tag tag-orange" style="display:inline-block;margin-right:4px">充值中</span>系统处理中，超时后自动失败</span>
+              <span><span class="tag tag-red" style="display:inline-block;margin-right:4px">充值失败</span>处理超时或异常，可点击重试</span>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="divider" class="w-px bg-gray-300"></div>
+    <div id="right-panel" class="w-[20%] overflow-y-auto bg-amber-50 border-l-2 border-dashed border-amber-300">
+      <div class="p-4">
+        <div class="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded uppercase tracking-wide">Prototype</span>
+            <span class="text-xs font-semibold text-amber-800">原型说明</span>
+          </div>
+          <p class="text-[11px] text-amber-700 leading-relaxed">悬停左侧元素可高亮对应连线。</p>
+        </div>
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-amber-200">
+          <i class="fas fa-map-signs text-amber-600"></i>
+          <h2 class="text-sm font-bold text-amber-900">功能说明</h2>
+        </div>
+        <div class="space-y-3">
+          <div class="proto-desc p-3 active-highlight" data-proto-id="1">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">1</span>
+              <div>
+                <h3 class="text-sm font-semibold">充值管理 · 入口</h3>
+                <p class="text-xs text-gray-500 mt-1">钱包管理子菜单，追踪用户充值记录和状态。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="2">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">2</span>
+              <div>
+                <h3 class="text-sm font-semibold">充值记录 · 金额与状态</h3>
+                <p class="text-xs text-gray-500 mt-1">9列表格，核心字段说明：</p>
+                <ul class="text-xs text-gray-500 mt-1 ml-4 space-y-0.5" style="list-style:disc">
+                  <li><strong>充值金额</strong>：用户提交的充值本金</li>
+                  <li><strong>赠送金额</strong>：充值活动赠送的金额（仅限有活动时，无活动显示 - ）</li>
+                  <li><strong>实收金额</strong> = 充值金额 + 赠送金额，即用户钱包实际到账金额</li>
+                </ul>
+                <p class="text-xs text-gray-500 mt-1"><strong>状态体系：</strong>只记录支付成功的充值，状态分为「充值成功」「充值中」「充值失败」三种。充值中超时后自动标记失败，失败后可点击「重试」重新发起入账。</p>
+              </div>
+            </div>
+          </div>
+          <div class="proto-desc p-3" data-proto-id="3">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 w-6 h-6 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center">3</span>
+              <div>
+                <h3 class="text-sm font-semibold">充值状态枚举</h3>
+                <p class="text-xs text-gray-500 mt-1">三种充值状态的含义：</p>
+                <ul class="text-xs text-gray-500 mt-1 ml-4 space-y-0.5" style="list-style:disc">
+                  <li><strong>充值成功（绿色）</strong>：充值完成，金额已入账用户钱包</li>
+                  <li><strong>充值中（橙色）</strong>：系统正在处理入账，超时后自动标记为失败</li>
+                  <li><strong>充值失败（红色）</strong>：处理超时或异常，可点击「重试」重新发起入账</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情弹窗 -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>充值流水详情</h3>
+        <span class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></span>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <svg id="connections" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+  <script>
+    var svg = document.getElementById("connections"), connections = [];
+    var detailData = {
+      'RCH-20260611-001': {
+        orderNo: 'RCH-20260611-001',
+        payOrderNo: 'PAY-20260611-001',
+        user: 'u10001',
+        phone: '138****1234',
+        amount: 1000,
+        bonus: 50,
+        total: 1050,
+        merchant: '平台自营商户',
+        rechargeStatus: '充值成功',
+        time: '2026-06-11 10:30:18',
+        payChannel: '微信支付',
+        principalUsed: 350,
+        principalRemain: 650,
+        bonusUsed: 10,
+        bonusRemain: 40,
+        principalConsume: [
+          { type: '消费', orderNo: 'ORD-20260615-001', amount: -250, time: '2026-06-15 14:30:00' },
+          { type: '消费', orderNo: 'ORD-20260618-002', amount: -100, time: '2026-06-18 09:15:00' }
+        ],
+        bonusConsume: [
+          { type: '消费', orderNo: 'ORD-20260616-003', amount: -10, time: '2026-06-16 11:00:00' }
+        ]
+      },
+      'RCH-20260611-002': {
+        orderNo: 'RCH-20260611-002',
+        payOrderNo: 'PAY-20260611-002',
+        user: 'u10002',
+        phone: '139****5678',
+        amount: 500,
+        bonus: 0,
+        total: 500,
+        merchant: '平台自营商户',
+        rechargeStatus: '充值成功',
+        time: '2026-06-11 11:00:05',
+        payChannel: '支付宝',
+        principalUsed: 120,
+        principalRemain: 380,
+        bonusUsed: 0,
+        bonusRemain: 0,
+        principalConsume: [
+          { type: '消费', orderNo: 'ORD-20260612-004', amount: -120, time: '2026-06-12 16:20:00' }
+        ],
+        bonusConsume: []
+      },
+      'RCH-20260611-003': {
+        orderNo: 'RCH-20260611-003',
+        payOrderNo: 'PAY-20260611-003',
+        user: 'u10005',
+        phone: '135****7890',
+        amount: 200,
+        bonus: 0,
+        total: 200,
+        merchant: 'XX数码旗舰店',
+        rechargeStatus: '充值中',
+        time: '2026-06-11 11:15:00',
+        payChannel: '微信支付',
+        principalUsed: 0,
+        principalRemain: 200,
+        bonusUsed: 0,
+        bonusRemain: 0,
+        principalConsume: [],
+        bonusConsume: []
+      },
+      'RCH-20260611-004': {
+        orderNo: 'RCH-20260611-004',
+        payOrderNo: 'PAY-20260611-004',
+        user: 'u10003',
+        phone: '137****9012',
+        amount: 3000,
+        bonus: 0,
+        total: 3000,
+        merchant: '平台自营商户',
+        rechargeStatus: '充值中',
+        time: '2026-06-11 12:00:00',
+        payChannel: '支付宝',
+        principalUsed: 0,
+        principalRemain: 3000,
+        bonusUsed: 0,
+        bonusRemain: 0,
+        principalConsume: [],
+        bonusConsume: []
+      },
+      'RCH-20260611-005': {
+        orderNo: 'RCH-20260611-005',
+        payOrderNo: 'PAY-20260611-005',
+        user: 'u10004',
+        phone: '136****2468',
+        amount: 800,
+        bonus: 40,
+        total: 840,
+        merchant: '平台自营商户',
+        rechargeStatus: '充值失败',
+        time: '2026-06-11 12:30:00',
+        payChannel: '支付宝',
+        principalUsed: 0,
+        principalRemain: 0,
+        bonusUsed: 0,
+        bonusRemain: 0,
+        principalConsume: [],
+        bonusConsume: [],
+        failReason: '系统回调超时，入账失败'
+      }
+    };
+
+    function drawConnections() {
+      svg.innerHTML = "";
+      connections.length = 0;
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        var pid = e.getAttribute("data-proto-id"),
+            re = document.querySelector('.proto-desc[data-proto-id="' + pid + '"]');
+        if (!re) return;
+        var lr = e.getBoundingClientRect(),
+            rr = re.getBoundingClientRect(),
+            sr = svg.getBoundingClientRect(),
+            x1 = lr.right - sr.left,
+            y1 = lr.top + lr.height / 2 - sr.top,
+            x2 = rr.left - sr.left,
+            y2 = rr.top + rr.height / 2 - sr.top,
+            cx = x1 + (x2 - x1) * .5;
+        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "M " + x1 + " " + y1 + " C " + cx + " " + y1 + ", " + cx + " " + y2 + ", " + x2 + " " + y2);
+        p.setAttribute("class", "connection-line");
+        p.setAttribute("data-proto-id", pid);
+        svg.appendChild(p);
+        var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        var bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bg.setAttribute("cx", mx);
+        bg.setAttribute("cy", my);
+        bg.setAttribute("r", 11);
+        bg.setAttribute("class", "connection-label-bg");
+        svg.appendChild(bg);
+        var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", mx);
+        t.setAttribute("y", my);
+        t.setAttribute("dy", "0.05em");
+        t.setAttribute("class", "connection-label");
+        t.textContent = pid;
+        svg.appendChild(t);
+        connections.push({ protoId: pid, path: p, leftEl: e, rightEl: re });
+      });
+    }
+
+    function highlightConnection(pid, a) {
+      var c = connections.find(function(c) { return c.protoId === pid; });
+      if (!c) return;
+      if (a) {
+        c.path.classList.add("active");
+        c.leftEl.classList.add("active-highlight");
+        c.rightEl.classList.add("active-highlight");
+      } else {
+        c.path.classList.remove("active");
+        c.leftEl.classList.remove("active-highlight");
+        c.rightEl.classList.remove("active-highlight");
+      }
+    }
+
+    function bindHoverEvents() {
+      document.querySelectorAll(".proto-element[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+      document.querySelectorAll(".proto-desc[data-proto-id]").forEach(function(e) {
+        e.addEventListener("mouseenter", function() { highlightConnection(e.getAttribute("data-proto-id"), !0); });
+        e.addEventListener("mouseleave", function() { highlightConnection(e.getAttribute("data-proto-id"), !1); });
+      });
+    }
+
+    var m = !1;
+    document.getElementById("mobileToggle").addEventListener("click", function() {
+      m = !m;
+      var lp = document.getElementById("left-panel"),
+          rp = document.getElementById("right-panel"),
+          btn = document.getElementById("mobileToggle");
+      if (m) {
+        lp.style.display = "none";
+        rp.style.height = "100vh";
+        btn.innerHTML = '<i class="fas fa-desktop"></i>';
+      } else {
+        lp.style.display = "";
+        rp.style.height = "";
+        btn.innerHTML = '<i class="fas fa-info"></i>';
+      }
+    });
+
+    function selectRow(row) {
+      document.querySelectorAll(".data-table tbody tr").forEach(function(x) { x.classList.remove("selected"); });
+      row.classList.add("selected");
+    }
+
+    function formatMoney(n) {
+      return '¥' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function buildConsumeTable(list) {
+      if (!list || list.length === 0) {
+        return '<p style="font-size:12px;color:#86909C;padding:8px 0">暂无消耗记录</p>';
+      }
+      var rows = list.map(function(item) {
+        var typeClass = item.type === '消费' ? 'consume' : 'refund';
+        var amountClass = item.amount < 0 ? 'neg' : 'pos';
+        var sign = item.amount > 0 ? '+' : '';
+        return '<tr>' +
+          '<td><span class="consume-type ' + typeClass + '">' + item.type + '</span></td>' +
+          '<td style="font-family:monospace;font-size:11px;color:#165DFF">' + item.orderNo + '</td>' +
+          '<td class="consume-amount ' + amountClass + '">' + sign + formatMoney(item.amount) + '</td>' +
+          '<td style="color:#86909C">' + item.time + '</td>' +
+        '</tr>';
+      }).join('');
+      return '<table class="consume-table"><thead><tr><th>类型</th><th>关联单号</th><th>金额</th><th>时间</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function showDetail(orderNo) {
+      var data = detailData[orderNo];
+      if (!data) return;
+      var statusTagClass = data.rechargeStatus === '充值成功' ? 'tag-green' : data.rechargeStatus === '充值中' ? 'tag-orange' : 'tag-red';
+      var principalPercent = data.amount > 0 ? (data.principalUsed / data.amount * 100) : 0;
+      var bonusPercent = data.bonus > 0 ? (data.bonusUsed / data.bonus * 100) : 0;
+
+      var body = document.getElementById("modalBody");
+      body.innerHTML = `
+        <div class="detail-section">
+          <div style="display:grid;grid-template-columns:100px 1fr;gap:12px 0;font-size:13px;">
+            <div style="color:#86909C">用户</div><div>${data.phone}</div>
+            <div style="color:#86909C">充值单号</div><div style="font-family:monospace">${data.orderNo}</div>
+            <div style="color:#86909C">支付单号</div><div style="font-family:monospace">${data.payOrderNo}</div>
+            <div style="color:#86909C">充值时间</div><div>${data.time}</div>
+          </div>
+        </div>
+        <div class="amount-summary">
+          <div class="amount-item">
+            <div class="amount-item-label">支付金额</div>
+            <div class="amount-item-value primary">${formatMoney(data.amount)}</div>
+          </div>
+          <div class="amount-item">
+            <div class="amount-item-label">赠送金额</div>
+            <div class="amount-item-value bonus">+${formatMoney(data.bonus)}</div>
+          </div>
+          <div class="amount-item">
+            <div class="amount-item-label">到账金额</div>
+            <div class="amount-item-value total">${formatMoney(data.total)}</div>
+          </div>
+          <div class="amount-item">
+            <div class="amount-item-label">流水剩余总额</div>
+            <div class="amount-item-value total">${formatMoney(data.principalRemain + data.bonusRemain)}</div>
+          </div>
+        </div>
+        ${data.rechargeStatus === '充值成功' ? `
+        <div class="fund-card">
+          <div class="fund-card-header">
+            <div class="fund-tag"><span class="fund-tag-dot principal"></span>本金</div>
+            <div style="display:flex;gap:8px">
+              <span class="fund-status available">可用</span>
+              <span class="fund-status withdrawable">可提现</span>
+            </div>
+          </div>
+          <div class="fund-progress">
+            <span class="fund-progress-text">已用 <strong>${formatMoney(data.principalUsed)}</strong></span>
+            <div class="fund-progress-bar"><div class="fund-progress-fill principal" style="width:${principalPercent}%"></div></div>
+            <span class="fund-progress-text">剩余 <strong>${formatMoney(data.principalRemain)}</strong></span>
+          </div>
+          <div style="font-size:12px;color:#86909C;margin-bottom:8px">消耗明细</div>
+          ${buildConsumeTable(data.principalConsume)}
+        </div>
+        ${data.bonus > 0 ? `
+        <div class="fund-card">
+          <div class="fund-card-header">
+            <div class="fund-tag"><span class="fund-tag-dot bonus"></span>赠送</div>
+            <div style="display:flex;gap:8px">
+              <span class="fund-status available">可用</span>
+              <span class="fund-status non-withdrawable">不可提现</span>
+            </div>
+          </div>
+          <div class="fund-progress">
+            <span class="fund-progress-text">已用 <strong>${formatMoney(data.bonusUsed)}</strong></span>
+            <div class="fund-progress-bar"><div class="fund-progress-fill bonus" style="width:${bonusPercent}%"></div></div>
+            <span class="fund-progress-text">剩余 <strong>${formatMoney(data.bonusRemain)}</strong></span>
+          </div>
+          <div style="font-size:12px;color:#86909C;margin-bottom:8px">消耗明细</div>
+          ${buildConsumeTable(data.bonusConsume)}
+        </div>
+        ` : ''}
+        ` : data.rechargeStatus === '充值失败' ? `
+        <div style="padding:16px;background:#FFF0F0;border-radius:8px;border:1px solid #FFCCC7;margin-bottom:16px">
+          <div style="font-size:13px;color:#CF1322;font-weight:600;margin-bottom:4px"><i class="fas fa-exclamation-circle mr-1"></i>充值失败</div>
+          <div style="font-size:12px;color:#666">${data.failReason || '处理异常，入账失败'}</div>
+        </div>
+        ` : `
+        <div style="padding:16px;background:#FFF7E6;border-radius:8px;border:1px solid #FFD591;margin-bottom:16px">
+          <div style="font-size:13px;color:#D46B08;font-weight:600;margin-bottom:4px"><i class="fas fa-clock mr-1"></i>充值处理中</div>
+          <div style="font-size:12px;color:#666">系统正在处理入账，请稍后查看结果</div>
+        </div>
+        `}
+      `;
+      document.getElementById("detailModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("detailModal").style.display = "none";
+    }
+
+    function retryRecharge(orderNo) {
+      alert("重试充值：" + orderNo + "\n\n确认重新发起该笔充值的入账流程？");
+    }
+
+    function exportData() {
+      alert("导出当前筛选条件下的充值记录为 Excel");
+    }
+
+    document.getElementById("detailModal").addEventListener("click", function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    function init() { drawConnections(); bindHoverEvents(); }
+    document.addEventListener("DOMContentLoaded", function() { setTimeout(init, 100); });
+    var resizeTimer;
+    window.addEventListener("resize", function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(init, 150); });
+    document.getElementById("left-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+    document.getElementById("right-panel").addEventListener("scroll", function() { requestAnimationFrame(drawConnections); });
+  </script>
+</body>
+</html>
