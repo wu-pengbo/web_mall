@@ -1,157 +1,207 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { mockFreightTemplates, ALL_PROVINCES, REMOTE_AREAS } from '../data/freight'
+import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, type ChargeType, type FreightTemplate } from '../types/freight'
 
 const router = useRouter()
 
-// --- 搜索表单 ---
-const searchForm = ref({
-  keyword: ''
+// --- 搜索与筛选 ---
+const searchForm = ref({ keyword: '', type: '' as ChargeType | '' })
+const currentPage = ref(1)
+const pageSize = 10
+
+const filteredList = computed(() => {
+  return mockFreightTemplates.filter(t => {
+    if (searchForm.value.keyword && !t.name.includes(searchForm.value.keyword)) return false
+    if (searchForm.value.type && t.type !== searchForm.value.type) return false
+    return true
+  })
 })
 
-// --- 模拟运费模板数据 ---
-const freights = ref([
-  {
-    id: 1,
-    name: '全国包邮',
-    type: 'piece', // piece 按件, weight 按重量, volume 按体积
-    defaultRule: { firstAmount: 1, firstFee: 0, nextAmount: 1, nextFee: 0 },
-    specialRules: [], // 无特殊地区
-    updatedAt: '2026-04-01 10:00:00'
-  },
-  {
-    id: 2,
-    name: '基础运费模板 (偏远加收)',
-    type: 'piece',
-    defaultRule: { firstAmount: 1, firstFee: 10, nextAmount: 1, nextFee: 5 },
-    specialRules: [
-      { areas: ['新疆', '西藏', '内蒙古'], firstAmount: 1, firstFee: 20, nextAmount: 1, nextFee: 15 }
-    ],
-    updatedAt: '2026-04-05 14:20:00'
-  },
-  {
-    id: 3,
-    name: '大件商品按重量',
-    type: 'weight',
-    defaultRule: { firstAmount: 1, firstFee: 15, nextAmount: 1, nextFee: 8 },
-    specialRules: [],
-    updatedAt: '2026-04-08 09:15:00'
-  }
-])
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredList.value.length / pageSize)))
 
-const getTypeLabel = (type: string) => {
-  const map: Record<string, string> = {
-    piece: '按件数',
-    weight: '按重量',
-    volume: '按体积'
-  }
-  return map[type] || type
-}
-
-// --- 搜索与过滤逻辑 ---
-const filteredFreights = computed(() => {
-  return freights.value.filter(f => f.name.includes(searchForm.value.keyword))
+const pagedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredList.value.slice(start, start + pageSize)
 })
 
 const handleSearch = () => {
-  console.log('执行搜索：', searchForm.value)
+  currentPage.value = 1
 }
 
 const resetSearch = () => {
-  searchForm.value.keyword = ''
+  searchForm.value = { keyword: '', type: '' }
+  currentPage.value = 1
 }
 
-// --- 操作逻辑 ---
+// --- 分页 ---
+const goPage = (page: number) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+const pageNumbers = computed(() => {
+  const pages: number[] = []
+  const total = totalPages.value
+  const cur = currentPage.value
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (cur > 3) pages.push(0) // ellipsis
+    for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
+    if (cur < total - 2) pages.push(0)
+    pages.push(total)
+  }
+  return pages
+})
+
+// --- 加载态 / 空态 ---
+const loading = ref(false)
+
+// --- 操作 ---
 const goPublish = (id?: number) => {
-  const url = id ? `/freight/publish?id=${id}` : '/freight/publish'
-  router.push(url)
+  router.push(id ? `/freight/publish?id=${id}` : '/freight/publish')
 }
 
-const copyFreight = (item: any) => {
-  const newItem = { ...item, id: Date.now(), name: item.name + ' - 副本', updatedAt: new Date().toLocaleString() }
-  freights.value.unshift(newItem)
+const copyFreight = (item: FreightTemplate) => {
+  // 后续支持真正的复制
   alert('复制成功')
 }
 
-const deleteFreight = (index: number) => {
-  if (confirm('确定要删除该运费模板吗？如果有商品正在使用该模板，可能会导致结算异常。')) {
-    freights.value.splice(index, 1)
+const confirmDelete = (item: FreightTemplate) => {
+  if (item.usedProductCount > 0) {
+    alert(`该模板已被 ${item.usedProductCount} 个商品使用，无法删除`)
+    return
+  }
+  if (confirm(`确定删除「${item.name}」？`)) {
+    // 后续接入真实删除
+    alert('删除成功')
   }
 }
+
+const getTypeUnit = (type: ChargeType) => CHARGE_TYPE_UNIT[type] || '件'
 </script>
 
 <template>
   <div class="freight-manage">
-    <div class="header">
-      <div class="bread-crumb">运费模板管理</div>
+    <div class="page-header">
+      <div class="breadcrumb">🚚 运费模板管理</div>
     </div>
 
-    <div class="container">
-      <!-- 搜索区域 -->
-      <div class="module search-area">
-        <div class="form-item">
-          <label>模板名称：</label>
-          <input type="text" class="form-input" v-model="searchForm.keyword" placeholder="请输入模板名称">
+    <div class="content-panel">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label>模板名称</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="searchForm.keyword"
+            placeholder="搜索模板名称…"
+            @keyup.enter="handleSearch"
+          />
         </div>
-        <div class="form-actions">
+        <div class="filter-item">
+          <label>计费方式</label>
+          <select class="form-select" v-model="searchForm.type">
+            <option value="">全部</option>
+            <option value="piece">按件数</option>
+            <option value="weight">按重量</option>
+            <option value="volume">按体积</option>
+          </select>
+        </div>
+        <div class="filter-item">
           <button class="btn btn-primary" @click="handleSearch">查询</button>
           <button class="btn btn-default" @click="resetSearch">重置</button>
         </div>
       </div>
 
-      <!-- 列表区域 -->
-      <div class="module list-area">
-        <div class="action-bar">
-          <button class="btn btn-primary btn-add" @click="goPublish()">+ 新建运费模板</button>
-        </div>
-        
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="width: 250px;">模板名称</th>
-              <th style="width: 100px;">计费方式</th>
-              <th>默认运费</th>
-              <th>特殊地区规则数</th>
-              <th style="width: 180px;">最后修改时间</th>
-              <th style="width: 150px;">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in filteredFreights" :key="item.id">
-              <td>
-                <div class="freight-title" :title="item.name">{{ item.name }}</div>
-              </td>
-              <td>
-                <span class="type-tag">{{ getTypeLabel(item.type) }}</span>
-              </td>
-              <td>
-                <div class="fee-text">
-                  首 {{ item.defaultRule.firstAmount }} ({{ item.type === 'piece' ? '件' : item.type === 'weight' ? 'kg' : 'm³' }}) 
-                  - <span class="price">¥{{ item.defaultRule.firstFee.toFixed(2) }}</span>，
-                  续 {{ item.defaultRule.nextAmount }} ({{ item.type === 'piece' ? '件' : item.type === 'weight' ? 'kg' : 'm³' }}) 
-                  - <span class="price">¥{{ item.defaultRule.nextFee.toFixed(2) }}</span>
-                </div>
-              </td>
-              <td>
-                {{ item.specialRules.length }} 条
-              </td>
-              <td>
-                <div class="time-text">{{ item.updatedAt }}</div>
-              </td>
-              <td>
-                <button class="link-btn" @click="goPublish(item.id)">编辑</button>
-                <button class="link-btn" @click="copyFreight(item)">复制</button>
-                <button class="link-btn danger" @click="deleteFreight(index)">删除</button>
-              </td>
-            </tr>
-            <tr v-if="filteredFreights.length === 0">
-              <td colspan="6" class="empty-text">暂无符合条件的运费模板</td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div class="pagination">
-          <span>共 {{ filteredFreights.length }} 条记录</span>
+      <!-- 操作栏 -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="table-title">运费模板列表</div>
+        <button class="btn btn-primary" @click="goPublish()">+ 新建模板</button>
+      </div>
+
+      <!-- 表格 -->
+      <table class="data-table table-nowrap" v-if="!loading && pagedList.length > 0">
+        <thead>
+          <tr>
+            <th>模板名称</th>
+            <th>计费方式</th>
+            <th>状态</th>
+            <th>默认运费</th>
+            <th>特殊地区</th>
+            <th style="text-align: center;">使用商品</th>
+            <th>更新时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in pagedList" :key="item.id">
+            <td><span class="freight-name">{{ item.name }}</span></td>
+            <td>
+              <span class="status-tag" :class="item.type === 'piece' ? 'normal' : item.type === 'weight' ? 'processing' : 'paid'">
+                {{ CHARGE_TYPE_LABEL[item.type] }}
+              </span>
+            </td>
+            <td>
+              <span class="status-tag" :class="item.status === 'active' ? 'success' : 'frozen'">
+                {{ item.status === 'active' ? '启用' : '停用' }}
+              </span>
+            </td>
+            <td>
+              <div class="fee-text">
+                首{{ item.defaultRule.firstAmount }}{{ getTypeUnit(item.type) }}
+                <span class="price">¥{{ item.defaultRule.firstFee.toFixed(2) }}</span>
+                ／续{{ item.defaultRule.nextAmount }}{{ getTypeUnit(item.type) }}
+                <span class="price">¥{{ item.defaultRule.nextFee.toFixed(2) }}</span>
+              </div>
+            </td>
+            <td>
+              <template v-if="item.specialRules.length > 0">
+                <span class="status-tag draft">{{ item.specialRules.length }} 条</span>
+                <div class="area-preview">{{ item.specialRules[0].areas.join('、') }}{{ item.specialRules.length > 1 ? '…' : '' }}</div>
+              </template>
+              <span v-else class="sub-text">—</span>
+            </td>
+            <td style="text-align: center;">
+              <span :class="item.usedProductCount > 0 ? 'count-badge' : 'sub-text'">
+                {{ item.usedProductCount }}
+              </span>
+            </td>
+            <td><span class="time-text">{{ item.updatedAt }}</span></td>
+            <td>
+              <span class="action-link" @click="goPublish(item.id)">编辑</span>
+              <span class="action-link" @click="copyFreight(item)">复制</span>
+              <span class="action-link danger" @click="confirmDelete(item)">删除</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- 空状态 -->
+      <div v-if="!loading && pagedList.length === 0" class="empty-text">
+        <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+        <div>暂无匹配的运费模板</div>
+        <div class="sub-text" style="margin-top: 4px;">试试修改筛选条件或<a class="action-link" @click="resetSearch">重置</a></div>
+      </div>
+
+      <!-- 分页 -->
+      <div class="pagination" v-if="totalPages > 1">
+        <span>共 {{ filteredList.length }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页</span>
+        <div class="page-btns">
+          <button class="page-btn" :class="{ disabled: currentPage <= 1 }" @click="goPage(currentPage - 1)" :disabled="currentPage <= 1">上一页</button>
+          <button
+            v-for="p in pageNumbers"
+            :key="p"
+            class="page-btn"
+            :class="{ active: p === currentPage, disabled: p === 0 }"
+            :disabled="p === 0"
+            @click="goPage(p)"
+          >{{ p === 0 ? '…' : p }}</button>
+          <button class="page-btn" :class="{ disabled: currentPage >= totalPages }" @click="goPage(currentPage + 1)" :disabled="currentPage >= totalPages">下一页</button>
         </div>
       </div>
     </div>
@@ -159,174 +209,62 @@ const deleteFreight = (index: number) => {
 </template>
 
 <style scoped>
-/* 复用基础管理页样式 */
+@import '../assets/wallet-common.css';
+
 .freight-manage {
   background-color: #F5F7FA;
-  min-height: 100vh;
-  color: #333333;
-  font-family: "Microsoft YaHei", sans-serif;
-}
-.header {
-  position: sticky;
-  top: 0;
-  height: 60px;
-  background-color: #FFFFFF;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  z-index: 999;
-}
-.bread-crumb {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333333;
-}
-.container {
+  min-height: calc(100vh - 60px);
+  color: #1D2129;
   padding: 20px;
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
-.module {
-  background-color: #FFFFFF;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  padding: 20px;
-  margin-bottom: 16px;
+.page-header {
+  margin-bottom: 20px;
 }
-
-/* 搜索表单样式 */
-.search-area {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  align-items: center;
+.breadcrumb {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1D2129;
+  letter-spacing: -0.01em;
 }
-.form-item {
-  display: flex;
-  align-items: center;
+.table-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1D2129;
 }
-.form-item label {
-  font-size: 14px;
-  margin-right: 8px;
-  color: #666666;
-}
-.form-input {
-  height: 32px;
-  border: 1px solid #DDDDDD;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 240px;
-}
-.form-input:focus {
-  border-color: #1677FF;
-}
-.form-actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* 按钮通用样式 */
-.btn {
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0 16px;
-  font-weight: bold;
-}
-.btn-primary {
-  background-color: #1677FF;
-  color: #FFFFFF;
-}
-.btn-primary:hover {
-  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.2);
-}
-.btn-default {
-  background-color: #EEEEEE;
-  color: #333333;
-}
-.btn-default:hover {
-  background-color: #E0E0E0;
-}
-
-/* 表格样式 */
-.action-bar {
-  margin-bottom: 16px;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-.data-table th, .data-table td {
-  border-bottom: 1px solid #EEEEEE;
-  padding: 16px 12px;
-  text-align: left;
-}
-.data-table th {
-  background-color: #FAFAFA;
-  color: #666666;
-  font-weight: bold;
-  border-bottom: 2px solid #EEEEEE;
-}
-.data-table tbody tr:hover {
-  background-color: #F5F7FA;
-}
-.freight-title {
-  color: #333333;
+.freight-name {
   font-weight: 500;
+  color: #1D2129;
 }
 .fee-text {
-  color: #666;
   font-size: 13px;
+  color: #4E5969;
+  line-height: 1.5;
 }
 .price {
-  color: #FF4D4F;
-  font-weight: bold;
+  color: #CF1322;
+  font-weight: 600;
 }
-.time-text {
-  color: #999999;
-  font-size: 13px;
+.area-preview {
+  font-size: 11px;
+  color: #86909C;
+  margin-top: 4px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.type-tag {
+.count-badge {
   display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  background-color: #F0F5FF;
-  color: #2F54EB;
-  border: 1px solid #ADC6FF;
-}
-
-/* 操作链接按钮样式 */
-.link-btn {
-  background: none;
-  border: none;
-  color: #1677FF;
-  cursor: pointer;
-  margin-right: 12px;
-  font-size: 14px;
-  padding: 0;
-}
-.link-btn.danger {
-  color: #FF4D4F;
-}
-.link-btn:hover {
-  text-decoration: underline;
-}
-.empty-text {
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
   text-align: center;
-  padding: 60px 0;
-  color: #999999;
-}
-.pagination {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #666666;
+  background-color: #F2F3F5;
+  color: #4E5969;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 6px;
 }
 </style>

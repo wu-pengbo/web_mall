@@ -54,3 +54,5 @@
 | 2026-07-06 | merge | main | git merge feature/wallet-split（提现流程重构：审核方式/自动执行/失败重试） | bf964b2 |
 
 | 2026-07-06 | branch -d | main | 删除 feature/wallet-split（已合并到 main） | bf964b2 |
+
+| 2026-07-16 09:53 | checkout -b | feature/freight-optimization | 从 main 创建开发分支，准备重构运费管理模块 | - |
