@@ -56,3 +56,5 @@
 | 2026-07-06 | branch -d | main | 删除 feature/wallet-split（已合并到 main） | bf964b2 |
 
 | 2026-07-16 09:53 | checkout -b | feature/freight-optimization | 从 main 创建开发分支，准备重构运费管理模块 | - |
+
+| 2026-07-16 10:27 | commit | feature/freight-optimization | feat: 重构运费管理模块——提取共享类型/数据、地区选择弹窗、分页、表单校验 | 97a765e |
