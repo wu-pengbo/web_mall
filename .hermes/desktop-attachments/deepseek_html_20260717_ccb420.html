@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运费模板设置</title>
+    <style>
+        :root {
+            --bg: #f5f6f8;
+            --card-bg: #ffffff;
+            --border: #e4e7ed;
+            --text: #303133;
+            --text-secondary: #606266;
+            --text-light: #909399;
+            --primary: #409eff;
+            --primary-light: #ecf5ff;
+            --primary-dark: #337ecc;
+            --danger: #f56c6c;
+            --danger-light: #fef0f0;
+            --success: #67c23a;
+            --success-light: #f0f9eb;
+            --warning: #e6a23c;
+            --warning-light: #fdf6ec;
+            --radius: 8px;
+            --radius-sm: 6px;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+            --transition: 0.2s ease;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .page-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--primary);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+            user-select: none;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        .btn-default {
+            background: #fff;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        .btn-default:hover {
+            background: #f9fafb;
+            border-color: #c0c4cc;
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: all var(--transition);
+        }
+        .btn-link:hover {
+            background: var(--primary-light);
+        }
+        .btn-link.danger {
+            color: var(--danger);
+        }
+        .btn-link.danger:hover {
+            background: var(--danger-light);
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-default {
+            background: var(--primary);
+        }
+        .dot-special {
+            background: var(--warning);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        .badge-info {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .badge-warning {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text);
+            background: #fff;
+            transition: border-color var(--transition);
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+        }
+        .form-input:disabled {
+            background: #f5f7fa;
+            color: var(--text-light);
+            cursor: not-allowed;
+        }
+        .form-input-sm {
+            width: 100px;
+            padding: 7px 10px;
+            font-size: 13px;
+        }
+        .form-select {
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            min-width: 80px;
+        }
+        .switch-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #c0c4cc;
+            border-radius: 24px;
+            transition: all var(--transition);
+        }
+        .switch .slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all var(--transition);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .switch input:checked+.slider {
+            background: var(--primary);
+        }
+        .switch input:checked+.slider::before {
+            transform: translateX(20px);
+        }
+        .radio-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .radio-card {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all var(--transition);
+            background: #fff;
+            user-select: none;
+            min-width: 90px;
+            flex: 1;
+        }
+        .radio-card:hover {
+            border-color: #b3d8ff;
+            background: #fafcff;
+        }
+        .radio-card.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .radio-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .radio-card .check-mark {
+            display: none;
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 14px;
+            color: var(--primary);
+        }
+        .radio-card.active .check-mark {
+            display: block;
+        }
+        .rule-card {
+            background: #fafbfc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .rule-card:hover {
+            border-color: #c0c4cc;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+        }
+        .rule-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .rule-card-body {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .region-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e8edf5;
+            color: #4a5568;
+        }
+        .region-tag.special {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .region-tag.default-tag {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-weight: 600;
+        }
+        .free-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .free-badge.yes {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .free-badge.no {
+            background: #fafafa;
+            color: #757575;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal-dialog {
+            background: #fff;
+            border-radius: 12px;
+            width: 92%;
+            max-width: 680px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 1;
+            border-radius: 12px 12px 0 0;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            color: #666;
+        }
+        .modal-close:hover {
+            background: #e8e8e8;
+            color: #333;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-radius: 0 0 12px 12px;
+        }
+        .region-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fafbfc;
+        }
+        .region-chip {
+            padding: 6px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            transition: all var(--transition);
+            user-select: none;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .region-chip:hover {
+            border-color: var(--primary);
+            background: #f5f9ff;
+            transform: translateY(-1px);
+        }
+        .region-chip.selected {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
+        }
+        .region-chip.disabled {
+            background: #f0f0f0;
+            color: #bbb;
+            cursor: not-allowed;
+            border-color: #e0e0e0;
+            text-decoration: line-through;
+            pointer-events: none;
+        }
+        .region-default-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #f5f7fa;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            font-weight: 600;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .range-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .range-table th {
+            text-align: left;
+            padding: 6px 4px;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 12px;
+        }
+        .range-table td {
+            padding: 5px 4px;
+            vertical-align: middle;
+        }
+        .range-table .form-input-sm {
+            width: 90px;
+        }
+        .sep {
+            text-align: center;
+            color: var(--text-light);
+            width: 20px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+            box-shadow: var(--shadow);
+            pointer-events: none;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        .toast-success {
+            background: #f0f9eb;
+            color: #67c23a;
+            border: 1px solid #c2e7b0;
+        }
+        .toast-error {
+            background: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fbc4c4;
+        }
+        .toast-warning {
+            background: #fdf6ec;
+            color: #e6a23c;
+            border: 1px solid #f5dab1;
+        }
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-dialog {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 380px;
+            max-width: 90%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .confirm-dialog .icon-warn {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        .confirm-dialog p {
+            margin-bottom: 18px;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .confirm-dialog .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .form-row-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 3px;
+        }
+        .text-muted {
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        .charge-config-hint {
+            display: inline-block;
+            font-size: 12px;
+            color: #909399;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+        @media (max-width: 600px) {
+            .card {
+                padding: 14px 12px;
+            }
+            .radio-card {
+                padding: 8px 10px;
+                font-size: 12px;
+                min-width: 60px;
+            }
+            .modal-dialog {
+                width: 97%;
+                max-height: 90vh;
+            }
+            .modal-body {
+                padding: 14px;
+            }
+            .region-grid {
+                max-height: 180px;
+                gap: 4px;
+                padding: 8px;
+            }
+            .region-chip {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            .form-input-sm {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title"><span class="icon">&#9679;</span> 运费模板设置</div>
+            <div><button class="btn btn-primary" onclick="saveTemplate()">保存模板</button></div>
+        </div>
+
+        <div class="card">
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">模板名称</label>
+                <input type="text" class="form-input" id="templateName" value="" placeholder="请输入模板名称" style="max-width:400px;">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="margin-bottom:12px;">计费方式（全局统一）</div>
+            <div class="radio-group" id="chargeTypeGroup">
+                <label class="radio-card" data-type="BY_QUANTITY"><input type="radio" name="chargeType" value="BY_QUANTITY"> 按件计费 <span class="check-mark">&#10003;</span></label>
+                <label class="radio-card active" data-type="BY_WEIGHT"><input type="radio" name="chargeType" value="BY_WEIGHT" checked> 按重量计费 <span class="check-mark">&#10003;</span></label>
+                <label class="radio-card" data-type="BY_ORDER_AMOUNT"><input type="radio" name="chargeType" value="BY_ORDER_AMOUNT"> 按金额阶梯 <span class="check-mark">&#10003;</span></label>
+                <label class="radio-card" data-type="FIXED"><input type="radio" name="chargeType" value="FIXED"> 固定邮费 <span class="check-mark">&#10003;</span></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="dot dot-default"></span> 默认运费（全国适用） <span class="badge badge-info">兜底规则</span></div>
+                <button class="btn btn-default btn-sm" onclick="editDefaultRule()">编辑</button>
+            </div>
+            <div id="defaultRuleSummary" class="rule-card-body" style="font-size:14px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="dot dot-special"></span> 特殊地区规则（覆盖默认） <span class="badge badge-warning" id="specialCountBadge">0条</span></div>
+                <button class="btn btn-primary btn-sm" onclick="openAddSpecialRule()">+ 添加特殊地区</button>
+            </div>
+            <div id="specialRulesList">
+                <div style="text-align:center;padding:30px;color:var(--text-light);" id="emptySpecialHint">暂无特殊地区规则，点击上方按钮添加</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ruleModal" style="display:none;">
+        <div class="modal-dialog">
+            <div class="modal-header"><span class="modal-title" id="modalTitle">编辑规则</span><button class="modal-close" onclick="closeModal()">&times;</button></div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmModal()">确定</button></div>
+        </div>
+    </div>
+
+    <div class="confirm-overlay" id="confirmOverlay" style="display:none;">
+        <div class="confirm-dialog">
+            <div class="icon-warn">&#9888;</div>
+            <p id="confirmMessage"></p>
+            <div class="btn-row"><button class="btn btn-default" onclick="resolveConfirm(false)">取消</button><button class="btn btn-primary" onclick="resolveConfirm(true)">确定</button></div>
+        </div>
+    </div>
+    <div id="toastContainer"></div>
+
+    <script>
+        (function() {
+            const ALL_PROVINCES = ['北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省',
+                '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省', '湖北省', '湖南省', '广东省',
+                '广西壮族自治区', '海南省', '重庆市', '四川省', '贵州省', '云南省', '西藏自治区', '陕西省', '甘肃省', '青海省',
+                '宁夏回族自治区', '新疆维吾尔自治区', '台湾省', '香港特别行政区', '澳门特别行政区'
+            ];
+
+            const state = {
+                templateName: '',
+                chargeType: 'BY_WEIGHT',
+                defaultRule: { isFreeShipping: false, freeThreshold: null, chargeConfig: getDefaultChargeConfig(
+                        'BY_WEIGHT') },
+                specialRules: [],
+                nextRuleId: 1,
+                modalMode: null,
+                editingRuleId: null,
+                tempFormData: null
+            };
+
+            function getDefaultChargeConfig(chargeType) {
+                switch (chargeType) {
+                    case 'BY_QUANTITY':
+                        return { firstQty: 1, firstFee: 8, additionalQty: 1, additionalFee: 3 };
+                    case 'BY_WEIGHT':
+                        return { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 10, additionalWeight: 0.5,
+                            additionalWeightUnit: 'kg', additionalFee: 5 };
+                    case 'BY_ORDER_AMOUNT':
+                        return { amountRanges: [{ min: 0, max: null, fee: 10 }] };
+                    case 'FIXED':
+                        return { fixedFee: 15 };
+                    default:
+                        return {};
+                }
+            }
+
+            function getOccupiedRegions(excludeRuleId = null) {
+                const occupied = new Set();
+                state.specialRules.forEach(rule => {
+                    if (excludeRuleId !== null && rule.id === excludeRuleId) return;
+                    rule.regions.forEach(r => occupied.add(r));
+                });
+                return occupied;
+            }
+
+            function showToast(message, type = 'success') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s';
+                    setTimeout(() => toast.remove(), 300); }, 2000);
+            }
+
+            let confirmResolve = null;
+
+            function customConfirm(message) {
+                return new Promise(resolve => {
+                    confirmResolve = resolve;
+                    document.getElementById('confirmMessage').textContent = message;
+                    document.getElementById('confirmOverlay').style.display = 'flex';
+                });
+            }
+
+            function resolveConfirm(result) {
+                document.getElementById('confirmOverlay').style.display = 'none';
+                if (confirmResolve) { confirmResolve(result);
+                    confirmResolve = null; }
+            }
+            window.resolveConfirm = resolveConfirm;
+
+            function getChargeConfigSummary(chargeType, config) {
+                switch (chargeType) {
+                    case 'BY_QUANTITY':
+                        return `首${config.firstQty}件 / ${config.firstFee}元，续${config.additionalQty}件 / ${config.additionalFee}元`;
+                    case 'BY_WEIGHT':
+                        return `首重${config.firstWeight}${config.firstWeightUnit==='kg'?'kg':'g'} / ${config.firstFee}元，续重${config.additionalWeight}${config.additionalWeightUnit==='kg'?'kg':'g'} / ${config.additionalFee}元`;
+                    case 'BY_ORDER_AMOUNT':
+                        const ranges = config.amountRanges.map(r => {
+                            const maxStr = r.max === null ? '以上' : '～' + r.max + '元';
+                            return r.min + maxStr + ': ' + r.fee + '元';
+                        }).join('；');
+                        return ranges;
+                    case 'FIXED':
+                        return `固定运费 ${config.fixedFee} 元`;
+                    default:
+                        return '';
+                }
+            }
+
+            function getFreeShippingText(rule) {
+                if (!rule.isFreeShipping) return '<span class="free-badge no">不包邮</span>';
+                if (rule.freeThreshold === 0 || rule.freeThreshold === null) return '<span class="free-badge yes">无条件包邮</span>';
+                return `<span class="free-badge yes">满${rule.freeThreshold}元包邮</span>`;
+            }
+
+            function renderAll() {
+                renderDefaultRuleSummary();
+                renderSpecialRulesList();
+                renderChargeTypeCards();
+                document.getElementById('templateName').value = state.templateName;
+            }
+
+            function renderDefaultRuleSummary() {
+                const container = document.getElementById('defaultRuleSummary');
+                const rule = state.defaultRule;
+                container.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span class="region-tag default-tag">全国适用</span>
+                        <span>${getFreeShippingText(rule)}</span>
+                    </div>
+                    <div style="margin-top:6px;color:var(--text-secondary);">${getChargeConfigSummary(state.chargeType, rule.chargeConfig)}</div>
+                `;
+            }
+
+            function renderSpecialRulesList() {
+                const container = document.getElementById('specialRulesList');
+                const countBadge = document.getElementById('specialCountBadge');
+                if (state.specialRules.length === 0) {
+                    container.innerHTML =
+                        '<div style="text-align:center;padding:30px;color:var(--text-light);">暂无特殊地区规则，点击上方按钮添加</div>';
+                    countBadge.textContent = '0条';
+                    return;
+                }
+                countBadge.textContent = state.specialRules.length + '条';
+                let html = '';
+                state.specialRules.forEach(rule => {
+                    const regionTags = rule.regions.map(r => `<span class="region-tag special">${r}</span>`).join(' ');
+                    html += `
+                        <div class="rule-card">
+                            <div class="rule-card-header">
+                                <div class="rule-regions">${regionTags}</div>
+                                <div class="rule-actions">
+                                    <button class="btn-link" onclick="editSpecialRule(${rule.id})">编辑</button>
+                                    <button class="btn-link danger" onclick="deleteSpecialRule(${rule.id})">删除</button>
+                                </div>
+                            </div>
+                            <div class="rule-card-body">
+                                <span>${getFreeShippingText(rule)}</span>
+                                <span style="margin-left:8px;">${getChargeConfigSummary(state.chargeType, rule.chargeConfig)}</span>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            }
+
+            function renderChargeTypeCards() {
+                document.querySelectorAll('#chargeTypeGroup .radio-card').forEach(card => {
+                    const type = card.getAttribute('data-type');
+                    card.classList.toggle('active', type === state.chargeType);
+                    card.querySelector('input').checked = (type === state.chargeType);
+                });
+            }
+
+            document.getElementById('chargeTypeGroup').addEventListener('click', async function(e) {
+                const card = e.target.closest('.radio-card');
+                if (!card) return;
+                const newType = card.getAttribute('data-type');
+                if (newType === state.chargeType) return;
+                const typeNames = { 'BY_QUANTITY': '按件计费', 'BY_WEIGHT': '按重量计费', 'BY_ORDER_AMOUNT': '按金额阶梯计费',
+                    'FIXED': '固定邮费' };
+                const confirmed = await customConfirm(
+                    `切换计费方式为「${typeNames[newType]}」将清空所有已配置的费率参数，是否继续？`);
+                if (!confirmed) { renderChargeTypeCards(); return; }
+                state.chargeType = newType;
+                state.defaultRule.chargeConfig = getDefaultChargeConfig(newType);
+                state.specialRules.forEach(r => r.chargeConfig = getDefaultChargeConfig(newType));
+                renderAll();
+                showToast(`已切换为「${typeNames[newType]}」`, 'success');
+            });
+
+            function shouldShowChargeConfig() {
+                const form = state.tempFormData;
+                if (!form) return true;
+                return !(form.isFreeShipping && form.freeThreshold === 0);
+            }
+
+            // 获取当前的包邮门槛
+            function getActiveThreshold() {
+                const form = state.tempFormData;
+                if (!form || !form.isFreeShipping || form.freeThreshold <= 0) return null;
+                return form.freeThreshold;
+            }
+
+            // 金额阶梯联动：如果包邮门槛>0，调整阶梯最高金额
+            function syncAmountRangesWithThreshold() {
+                if (state.chargeType !== 'BY_ORDER_AMOUNT') return;
+                const form = state.tempFormData;
+                if (!form || !form.chargeConfig) return;
+                const threshold = getActiveThreshold();
+                let ranges = form.chargeConfig.amountRanges || [];
+                if (threshold !== null) {
+                    // 移除所有min >= threshold的区间
+                    ranges = ranges.filter(r => r.min < threshold);
+                    if (ranges.length === 0) {
+                        ranges = [{ min: 0, max: threshold, fee: 10 }];
+                    } else {
+                        // 最后一个区间的max锁定为threshold
+                        ranges[ranges.length - 1].max = threshold;
+                    }
+                    // 确保连续性
+                    for (let i = 1; i < ranges.length; i++) {
+                        ranges[i].min = ranges[i - 1].max;
+                        // 如果某个区间的min>=threshold，移除之
+                        if (ranges[i].min >= threshold) {
+                            ranges = ranges.slice(0, i);
+                            break;
+                        }
+                    }
+                    ranges[ranges.length - 1].max = threshold;
+                } else {
+                    // 关闭包邮或无门槛：最后区间max可以为null
+                    if (ranges.length > 0) ranges[ranges.length - 1].max = null;
+                }
+                form.chargeConfig.amountRanges = ranges;
+            }
+
+            function openModal(title, mode, ruleData = null, editingRuleId = null) {
+                state.modalMode = mode;
+                state.editingRuleId = editingRuleId;
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('ruleModal').style.display = 'flex';
+                const body = document.getElementById('modalBody');
+                const isDefault = (mode === 'default');
+                const occupiedRegions = (mode === 'editSpecial') ? getOccupiedRegions(editingRuleId) : getOccupiedRegions(
+                    null);
+                if (ruleData) {
+                    state.tempFormData = JSON.parse(JSON.stringify(ruleData));
+                } else {
+                    state.tempFormData = { regions: [], isFreeShipping: false, freeThreshold: null, chargeConfig: getDefaultChargeConfig(
+                            state.chargeType) };
+                }
+                if (!state.tempFormData.chargeConfig || Object.keys(state.tempFormData.chargeConfig).length === 0) {
+                    state.tempFormData.chargeConfig = getDefaultChargeConfig(state.chargeType);
+                }
+                // 先同步阶梯
+                syncAmountRangesWithThreshold();
+                buildModalBody(body, isDefault, occupiedRegions);
+            }
+
+            function buildModalBody(body, isDefault, occupiedRegions) {
+                const form = state.tempFormData;
+                let html = '';
+                if (isDefault) {
+                    html +=
+                        `<div class="form-group"><label class="form-label">适用地区</label><div class="region-default-display">全国适用（默认兜底规则，地区不可更改）</div></div>`;
+                } else {
+                    const selectedSet = new Set(form.regions || []);
+                    let chips = '';
+                    ALL_PROVINCES.forEach(prov => {
+                        let cls = 'region-chip';
+                        if (selectedSet.has(prov)) cls += ' selected';
+                        if (occupiedRegions.has(prov)) cls += ' disabled';
+                        chips +=
+                            `<span class="${cls}" data-province="${prov}" onclick="toggleRegionChip(this,'${prov}')">${prov}</span>`;
+                    });
+                    html +=
+                        `<div class="form-group"><label class="form-label">选择适用地区 <span class="text-muted">（可多选）</span></label><div class="region-grid" id="regionGrid">${chips}</div><div class="form-hint">灰色划线地区已被其他特殊规则占用</div><div id="selectedRegionsPreview" style="margin-top:6px;font-size:13px;color:var(--text-secondary);"></div></div>`;
+                }
+                const freeChecked = form.isFreeShipping ? 'checked' : '';
+                const thresholdDisplay = form.isFreeShipping ? '' : 'style="display:none;"';
+                const thresholdVal = form.freeThreshold !== null && form.freeThreshold !== undefined ? form.freeThreshold : '';
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">包邮设置</label>
+                        <div class="switch-wrap">
+                            <label class="switch"><input type="checkbox" id="freeShippingSwitch" ${freeChecked} onchange="toggleFreeShipping()"><span class="slider"></span></label>
+                            <span id="freeShippingLabel" style="font-size:14px;font-weight:500;">${form.isFreeShipping?'开启包邮':'不包邮'}</span>
+                        </div>
+                    </div>
+                    <div class="form-group" id="freeThresholdGroup" ${thresholdDisplay}>
+                        <label class="form-label">包邮门槛（元）<span class="form-hint">订单金额达此门槛即免邮；填0表示无条件包邮，无需设置计费参数</span></label>
+                        <input type="number" class="form-input form-input-sm" id="freeThresholdInput" value="${thresholdVal}" min="0" step="0.01" placeholder="0表示无条件包邮" oninput="updateTempFreeThreshold(this.value)">
+                    </div>`;
+                const showCharge = shouldShowChargeConfig();
+                html +=
+                    `<div class="form-group" id="chargeConfigGroup" style="${showCharge?'':'display:none;'}">
+                    <label class="form-label">计费参数 <span class="charge-config-hint">（未达包邮门槛时生效）</span></label>
+                    ${buildChargeConfigForm()}
+                </div>`;
+                if (!showCharge) {
+                    html +=
+                        `<div id="unconditionalFreeHint" style="padding:14px;background:#f0f9eb;border-radius:6px;color:#2e7d32;font-size:13px;margin-top:4px;">无条件包邮，无需配置计费参数。</div>`;
+                }
+                body.innerHTML = html;
+                if (!isDefault) updateSelectedRegionsPreview();
+            }
+
+            function buildChargeConfigForm() {
+                const config = state.tempFormData.chargeConfig || getDefaultChargeConfig(state.chargeType);
+                const threshold = getActiveThreshold();
+                switch (state.chargeType) {
+                    case 'BY_QUANTITY':
+                        return `<div class="form-row-wrap"><span>首</span><input type="number" class="form-input form-input-sm" value="${config.firstQty||1}" min="1" step="1" onchange="updateChargeConfig('firstQty',parseInt(this.value)||1)"><span>件，运费</span><input type="number" class="form-input form-input-sm" value="${config.firstFee||0}" min="0" step="0.01" onchange="updateChargeConfig('firstFee',parseFloat(this.value)||0)"><span>元</span></div>
+                <div class="form-row-wrap" style="margin-top:8px;"><span>续</span><input type="number" class="form-input form-input-sm" value="${config.additionalQty||1}" min="1" step="1" onchange="updateChargeConfig('additionalQty',parseInt(this.value)||1)"><span>件，运费</span><input type="number" class="form-input form-input-sm" value="${config.additionalFee||0}" min="0" step="0.01" onchange="updateChargeConfig('additionalFee',parseFloat(this.value)||0)"><span>元</span></div>`;
+                    case 'BY_WEIGHT':
+                        return `<div class="form-row-wrap"><span>首重</span><input type="number" class="form-input form-input-sm" value="${config.firstWeight||1}" min="0.01" step="0.01" onchange="updateChargeConfig('firstWeight',parseFloat(this.value)||1)"><select class="form-select" onchange="updateChargeConfig('firstWeightUnit',this.value)" style="width:70px;"><option value="kg" ${config.firstWeightUnit==='kg'?'selected':''}>kg</option><option value="g" ${config.firstWeightUnit==='g'?'selected':''}>g</option></select><span>，运费</span><input type="number" class="form-input form-input-sm" value="${config.firstFee||0}" min="0" step="0.01" onchange="updateChargeConfig('firstFee',parseFloat(this.value)||0)"><span>元</span></div>
+                <div class="form-row-wrap" style="margin-top:8px;"><span>续重</span><input type="number" class="form-input form-input-sm" value="${config.additionalWeight||0.5}" min="0.01" step="0.01" onchange="updateChargeConfig('additionalWeight',parseFloat(this.value)||0.5)"><select class="form-select" onchange="updateChargeConfig('additionalWeightUnit',this.value)" style="width:70px;"><option value="kg" ${config.additionalWeightUnit==='kg'?'selected':''}>kg</option><option value="g" ${config.additionalWeightUnit==='g'?'selected':''}>g</option></select><span>，运费</span><input type="number" class="form-input form-input-sm" value="${config.additionalFee||0}" min="0" step="0.01" onchange="updateChargeConfig('additionalFee',parseFloat(this.value)||0)"><span>元</span></div>`;
+                    case 'BY_ORDER_AMOUNT':
+                        const ranges = config.amountRanges || [{ min: 0, max: threshold || null, fee: 10 }];
+                        let table =
+                            `<div style="overflow-x:auto;"><table class="range-table" id="rangeTable"><thead><tr><th>最低金额(元)</th><th></th><th>最高金额(元)</th><th>运费(元)</th><th></th></tr></thead><tbody>`;
+                        ranges.forEach((r, i) => {
+                            const isLast = (i === ranges.length - 1);
+                            const maxVal = r.max === null ? '' : r.max;
+                            // 如果包邮门槛>0，最后一个区间的max不可编辑
+                            const maxDisabled = (threshold && isLast) ? 'disabled' : (isLast && !threshold ?
+                                'disabled' : '');
+                            const maxPlaceholder = (threshold && isLast) ? '' : (isLast ? '以上' : '');
+                            table += `<tr class="range-row" data-index="${i}">
+                                <td><input type="number" class="form-input form-input-sm" value="${r.min}" min="0" step="0.01" disabled style="background:#f5f7fa;"></td>
+                                <td class="sep">～</td>
+                                <td><input type="number" class="form-input form-input-sm range-max" value="${maxVal}" min="0" step="0.01" placeholder="${maxPlaceholder}" ${maxDisabled} onchange="updateRangeMax(${i}, this.value)"></td>
+                                <td><input type="number" class="form-input form-input-sm" value="${r.fee}" min="0" step="0.01" onchange="updateRangeFee(${i}, this.value)"></td>
+                                <td>${ranges.length>1 ? `<button class="btn-link danger btn-xs" onclick="removeRangeRow(${i})">&times;</button>` : ''}</td>
+                            </tr>`;
+                        });
+                        table += `</tbody></table></div>`;
+                        // 关键修复：无论是否设置了包邮门槛，都允许在门槛范围内添加区间
+                        if (!threshold) {
+                            table +=
+                                `<button class="btn-link" style="margin-top:6px;" onclick="addRangeRow()">+ 添加区间</button>`;
+                        } else {
+                            // 有门槛时也允许添加，但会在门槛前插入
+                            table +=
+                                `<button class="btn-link" style="margin-top:6px;" onclick="addRangeRowWithThreshold()">+ 添加区间</button>`;
+                        }
+                        return table;
+                    case 'FIXED':
+                        return `<div class="form-row-wrap"><span>固定运费</span><input type="number" class="form-input form-input-sm" value="${config.fixedFee||0}" min="0" step="0.01" onchange="updateChargeConfig('fixedFee',parseFloat(this.value)||0)"><span>元</span></div>`;
+                    default:
+                        return '';
+                }
+            }
+
+            function updateChargeConfigVisibility() {
+                const chargeGroup = document.getElementById('chargeConfigGroup');
+                const hint = document.getElementById('unconditionalFreeHint');
+                if (!chargeGroup) return;
+                const show = shouldShowChargeConfig();
+                chargeGroup.style.display = show ? '' : 'none';
+                if (hint) hint.style.display = show ? 'none' : '';
+            }
+
+            window.toggleRegionChip = function(chip, province) {
+                if (chip.classList.contains('disabled')) return;
+                chip.classList.toggle('selected');
+                const selected = [];
+                document.querySelectorAll('#regionGrid .region-chip.selected').forEach(c => selected.push(c.getAttribute(
+                    'data-province')));
+                state.tempFormData.regions = selected;
+                updateSelectedRegionsPreview();
+            };
+
+            function updateSelectedRegionsPreview() {
+                const preview = document.getElementById('selectedRegionsPreview');
+                if (!preview) return;
+                const selected = state.tempFormData.regions || [];
+                preview.innerHTML = selected.length === 0 ? '<span style="color:#e6a23c;">请至少选择一个地区</span>' :
+                    '已选：' + selected.map(r => `<strong>${r}</strong>`).join('、');
+            }
+
+            window.toggleFreeShipping = function() {
+                const switchEl = document.getElementById('freeShippingSwitch');
+                const isFree = switchEl.checked;
+                state.tempFormData.isFreeShipping = isFree;
+                if (!isFree) {
+                    state.tempFormData.freeThreshold = null;
+                } else {
+                    state.tempFormData.freeThreshold = state.tempFormData.freeThreshold !== null ? state.tempFormData
+                        .freeThreshold : 99;
+                }
+                const thresholdGroup = document.getElementById('freeThresholdGroup');
+                const label = document.getElementById('freeShippingLabel');
+                const thresholdInput = document.getElementById('freeThresholdInput');
+                if (thresholdGroup) thresholdGroup.style.display = isFree ? '' : 'none';
+                if (label) label.textContent = isFree ? '开启包邮' : '不包邮';
+                if (thresholdInput && isFree) thresholdInput.value = state.tempFormData.freeThreshold !== null ? state
+                    .tempFormData.freeThreshold : 99;
+                if (!isFree) state.tempFormData.freeThreshold = null;
+                // 金额阶梯联动
+                syncAmountRangesWithThreshold();
+                refreshChargeConfigArea();
+                updateChargeConfigVisibility();
+            };
+
+            window.updateTempFreeThreshold = function(val) {
+                const numVal = parseFloat(val);
+                state.tempFormData.freeThreshold = (val === '' || isNaN(numVal)) ? null : Math.max(0, numVal);
+                // 金额阶梯联动
+                syncAmountRangesWithThreshold();
+                refreshChargeConfigArea();
+                updateChargeConfigVisibility();
+            };
+
+            function refreshChargeConfigArea() {
+                const chargeGroup = document.getElementById('chargeConfigGroup');
+                if (!chargeGroup || !shouldShowChargeConfig()) return;
+                chargeGroup.innerHTML =
+                    `<label class="form-label">计费参数 <span class="charge-config-hint">（未达包邮门槛时生效）</span></label>${buildChargeConfigForm()}`;
+            }
+
+            window.updateChargeConfig = function(key, value) {
+                if (!state.tempFormData.chargeConfig) state.tempFormData.chargeConfig = getDefaultChargeConfig(state
+                    .chargeType);
+                state.tempFormData.chargeConfig[key] = value;
+            };
+
+            window.updateRangeMax = function(index, val) {
+                const ranges = state.tempFormData.chargeConfig.amountRanges;
+                if (!ranges) return;
+                const threshold = getActiveThreshold();
+                const numVal = parseFloat(val);
+                // 非最后区间：允许编辑max，但要确保不超过threshold
+                if (index < ranges.length - 1) {
+                    let finalVal = (val === '' || isNaN(numVal)) ? null : numVal;
+                    if (threshold && finalVal !== null && finalVal > threshold) {
+                        finalVal = threshold;
+                    }
+                    ranges[index].max = finalVal;
+                    for (let i = index + 1; i < ranges.length; i++) {
+                        ranges[i].min = ranges[i - 1].max;
+                        if (threshold && ranges[i].min >= threshold) {
+                            ranges.splice(i);
+                            break;
+                        }
+                    }
+                    if (threshold) ranges[ranges.length - 1].max = threshold;
+                }
+                // 最后区间在有门槛时不可编辑，无门槛时也不可编辑（因为是"以上"）
+                refreshRangeTable();
+            };
+
+            window.updateRangeFee = function(index, val) {
+                const ranges = state.tempFormData.chargeConfig.amountRanges;
+                if (!ranges) return;
+                ranges[index].fee = parseFloat(val) || 0;
+            };
+
+            // 没有门槛时的添加区间
+            window.addRangeRow = function() {
+                const ranges = state.tempFormData.chargeConfig.amountRanges;
+                if (!ranges) return;
+                const lastRange = ranges[ranges.length - 1];
+                if (lastRange.max === null) lastRange.max = (lastRange.min || 0) + 50;
+                ranges.push({ min: lastRange.max, max: null, fee: lastRange.fee });
+                state.tempFormData.chargeConfig.amountRanges = ranges;
+                refreshRangeTable();
+            };
+
+            // 有门槛时在门槛范围内添加区间
+            window.addRangeRowWithThreshold = function() {
+                const ranges = state.tempFormData.chargeConfig.amountRanges;
+                const threshold = getActiveThreshold();
+                if (!ranges || !threshold) return;
+                const lastRange = ranges[ranges.length - 1];
+                // 如果最后一个区间已经到达门槛，不能再添加
+                if (lastRange.max === threshold && lastRange.min >= threshold - 1) {
+                    showToast('已达到包邮门槛上限，无法添加更多区间', 'warning');
+                    return;
+                }
+                // 在最后一个区间之前插入新区间
+                const newMax = Math.min((lastRange.min || 0) + Math.ceil((threshold - lastRange.min) / 2), threshold - 1);
+                if (newMax <= lastRange.min) {
+                    showToast('区间间距太小，无法添加新区间', 'warning');
+                    return;
+                }
+                // 将最后一个区间的min改为newMax，然后插入新区间
+                const oldMin = lastRange.min;
+                const oldFee = lastRange.fee;
+                lastRange.min = newMax;
+                lastRange.max = threshold;
+                // 插入新区间在最后之前
+                ranges.splice(ranges.length - 1, 0, { min: oldMin, max: newMax, fee: oldFee });
+                state.tempFormData.chargeConfig.amountRanges = ranges;
+                refreshRangeTable();
+            };
+
+            window.removeRangeRow = function(index) {
+                const ranges = state.tempFormData.chargeConfig.amountRanges;
+                const threshold = getActiveThreshold();
+                if (!ranges || ranges.length <= 1) { showToast('至少保留一个金额区间', 'warning'); return; }
+                // 如果有门槛，确保删除后还剩至少一个区间
+                if (threshold && ranges.length <= 1) { showToast('至少保留一个金额区间', 'warning'); return; }
+                ranges.splice(index, 1);
+                if (threshold) {
+                    ranges[ranges.length - 1].max = threshold;
+                } else {
+                    if (ranges.length > 0) ranges[ranges.length - 1].max = null;
+                }
+                for (let i = 1; i < ranges.length; i++) ranges[i].min = ranges[i - 1].max;
+                state.tempFormData.chargeConfig.amountRanges = ranges;
+                refreshRangeTable();
+            };
+
+            function refreshRangeTable() {
+                const body = document.getElementById('modalBody');
+                const tableContainer = body.querySelector('#rangeTable');
+                if (!tableContainer) return;
+                const newHtml = buildChargeConfigForm();
+                const formGroup = tableContainer.closest('.form-group');
+                if (formGroup) formGroup.innerHTML =
+                    `<label class="form-label">计费参数 <span class="charge-config-hint">（未达包邮门槛时生效）</span></label>${newHtml}`;
+            }
+
+            function closeModal() {
+                document.getElementById('ruleModal').style.display = 'none';
+                state.modalMode = null;
+                state.editingRuleId = null;
+                state.tempFormData = null;
+            }
+
+            function confirmModal() {
+                const form = state.tempFormData;
+                if (!form) return;
+                if (state.modalMode !== 'default') {
+                    if (!form.regions || form.regions.length === 0) { showToast('请至少选择一个地区', 'error'); return; }
+                    const occupied = getOccupiedRegions(state.editingRuleId);
+                    const overlap = form.regions.filter(r => occupied.has(r));
+                    if (overlap.length > 0) { showToast(`地区「${overlap.join('、')}」已被其他特殊规则占用`, 'error'); return; }
+                }
+                if (form.isFreeShipping && (form.freeThreshold === null || form.freeThreshold === undefined || form
+                        .freeThreshold < 0)) {
+                    showToast('请输入有效的包邮门槛（>=0）', 'error');
+                    return;
+                }
+                if (!(form.isFreeShipping && form.freeThreshold === 0)) {
+                    if (!validateChargeConfig(form.chargeConfig)) return;
+                }
+                switch (state.modalMode) {
+                    case 'default':
+                        state.defaultRule = JSON.parse(JSON.stringify(form));
+                        state.defaultRule.regions = ['全国'];
+                        showToast('默认规则已更新', 'success');
+                        break;
+                    case 'addSpecial':
+                        const newRule = JSON.parse(JSON.stringify(form));
+                        newRule.id = state.nextRuleId++;
+                        state.specialRules.push(newRule);
+                        showToast('特殊地区规则已添加', 'success');
+                        break;
+                    case 'editSpecial':
+                        const idx = state.specialRules.findIndex(r => r.id === state.editingRuleId);
+                        if (idx >= 0) {
+                            state.specialRules[idx] = JSON.parse(JSON.stringify(form));
+                            state.specialRules[idx].id = state.editingRuleId;
+                            showToast('特殊地区规则已更新', 'success');
+                        }
+                        break;
+                }
+                closeModal();
+                renderAll();
+            }
+
+            function validateChargeConfig(config) {
+                if (!config) { showToast('计费参数不能为空', 'error'); return false; }
+                switch (state.chargeType) {
+                    case 'BY_QUANTITY':
+                        if (!config.firstQty || config.firstQty < 1) { showToast('首件数量必须>=1', 'error'); return false; }
+                        if (config.firstFee < 0) { showToast('首件运费不能为负', 'error'); return false; }
+                        if (!config.additionalQty || config.additionalQty < 1) { showToast('续件数量必须>=1', 'error'); return false; }
+                        if (config.additionalFee < 0) { showToast('续件运费不能为负', 'error'); return false; }
+                        break;
+                    case 'BY_WEIGHT':
+                        if (!config.firstWeight || config.firstWeight <= 0) { showToast('首重必须>0', 'error'); return false; }
+                        if (config.firstFee < 0) { showToast('首重运费不能为负', 'error'); return false; }
+                        if (!config.additionalWeight || config.additionalWeight <= 0) { showToast('续重必须>0',
+                            'error'); return false; }
+                        if (config.additionalFee < 0) { showToast('续重运费不能为负', 'error'); return false; }
+                        break;
+                    case 'BY_ORDER_AMOUNT':
+                        const ranges = config.amountRanges;
+                        if (!ranges || ranges.length === 0) { showToast('至少需要一个金额区间', 'error'); return false; }
+                        for (let i = 0; i < ranges.length; i++) {
+                            if (ranges[i].fee < 0) { showToast(`区间${i+1}运费不能为负`, 'error'); return false; }
+                            if (i < ranges.length - 1 && (ranges[i].max === null || ranges[i].max === undefined || ranges[i]
+                                    .max <= ranges[i].min)) {
+                                showToast(`区间${i+1}的最高金额必须大于最低金额`, 'error');
+                                return false;
+                            }
+                            if (i > 0 && ranges[i].min !== ranges[i - 1].max) { showToast('金额区间必须连续',
+                                'error'); return false; }
+                        }
+                        break;
+                    case 'FIXED':
+                        if (config.fixedFee < 0) { showToast('固定运费不能为负', 'error'); return false; }
+                        break;
+                }
+                return true;
+            }
+
+            window.editDefaultRule = function() {
+                const ruleData = JSON.parse(JSON.stringify(state.defaultRule));
+                ruleData.regions = ['全国'];
+                openModal('编辑默认规则', 'default', ruleData);
+            };
+            window.openAddSpecialRule = function() {
+                openModal('添加特殊地区规则', 'addSpecial', { regions: [], isFreeShipping: false, freeThreshold: null,
+                    chargeConfig: getDefaultChargeConfig(state.chargeType) });
+            };
+            window.editSpecialRule = function(ruleId) {
+                const rule = state.specialRules.find(r => r.id === ruleId);
+                if (!rule) return;
+                openModal('编辑特殊地区规则', 'editSpecial', JSON.parse(JSON.stringify(rule)), ruleId);
+            };
+            window.deleteSpecialRule = async function(ruleId) {
+                const rule = state.specialRules.find(r => r.id === ruleId);
+                if (!rule) return;
+                const confirmed = await customConfirm(
+                    `确定要删除「${rule.regions.join('、')}」的特殊规则吗？删除后该地区将自动使用默认运费规则。`);
+                if (!confirmed) return;
+                state.specialRules = state.specialRules.filter(r => r.id !== ruleId);
+                renderAll();
+                showToast('特殊地区规则已删除', 'success');
+            };
+            window.saveTemplate = function() {
+                state.templateName = document.getElementById('templateName').value.trim() || '未命名模板';
+                const payload = { name: state.templateName, chargeType: state.chargeType, defaultRule: state.defaultRule,
+                    specialRules: state.specialRules };
+                console.log('保存数据：', JSON.stringify(payload, null, 2));
+                showToast('模板保存成功！（数据已输出到控制台）', 'success');
+            };
+
+            document.getElementById('ruleModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (document.getElementById('confirmOverlay').style.display === 'flex') resolveConfirm(false);
+                    else if (document.getElementById('ruleModal').style.display === 'flex') closeModal();
+                }
+                if (e.key === 'Enter' && document.getElementById('ruleModal').style.display === 'flex' && document
+                    .getElementById('confirmOverlay').style.display !== 'flex') confirmModal();
+            });
+
+            window.closeModal = closeModal;
+            window.confirmModal = confirmModal;
+
+            function init() { renderAll();
+                console.log('运费模板设置页面已就绪'); }
+            init();
+        })();
+    </script>
+</body>
+</html>

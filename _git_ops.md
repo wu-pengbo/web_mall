@@ -74,3 +74,5 @@
 | 2026-07-16 12:01 | commit | feature/freight-optimization | feat: 新增计费模式选择（首续费/固定运费），计费方式新增按金额 | f7d08f7 |
 
 | 2026-07-16 12:35 | commit | feature/freight-optimization | feat: 运费模板大优化——动态表单、阶梯/固定计费、偏远合并、实时预览、字段重命名 | 0034502 |
+
+| 2026-07-16 13:50 | commit | feature/freight-optimization | feat: 去掉硬编码偏远地区，改为默认运费+用户自定义地区运费 | 221c593 |

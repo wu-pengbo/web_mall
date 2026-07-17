@@ -2,117 +2,78 @@
 import type { FreightTemplate } from '../types/freight'
 
 export const ALL_PROVINCES = [
-  '北京', '天津', '上海', '重庆',
-  '河北', '山西', '辽宁', '吉林', '黑龙江', '江苏', '浙江', '安徽',
-  '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西',
-  '海南', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海',
-  '宁夏', '新疆', '内蒙古',
-  '台湾', '香港', '澳门'
+  '北京市', '天津市', '河北省', '山西省', '内蒙古自治区',
+  '辽宁省', '吉林省', '黑龙江省',
+  '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省',
+  '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区', '海南省',
+  '重庆市', '四川省', '贵州省', '云南省', '西藏自治区',
+  '陕西省', '甘肃省', '青海省', '宁夏回族自治区', '新疆维吾尔自治区',
+  '台湾省', '香港特别行政区', '澳门特别行政区'
 ]
 
 export const mockTemplates: FreightTemplate[] = [
   {
     id: 'tpl_001', name: '全国包邮',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'all', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 },
+    chargeType: 'BY_QUANTITY',
+    defaultRule: {
+      regions: ['全国'], isFreeShipping: true, freeThreshold: null,
+      chargeConfig: { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 }
+    },
+    specialRules: [],
     status: 'active', productCount: 128,
     createdAt: '2026-01-05 09:00:00', updatedAt: '2026-07-15 10:30:00'
   },
   {
-    id: 'tpl_002', name: '满99包邮（偏远除外）',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'amount', freeShippingThreshold: 99, freeShippingExcludeRemote: true,
-    defaultRule: { firstQty: 1, firstFee: 10, additionalQty: 1, additionalFee: 5 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 1, firstFee: 20, additionalQty: 1, additionalFee: 15 }],
+    id: 'tpl_002', name: '阶梯运费+偏远加收',
+    chargeType: 'BY_WEIGHT',
+    defaultRule: {
+      regions: ['全国'], isFreeShipping: true, freeThreshold: 99,
+      chargeConfig: { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 10, additionalWeight: 0.5, additionalWeightUnit: 'kg', additionalFee: 5 }
+    },
+    specialRules: [
+      { id: 1, regions: ['新疆维吾尔自治区', '西藏自治区', '内蒙古自治区', '青海省', '甘肃省'], isFreeShipping: false, freeThreshold: null,
+        chargeConfig: { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 20, additionalWeight: 0.5, additionalWeightUnit: 'kg', additionalFee: 15 } }
+    ],
     status: 'active', productCount: 56,
     createdAt: '2026-01-10 10:00:00', updatedAt: '2026-07-14 14:20:00'
   },
   {
-    id: 'tpl_003', name: '大件商品按重量',
-    chargeType: 'weight', billingMode: 'tiered',
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 15, additionalQty: 1, additionalFee: 8 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 1, firstFee: 30, additionalQty: 1, additionalFee: 20 }],
-    status: 'active', productCount: 23,
-    createdAt: '2026-02-01 08:00:00', updatedAt: '2026-07-12 09:15:00'
-  },
-  {
-    id: 'tpl_004', name: '生鲜冷链',
-    chargeType: 'weight', billingMode: 'tiered',
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 18, additionalQty: 1, additionalFee: 12 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 1, firstFee: 35, additionalQty: 1, additionalFee: 25 }],
-    status: 'active', productCount: 15,
-    createdAt: '2026-03-10 09:00:00', updatedAt: '2026-07-06 08:00:00'
-  },
-  {
-    id: 'tpl_005', name: '满199包邮',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'amount', freeShippingThreshold: 199, freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 10, additionalQty: 1, additionalFee: 5 },
-    status: 'disabled', productCount: 0,
-    createdAt: '2026-01-20 09:00:00', updatedAt: '2026-06-30 17:00:00'
-  },
-  {
-    id: 'tpl_006', name: '图书音像特惠',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 5, additionalQty: 1, additionalFee: 2 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 1, firstFee: 12, additionalQty: 1, additionalFee: 8 }],
+    id: 'tpl_003', name: '图书按件计费',
+    chargeType: 'BY_QUANTITY',
+    defaultRule: {
+      regions: ['全国'], isFreeShipping: false, freeThreshold: null,
+      chargeConfig: { firstQty: 1, firstFee: 5, additionalQty: 1, additionalFee: 2 }
+    },
+    specialRules: [
+      { id: 2, regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
+        chargeConfig: { firstQty: 1, firstFee: 12, additionalQty: 1, additionalFee: 8 } }
+    ],
     status: 'active', productCount: 67,
     createdAt: '2026-02-20 09:00:00', updatedAt: '2026-07-03 10:20:00'
   },
   {
-    id: 'tpl_007', name: '电子产品包邮',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'all', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 },
-    status: 'active', productCount: 34,
-    createdAt: '2026-03-15 10:00:00', updatedAt: '2026-07-01 09:00:00'
-  },
-  {
-    id: 'tpl_008', name: '建材重货按重量',
-    chargeType: 'weight', billingMode: 'tiered',
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 10, firstFee: 30, additionalQty: 10, additionalFee: 15 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 10, firstFee: 60, additionalQty: 10, additionalFee: 35 }],
-    status: 'active', productCount: 11,
-    createdAt: '2026-04-10 08:00:00', updatedAt: '2026-06-28 11:00:00'
-  },
-  {
-    id: 'tpl_009', name: '东北特惠（满2件包邮）',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'amount', freeShippingThreshold: 2, freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 12, additionalQty: 1, additionalFee: 6 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], firstQty: 1, firstFee: 20, additionalQty: 1, additionalFee: 12 }],
-    status: 'active', productCount: 19,
-    createdAt: '2026-05-20 09:00:00', updatedAt: '2026-06-18 15:00:00'
-  },
-  {
-    id: 'tpl_010', name: '基础运费',
-    chargeType: 'piece', billingMode: 'tiered',
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 8, additionalQty: 1, additionalFee: 4 },
-    status: 'active', productCount: 42,
-    createdAt: '2026-03-01 10:00:00', updatedAt: '2026-07-08 11:30:00'
-  },
-  {
-    id: 'tpl_011', name: '全场固定运费10元',
-    chargeType: 'piece', billingMode: 'fixed', fixedFee: 10,
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 10, additionalQty: 1, additionalFee: 0 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], fixedFee: 20 }],
+    id: 'tpl_004', name: '固定运费10元',
+    chargeType: 'FIXED',
+    defaultRule: {
+      regions: ['全国'], isFreeShipping: false, freeThreshold: null,
+      chargeConfig: { fixedFee: 10 }
+    },
+    specialRules: [
+      { id: 3, regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
+        chargeConfig: { fixedFee: 20 } }
+    ],
     status: 'active', productCount: 35,
     createdAt: '2026-04-01 09:00:00', updatedAt: '2026-07-10 14:00:00'
   },
   {
-    id: 'tpl_012', name: '偏远统一加收5元',
-    chargeType: 'piece', billingMode: 'fixed', fixedFee: 15,
-    freeShippingMode: 'none', freeShippingExcludeRemote: false,
-    defaultRule: { firstQty: 1, firstFee: 15, additionalQty: 1, additionalFee: 0 },
-    customRules: [{ id: 'cr_remote', name: '偏远地区', provinces: ['新疆','西藏','内蒙古','青海','甘肃'], fixedFee: 20 }],
-    status: 'active', productCount: 9,
-    createdAt: '2026-05-15 09:00:00', updatedAt: '2026-07-08 10:00:00'
+    id: 'tpl_005', name: '金额阶梯满199包邮',
+    chargeType: 'BY_ORDER_AMOUNT',
+    defaultRule: {
+      regions: ['全国'], isFreeShipping: true, freeThreshold: 199,
+      chargeConfig: { amountRanges: [{ min: 0, max: 199, fee: 10 }] }
+    },
+    specialRules: [],
+    status: 'disabled', productCount: 0,
+    createdAt: '2026-01-20 09:00:00', updatedAt: '2026-06-30 17:00:00'
   }
 ]
