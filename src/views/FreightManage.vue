@@ -83,7 +83,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
 <template>
   <div class="freight-manage">
     <div class="page-header">
-      <div class="breadcrumb">🚚 运费模板管理</div>
+      <div class="breadcrumb">运费模板管理</div>
     </div>
 
     <div class="content-panel">
@@ -156,7 +156,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
       </table>
 
       <div v-if="pagedList.length === 0" class="empty-text">
-        <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+        <div style="font-size: 32px; margin-bottom: 8px; color: #C9CDD4;">[ ]</div>
         <div>暂无匹配的运费模板</div>
       </div>
 

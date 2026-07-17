@@ -104,7 +104,7 @@ onMounted(() => {
     <div class="container">
       <!-- 错误 -->
       <div v-if="formErrors.length > 0" class="error-banner">
-        <span>⚠️ 表单有 {{ formErrors.length }} 处问题：</span>
+        <span>表单有 {{ formErrors.length }} 处问题：</span>
         <ul style="margin: 4px 0 0 16px;">
           <li v-for="(err, i) in formErrors" :key="i">{{ err }}</li>
         </ul>
@@ -134,7 +134,7 @@ onMounted(() => {
               >
                 <input type="radio" :value="key" :checked="form.chargeType === key" style="display: none;" />
                 <span>{{ label }}</span>
-                <span class="sub-text" style="font-size: 11px;">{{ key === 'piece' ? '📦 适合标品' : '⚖️ 适合散装' }}</span>
+                <span class="sub-text" style="font-size: 11px;">{{ key === 'piece' ? '适合标品' : '适合散装' }}</span>
               </label>
             </div>
           </div>
@@ -143,7 +143,7 @@ onMounted(() => {
           <div class="divider"></div>
 
           <!-- 包邮方式 — 三段式 -->
-          <div class="section-label">📮 包邮方式</div>
+          <div class="section-label">包邮方式</div>
 
           <div class="shipping-cards">
             <div
@@ -151,7 +151,7 @@ onMounted(() => {
               :class="{ active: form.freeShippingMode === 'all' }"
               @click="form.freeShippingMode = 'all'; handleFreeShippingModeChange()"
             >
-              <div class="shipping-card-icon">✅</div>
+              <div class="shipping-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9H9l-3-9H2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 14h12"/></svg></div>
               <div class="shipping-card-title">完全包邮</div>
               <div class="shipping-card-desc">买家全部免运费</div>
             </div>
@@ -160,7 +160,7 @@ onMounted(() => {
               :class="{ active: form.freeShippingMode === 'amount' }"
               @click="form.freeShippingMode = 'amount'"
             >
-              <div class="shipping-card-icon">🛒</div>
+              <div class="shipping-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg></div>
               <div class="shipping-card-title">满额包邮</div>
               <div class="shipping-card-desc">满X元/件免运费</div>
             </div>
@@ -169,7 +169,7 @@ onMounted(() => {
               :class="{ active: form.freeShippingMode === 'none' }"
               @click="form.freeShippingMode = 'none'; handleFreeShippingModeChange()"
             >
-              <div class="shipping-card-icon">💰</div>
+              <div class="shipping-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
               <div class="shipping-card-title">不包邮</div>
               <div class="shipping-card-desc">买家自付运费</div>
             </div>
@@ -202,7 +202,7 @@ onMounted(() => {
 
           <!-- 默认运费（完全包邮时隐藏） -->
           <div v-if="needsDefaultRule">
-            <div class="section-label">🚚 默认运费</div>
+            <div class="section-label">默认运费</div>
 
             <table class="rule-table">
               <thead>
@@ -283,7 +283,7 @@ onMounted(() => {
 
           <!-- 完全包邮提示 -->
           <div v-if="form.freeShippingMode === 'all'" class="all-free-note">
-            ✨ 完全包邮模板已配置完成，所有买家免运费
+            完全包邮模板已配置完成，所有买家免运费
           </div>
 
         </div>
