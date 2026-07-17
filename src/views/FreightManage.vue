@@ -103,23 +103,28 @@ const getRuleSummary = (t: FreightTemplate): string => {
         <button class="btn btn-primary" @click="goPublish()">+ 新建模板</button>
       </div>
 
-      <table class="data-table" v-if="pagedList.length > 0" style="table-layout: fixed; width: 100%;">
+      <table class="data-table freight-table" v-if="pagedList.length > 0">
         <thead>
           <tr>
-            <th style="width: 200px;">模板名称</th>
-            <th style="width: 90px;">计费方式</th>
-            <th style="width: 180px;">包邮方式</th>
-            <th style="width: 180px;">运费规则</th>
-            <th style="width: 100px;">偏远加收</th>
-            <th style="width: 80px; text-align: center;">商品数</th>
-            <th style="width: 80px;">状态</th>
-            <th style="width: 120px;">操作</th>
+            <th>模板名称</th>
+            <th style="white-space: nowrap;">计费方式</th>
+            <th>包邮方式</th>
+            <th>运费规则</th>
+            <th>偏远加收</th>
+            <th style="text-align: center;">商品数</th>
+            <th>状态</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in pagedList" :key="item.id">
             <td class="freight-name" :title="item.name">{{ item.name }}</td>
-            <td><span class="status-tag" :class="item.chargeType === 'piece' ? 'normal' : 'processing'">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span></td>
+            <td>
+              <span
+                class="status-tag"
+                :class="item.chargeType === 'piece' ? 'normal' : item.chargeType === 'weight' ? 'processing' : 'paid'"
+              >{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span>
+            </td>
             <td>
               <span class="free-tag" :class="item.freeShippingMode">
                 {{ getFreeShippingText(item) }}
@@ -202,4 +207,9 @@ const getRuleSummary = (t: FreightTemplate): string => {
   border-radius: 11px; font-size: 12px; font-weight: 500; padding: 0 6px;
 }
 .action-group { display: flex; gap: 12px; align-items: center; }
+.freight-table { table-layout: auto; width: 100%; }
+.freight-table th, .freight-table td { padding: 16px 14px !important; }
+.freight-table th { white-space: nowrap; }
+.freight-table td:last-child { min-width: 100px; }
+.freight-table td:nth-child(6) { text-align: center; }
 </style>

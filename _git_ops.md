@@ -66,3 +66,5 @@
 | 2026-07-16 11:16 | commit | feature/freight-optimization | feat: 运费模板v3简化版——包邮优先三选一、默认运费+偏远加收、单页表单 | 727e4ab |
 
 | 2026-07-16 11:29 | commit | feature/freight-optimization | style: 移除运费模块中的 emoji，使用 SVG 图标替代三卡片图标 | 61cc5f0 |
+
+| 2026-07-16 11:35 | commit | feature/freight-optimization | style: 优化运费模板列表页排版——列宽分配、操作按钮间距、信息精简 | 59fa33e |

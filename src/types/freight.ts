@@ -1,7 +1,7 @@
 // ==================== 运费管理 - 共享类型定义（v3 简化版） ====================
 
 /** 计费方式 */
-export type ChargeType = 'piece' | 'weight'
+export type ChargeType = 'piece' | 'weight' | 'amount'
 
 /** 包邮模式 */
 export type FreeShippingMode = 'all' | 'amount' | 'none'
@@ -37,12 +37,14 @@ export interface FreightTemplate {
 
 export const CHARGE_TYPE_LABEL: Record<ChargeType, string> = {
   piece: '按件数',
-  weight: '按重量'
+  weight: '按重量',
+  amount: '按金额'
 }
 
 export const CHARGE_TYPE_UNIT: Record<ChargeType, string> = {
   piece: '件',
-  weight: 'kg'
+  weight: 'kg',
+  amount: '元'
 }
 
 export const FREE_SHIPPING_MODE_LABEL: Record<FreeShippingMode, string> = {
