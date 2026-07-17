@@ -20,6 +20,18 @@ export interface FreightRule {
   additionalFee: number
 }
 
+/** 自定义地区规则 */
+export interface CustomAreaRule {
+  id: string
+  name: string
+  provinces: string[]
+  fixedFee?: number
+  firstQty?: number
+  firstFee?: number
+  additionalQty?: number
+  additionalFee?: number
+}
+
 /** 运费模板 */
 export interface FreightTemplate {
   id: string
@@ -27,11 +39,11 @@ export interface FreightTemplate {
   chargeType: ChargeType
   billingMode: BillingMode
   fixedFee?: number
-  freeShippingMode: FreeShippingMode        // 包邮模式：完全包邮/满额包邮/不包邮
-  freeShippingThreshold?: number            // 满额包邮门槛
-  freeShippingExcludeRemote: boolean        // 满额包邮时偏远除外？
-  defaultRule: FreightRule                  // 默认运费
-  remoteRule?: FreightRule                  // 偏远加收（可选）
+  freeShippingMode: FreeShippingMode
+  freeShippingThreshold?: number
+  freeShippingExcludeRemote: boolean
+  defaultRule: FreightRule
+  customRules?: CustomAreaRule[]
   status: FreightStatus
   productCount: number
   createdAt: string

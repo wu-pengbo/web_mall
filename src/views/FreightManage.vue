@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { mockTemplates } from '../data/freight'
-import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL, FREE_SHIPPING_MODE_LABEL, DEFAULT_REMOTE_AREAS } from '../types/freight'
+import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL, FREE_SHIPPING_MODE_LABEL } from '../types/freight'
 import type { FreightTemplate } from '../types/freight'
 
 const router = useRouter()
@@ -114,8 +114,8 @@ const getRuleSummary = (t: FreightTemplate): string => {
             <th>计费模式</th>
             <th>包邮方式</th>
             <th>运费规则</th>
-            <th>偏远加收</th>
-            <th style="text-align: center;">商品数</th>
+            <th>自定义地区</th>
+            <th style="width: 80px; text-align: center;">商品数</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
@@ -144,8 +144,10 @@ const getRuleSummary = (t: FreightTemplate): string => {
               </template>
             </td>
             <td>
-              <template v-if="item.remoteRule">
-                <span class="status-tag draft">{{ item.remoteRule.firstQty }}{{CHARGE_TYPE_UNIT[item.chargeType]}}起</span>
+              <template v-if="item.customRules && item.customRules.length > 0">
+                <div v-for="cr in item.customRules" :key="cr.id" class="custom-rule-badge">
+                  <span class="status-tag draft" style="font-size: 10px;">{{ cr.name }}</span>
+                </div>
               </template>
               <span v-else class="sub-text">—</span>
             </td>
@@ -211,6 +213,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
   text-align: center; background-color: #F2F3F5; color: #4E5969;
   border-radius: 11px; font-size: 12px; font-weight: 500; padding: 0 6px;
 }
+.custom-rule-badge { margin-bottom: 3px; }
 .action-group { display: flex; gap: 12px; align-items: center; }
 .freight-table { table-layout: auto; width: 100%; }
 .freight-table th, .freight-table td { padding: 16px 14px !important; }

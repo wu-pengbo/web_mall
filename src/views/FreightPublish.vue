@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { mockTemplates } from '../data/freight'
-import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL, DEFAULT_REMOTE_AREAS } from '../types/freight'
-import type { ChargeType, BillingMode, FreeShippingMode, FreightTemplate } from '../types/freight'
+import { mockTemplates, ALL_PROVINCES } from '../data/freight'
+import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL } from '../types/freight'
+import type { ChargeType, BillingMode, FreeShippingMode, FreightTemplate, CustomAreaRule } from '../types/freight'
 
 const router = useRouter()
 const route = useRoute()
 const isEdit = !!route.query.id
 
+// --- 表单 ---
 const form = reactive({
   name: '',
   chargeType: 'piece' as ChargeType,
@@ -18,15 +19,12 @@ const form = reactive({
   freeShippingThreshold: 99,
   freeShippingExcludeRemote: true,
   defaultRule: { firstQty: 1, firstFee: 10, additionalQty: 1, additionalFee: 5 },
-  enableRemoteFee: false,
-  remoteFee: 0,
-  remoteRule: { firstQty: 1, firstFee: 20, additionalQty: 1, additionalFee: 15 }
+  customRules: [] as (CustomAreaRule & { _open: boolean })[]
 })
 
 const unitLabel = computed(() => CHARGE_TYPE_UNIT[form.chargeType] || '件')
 const showFeeSection = computed(() => form.freeShippingMode !== 'all')
 
-// 计费维度对应的首/续列名
 const firstLabel = computed(() => {
   const map: Record<string, string> = { piece: '首件', weight: '首重', amount: '首金额' }
   return map[form.chargeType] || '首件'
@@ -39,18 +37,62 @@ const additionalLabel = computed(() => {
 const handleFreeShippingModeChange = () => {
   if (form.freeShippingMode === 'all') {
     form.defaultRule = { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 }
-    form.enableRemoteFee = false
-    form.remoteFee = 0
-    form.remoteRule = { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 }
+    form.customRules = []
   } else if (form.freeShippingMode === 'none') {
     form.defaultRule = { firstQty: 1, firstFee: 10, additionalQty: 1, additionalFee: 5 }
   }
 }
 
-// 偏远除外只在满额包邮时显示
-const showRemoteExclude = computed(() => form.freeShippingMode === 'amount')
+// --- 自定义地区规则 ---
+let ruleIdCounter = 100
+const addCustomRule = () => {
+  form.customRules.push({
+    id: `cr_${++ruleIdCounter}`,
+    name: '',
+    provinces: [],
+    firstQty: 1,
+    firstFee: 10,
+    additionalQty: 1,
+    additionalFee: 5,
+    fixedFee: 10,
+    _open: true
+  })
+}
 
-// 表单校验
+const removeCustomRule = (index: number) => {
+  form.customRules.splice(index, 1)
+}
+
+// --- 省份选择弹窗 ---
+const showProvinceModal = ref(false)
+const editingRuleIndex = ref(-1)
+const tempProvinces = ref<string[]>([])
+const provinceSearch = ref('')
+
+const filteredProvinces = computed(() => {
+  if (!provinceSearch.value) return ALL_PROVINCES
+  return ALL_PROVINCES.filter(p => p.includes(provinceSearch.value))
+})
+
+const openProvinceSelector = (index: number) => {
+  editingRuleIndex.value = index
+  tempProvinces.value = [...form.customRules[index].provinces]
+  provinceSearch.value = ''
+  showProvinceModal.value = true
+}
+
+const toggleProvince = (p: string) => {
+  const idx = tempProvinces.value.indexOf(p)
+  if (idx >= 0) tempProvinces.value.splice(idx, 1)
+  else tempProvinces.value.push(p)
+}
+
+const confirmProvinces = () => {
+  form.customRules[editingRuleIndex.value].provinces = [...tempProvinces.value]
+  showProvinceModal.value = false
+}
+
+// --- 校验 ---
 const formErrors = ref<string[]>([])
 const validate = (): boolean => {
   formErrors.value = []
@@ -59,14 +101,19 @@ const validate = (): boolean => {
     if (form.billingMode === 'fixed') {
       if (form.fixedFee < 0) formErrors.value.push('固定运费不能为负数')
     } else {
-      if (form.defaultRule.firstQty < 1) formErrors.value.push(`${firstLabel.value}不能小于 1`)
+      if (form.defaultRule.firstQty < 1) formErrors.value.push(`${firstLabel.value}不能小于1`)
       if (form.defaultRule.firstFee < 0) formErrors.value.push('首运费不能为负数')
-      if (form.defaultRule.additionalQty < 1) formErrors.value.push(`${additionalLabel.value}不能小于 1`)
+      if (form.defaultRule.additionalQty < 1) formErrors.value.push(`${additionalLabel.value}不能小于1`)
       if (form.defaultRule.additionalFee < 0) formErrors.value.push('续运费不能为负数')
     }
   }
-  if (form.enableRemoteFee && form.remoteFee < 0) {
-    formErrors.value.push('偏远加收金额不能为负数')
+  for (let i = 0; i < form.customRules.length; i++) {
+    const r = form.customRules[i]
+    if (!r.name.trim()) formErrors.value.push(`自定义地区 #${i + 1}：请输入地区名称`)
+    if (r.provinces.length === 0) formErrors.value.push(`自定义地区 #${i + 1}：请选择省份`)
+    if (form.billingMode === 'fixed' && (r.fixedFee ?? 0) < 0) {
+      formErrors.value.push(`自定义地区 #${i + 1}：运费不能为负数`)
+    }
   }
   return formErrors.value.length === 0
 }
@@ -79,265 +126,217 @@ const saveTemplate = () => {
 
 const goBack = () => router.push('/freight')
 
-// 运费预览计算
+// --- 预览 ---
 const previewExamples = computed(() => {
   const results: { label: string; fee: string }[] = []
   if (!showFeeSection.value) return results
-
   if (form.billingMode === 'fixed') {
-    results.push({ label: `任意数量，非偏远`, fee: `¥${(form.fixedFee ?? 0).toFixed(2)}` })
-    if (form.enableRemoteFee) {
-      results.push({ label: `任意数量，偏远地区`, fee: `¥${((form.fixedFee ?? 0) + form.remoteFee).toFixed(2)}` })
+    results.push({ label: `默认地区`, fee: `¥${(form.fixedFee ?? 0).toFixed(2)}` })
+    for (const cr of form.customRules) {
+      if (cr.fixedFee != null) {
+        results.push({ label: cr.name, fee: `¥${cr.fixedFee.toFixed(2)}` })
+      }
     }
   } else {
     const d = form.defaultRule
-    for (const qty of [1, 3, 5, 10]) {
+    const unit = unitLabel.value
+    for (const qty of [1, 3, 5]) {
       const extra = Math.max(0, Math.ceil((qty - d.firstQty) / d.additionalQty))
       const fee = d.firstFee + extra * d.additionalFee
-      results.push({ label: `${qty}${unitLabel}，非偏远`, fee: `¥${fee.toFixed(2)}` })
+      results.push({ label: `默认·${qty}${unit}`, fee: `¥${fee.toFixed(2)}` })
     }
-    if (form.enableRemoteFee) {
-      const r = form.remoteRule
-      for (const qty of [1, 3]) {
-        const extra = Math.max(0, Math.ceil((qty - r.firstQty) / r.additionalQty))
-        const base = r.firstFee + extra * r.additionalFee
-        results.push({ label: `${qty}${unitLabel}，偏远地区`, fee: `¥${base.toFixed(2)}` })
+    for (const cr of form.customRules) {
+      if (cr.firstQty != null && cr.firstFee != null) {
+        for (const qty of [1, 3]) {
+          const extra = Math.max(0, Math.ceil((qty - cr.firstQty) / (cr.additionalQty ?? 1)))
+          const fee = cr.firstFee + extra * (cr.additionalFee ?? 0)
+          results.push({ label: `${cr.name}·${qty}${unit}`, fee: `¥${fee.toFixed(2)}` })
+        }
       }
     }
   }
   return results
 })
 
-// 编辑模式加载
+// --- 编辑加载 ---
 onMounted(() => {
   if (isEdit) {
     const tpl = mockTemplates.find(t => t.id === route.query.id)
     if (tpl) {
       form.name = tpl.name
       form.chargeType = tpl.chargeType
-      form.billingMode = tpl.billingMode === 'first_next' ? 'tiered' : tpl.billingMode
+      form.billingMode = tpl.billingMode
       form.fixedFee = tpl.fixedFee ?? 10
       form.freeShippingMode = tpl.freeShippingMode
       form.freeShippingThreshold = tpl.freeShippingThreshold ?? 99
       form.freeShippingExcludeRemote = tpl.freeShippingExcludeRemote
       form.defaultRule = { ...tpl.defaultRule }
-      form.enableRemoteFee = !!tpl.remoteRule
-      if (tpl.remoteRule) form.remoteRule = { ...tpl.remoteRule }
+      form.customRules = (tpl.customRules ?? []).map(r => ({ ...r, _open: false }))
     }
   }
 })
 </script>
 
 <template>
-  <div class="freight-publish">
-    <div class="fixed-top-area">
-      <div class="page-header">
-        <div class="breadcrumb">
-          <span class="breadcrumb-link" @click="goBack">运费模板管理</span>
-          <span class="breadcrumb-sep">/</span>
+  <div class="fp">
+    <div class="fp-top">
+      <div class="fp-header">
+        <div class="fp-bread">
+          <span class="fp-link" @click="goBack">运费模板管理</span>
+          <span class="fp-sep">/</span>
           <span>{{ isEdit ? '编辑模板' : '新建模板' }}</span>
         </div>
-        <div class="header-actions">
+        <div class="fp-actions">
           <button class="btn btn-default" @click="goBack">取消</button>
           <button class="btn btn-primary" @click="saveTemplate">保存模板</button>
         </div>
       </div>
     </div>
 
-    <div class="container">
-      <div v-if="formErrors.length > 0" class="error-banner">
+    <div class="fp-body">
+      <div v-if="formErrors.length > 0" class="err-bar">
         <span>表单有 {{ formErrors.length }} 处问题：</span>
         <ul style="margin: 4px 0 0 16px;">
-          <li v-for="(err, i) in formErrors" :key="i">{{ err }}</li>
+          <li v-for="(e, i) in formErrors" :key="i">{{ e }}</li>
         </ul>
       </div>
 
-      <div class="content-panel">
-        <div class="panel-body" style="max-width: 680px;">
+      <div class="panel">
+        <div class="panel-inner">
 
-          <!-- ====== ① 基础设置 ====== -->
-          <div class="section-header">① 基础设置</div>
-
-          <div class="form-item">
-            <label class="form-label required">模板名称</label>
-            <div class="form-control-row">
-              <input type="text" class="form-input" v-model="form.name" placeholder="如：全国包邮、满99包邮" style="width: 320px;" />
-            </div>
+          <!-- ① 基础设置 -->
+          <div class="sec-title">① 基础设置</div>
+          <div class="fi">
+            <label class="fl">模板名称</label>
+            <input type="text" class="fi-input" v-model="form.name" placeholder="如：全国包邮、满99包邮" style="width: 320px;" />
           </div>
-
-          <div class="form-item" style="margin-top: 16px;">
-            <label class="form-label required">计费维度</label>
-            <div class="form-control-row">
-              <label
-                v-for="(label, key) in CHARGE_TYPE_LABEL"
-                :key="key"
-                class="radio-card"
-                :class="{ active: form.chargeType === key }"
-                @click="form.chargeType = key as ChargeType"
-              >
+          <div class="fi" style="margin-top: 16px;">
+            <label class="fl">计费维度</label>
+            <div style="display: flex; gap: 10px;">
+              <label v-for="(lb, key) in CHARGE_TYPE_LABEL" :key="key" class="rc" :class="{ on: form.chargeType === key }" @click="form.chargeType = key as ChargeType">
                 <input type="radio" :value="key" :checked="form.chargeType === key" style="display: none;" />
-                <span>{{ label }}</span>
+                <span>{{ lb }}</span>
               </label>
             </div>
           </div>
 
-          <div class="section-divider"></div>
+          <div class="sd"></div>
 
-          <!-- ====== ② 包邮策略 ====== -->
-          <div class="section-header">② 包邮策略</div>
-
-          <div class="policy-cards">
-            <div
-              class="policy-card"
-              :class="{ active: form.freeShippingMode === 'all' }"
-              @click="form.freeShippingMode = 'all'; handleFreeShippingModeChange()"
-            >
-              <div class="policy-card-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9H9l-3-9H2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 14h12"/></svg>
-              </div>
-              <div class="policy-card-title">完全包邮</div>
-              <div class="policy-card-desc">买家全部免运费</div>
+          <!-- ② 包邮策略 -->
+          <div class="sec-title">② 包邮策略</div>
+          <div class="pcards">
+            <div class="pcard" :class="{ on: form.freeShippingMode === 'all' }" @click="form.freeShippingMode = 'all'; handleFreeShippingModeChange()">
+              <div class="pcard-tt">完全包邮</div>
+              <div class="pcard-desc">买家全部免运费</div>
             </div>
-            <div
-              class="policy-card"
-              :class="{ active: form.freeShippingMode === 'amount' }"
-              @click="form.freeShippingMode = 'amount'"
-            >
-              <div class="policy-card-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-              </div>
-              <div class="policy-card-title">满额包邮</div>
-              <div class="policy-card-desc">满一定金额/数量免运费</div>
-              <!-- 内联展开 -->
-              <div v-if="form.freeShippingMode === 'amount'" class="policy-card-expand" @click.stop>
-                <div class="policy-inline-row">
-                  <span>满</span>
-                  <input type="number" class="form-input" v-model.number="form.freeShippingThreshold" min="0" style="width: 72px; text-align: center;" />
-                  <span>{{ unitLabel }}</span>
-                </div>
-                <label class="policy-inline-row" style="cursor: pointer; margin-top: 8px;">
-                  <input type="checkbox" v-model="form.freeShippingExcludeRemote" />
-                  <span style="margin-left: 6px; font-size: 13px;">偏远除外（{{ DEFAULT_REMOTE_AREAS.join('、') }}不参与包邮）</span>
-                </label>
-              </div>
+            <div class="pcard" :class="{ on: form.freeShippingMode === 'amount' }" @click="form.freeShippingMode = 'amount'">
+              <div class="pcard-tt">满额包邮</div>
+              <div class="pcard-desc">满一定金额/数量免运费</div>
             </div>
-            <div
-              class="policy-card"
-              :class="{ active: form.freeShippingMode === 'none' }"
-              @click="form.freeShippingMode = 'none'; handleFreeShippingModeChange()"
-            >
-              <div class="policy-card-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-              </div>
-              <div class="policy-card-title">不包邮</div>
-              <div class="policy-card-desc">买家自付运费</div>
+            <div class="pcard" :class="{ on: form.freeShippingMode === 'none' }" @click="form.freeShippingMode = 'none'; handleFreeShippingModeChange()">
+              <div class="pcard-tt">不包邮</div>
+              <div class="pcard-desc">买家自付运费</div>
             </div>
           </div>
 
-          <!-- ====== ③ 运费规则（动态展开） ====== -->
+          <!-- 满额包邮配置 -->
+          <div v-if="form.freeShippingMode === 'amount'" class="nested">
+            <div class="fi">
+              <label class="fl" style="width: 80px;">包邮门槛</label>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="tip">满</span>
+                <input type="number" class="fi-input" v-model.number="form.freeShippingThreshold" min="0" style="width: 80px; text-align: center;" />
+                <span class="tip">{{ unitLabel }}</span>
+              </div>
+            </div>
+            <div class="fi" style="margin-top: 12px;">
+              <label class="fl" style="width: 80px;">偏远除外</label>
+              <label class="toggle-switch">
+                <input type="checkbox" v-model="form.freeShippingExcludeRemote" />
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="tip" style="margin-left: 8px;">新疆、西藏、内蒙古、青海、甘肃不参与包邮</span>
+            </div>
+          </div>
+
+          <!-- ③ 运费规则 -->
           <template v-if="showFeeSection">
-            <div class="section-divider"></div>
-            <div class="section-header">③ 运费规则</div>
+            <div class="sd"></div>
+            <div class="sec-title">③ 运费规则</div>
 
             <!-- 计费模式 -->
-            <div class="form-item">
-              <label class="form-label">计费模式</label>
-              <div class="form-control-row">
-                <label
-                  class="radio-card sm"
-                  :class="{ active: form.billingMode === 'tiered' }"
-                  @click="form.billingMode = 'tiered'"
-                >
-                  <span>阶梯运费</span>
-                </label>
-                <label
-                  class="radio-card sm"
-                  :class="{ active: form.billingMode === 'fixed' }"
-                  @click="form.billingMode = 'fixed'"
-                >
-                  <span>固定运费</span>
-                </label>
+            <div class="fi">
+              <label class="fl">计费模式</label>
+              <div style="display: flex; gap: 10px;">
+                <label class="rc sm" :class="{ on: form.billingMode === 'tiered' }" @click="form.billingMode = 'tiered'"><span>阶梯运费</span></label>
+                <label class="rc sm" :class="{ on: form.billingMode === 'fixed' }" @click="form.billingMode = 'fixed'"><span>固定运费</span></label>
               </div>
             </div>
 
-            <!-- 阶梯运费 -->
-            <template v-if="form.billingMode === 'tiered'">
-              <table class="rule-table">
-                <thead>
-                  <tr>
-                    <th>{{ firstLabel }}（{{ unitLabel }}）</th>
-                    <th>首运费（元）</th>
-                    <th>{{ additionalLabel }}（{{ unitLabel }}）</th>
-                    <th>续运费（元）</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstQty" min="1" /></td>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstFee" min="0" step="0.01" /></td>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalQty" min="1" /></td>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalFee" min="0" step="0.01" /></td>
-                  </tr>
-                </tbody>
-              </table>
-            </template>
+            <!-- 默认运费 -->
+            <div class="def-rule">
+              <div class="def-label">默认运费（覆盖未自定义的地区）</div>
+              <template v-if="form.billingMode === 'tiered'">
+                <table class="rt">
+                  <thead><tr><th>{{ firstLabel }}（{{ unitLabel }}）</th><th>首运费（元）</th><th>{{ additionalLabel }}（{{ unitLabel }}）</th><th>续运费（元）</th></tr></thead>
+                  <tbody><tr>
+                    <td><input type="number" class="ri" v-model.number="form.defaultRule.firstQty" min="1" /></td>
+                    <td><input type="number" class="ri" v-model.number="form.defaultRule.firstFee" min="0" step="0.01" /></td>
+                    <td><input type="number" class="ri" v-model.number="form.defaultRule.additionalQty" min="1" /></td>
+                    <td><input type="number" class="ri" v-model.number="form.defaultRule.additionalFee" min="0" step="0.01" /></td>
+                  </tr></tbody>
+                </table>
+              </template>
+              <template v-else>
+                <div class="fee-row">
+                  <span>每单统一收取</span>
+                  <span style="display: flex; align-items: center; gap: 2px;">
+                    <span class="tip">¥</span>
+                    <input type="number" class="fi-input" v-model.number="form.fixedFee" min="0" step="0.01" style="width: 100px; text-align: center;" />
+                  </span>
+                </div>
+              </template>
+            </div>
 
-            <!-- 固定运费 -->
-            <template v-if="form.billingMode === 'fixed'">
-              <div class="fee-row">
-                <span>每单统一收取</span>
-                <span class="fee-input-wrap">
-                  <span class="fee-currency">¥</span>
-                  <input type="number" class="form-input" v-model.number="form.fixedFee" min="0" step="0.01" style="width: 100px; text-align: center;" />
-                </span>
-                <span>运费</span>
+            <!-- 自定义地区 -->
+            <div class="cus-rules">
+              <div class="cus-header">
+                <span>自定义地区运费</span>
+                <button class="btn btn-default btn-xs" @click="addCustomRule">+ 添加地区</button>
               </div>
-            </template>
+              <div v-if="form.customRules.length === 0" class="cus-empty">尚未添加自定义地区，默认运费将应用于全国</div>
 
-            <!-- 偏远地区附加规则（合并位置） -->
-            <div class="remote-section">
-              <div class="remote-header">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>偏远地区（{{ DEFAULT_REMOTE_AREAS.join('、') }}）</span>
-              </div>
-              <div class="remote-options">
-                <label class="remote-option" v-if="showRemoteExclude">
-                  <input type="checkbox" v-model="form.freeShippingExcludeRemote" />
-                  <span>不参与包邮（满额包邮时，偏远地区不享受包邮）</span>
-                </label>
-                <label class="remote-option">
-                  <input type="checkbox" v-model="form.enableRemoteFee" />
-                  <span>额外加收运费</span>
-                </label>
-                <template v-if="form.enableRemoteFee">
-                  <div class="remote-fee-inputs">
-                    <template v-if="form.billingMode === 'fixed'">
-                      <span>每单加收</span>
-                      <span class="fee-input-wrap">
-                        <span class="fee-currency">¥</span>
-                        <input type="number" class="form-input" v-model.number="form.remoteFee" min="0" step="0.01" style="width: 80px; text-align: center;" />
-                      </span>
-                    </template>
-                    <template v-else>
-                      <table class="rule-table compact">
-                        <thead>
-                          <tr>
-                            <th>{{ firstLabel }}（{{ unitLabel }}）</th>
-                            <th>首运费（元）</th>
-                            <th>{{ additionalLabel }}（{{ unitLabel }}）</th>
-                            <th>续运费（元）</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstQty" min="1" /></td>
-                            <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstFee" min="0" step="0.01" /></td>
-                            <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalQty" min="1" /></td>
-                            <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalFee" min="0" step="0.01" /></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </template>
+              <div v-for="(rule, idx) in form.customRules" :key="rule.id" class="cus-card">
+                <div class="cus-card-hd">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="cus-idx">{{ idx + 1 }}</span>
+                    <input type="text" class="fi-input" v-model="rule.name" placeholder="地区名称，如：偏远地区" style="width: 160px;" />
+                    <span class="action-link" @click="openProvinceSelector(idx)">
+                      {{ rule.provinces.length > 0 ? `已选 ${rule.provinces.length} 省` : '选择省份' }}
+                    </span>
+                    <span v-if="rule.provinces.length > 0" class="tip" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ rule.provinces.join('、') }}</span>
+                  </div>
+                  <span class="action-link danger" @click="removeCustomRule(idx)">删除</span>
+                </div>
+
+                <template v-if="form.billingMode === 'tiered'">
+                  <table class="rt" style="margin-top: 10px;">
+                    <thead><tr><th>{{ firstLabel }}（{{ unitLabel }}）</th><th>首运费（元）</th><th>{{ additionalLabel }}（{{ unitLabel }}）</th><th>续运费（元）</th></tr></thead>
+                    <tbody><tr>
+                      <td><input type="number" class="ri" v-model.number="rule.firstQty" min="1" /></td>
+                      <td><input type="number" class="ri" v-model.number="rule.firstFee" min="0" step="0.01" /></td>
+                      <td><input type="number" class="ri" v-model.number="rule.additionalQty" min="1" /></td>
+                      <td><input type="number" class="ri" v-model.number="rule.additionalFee" min="0" step="0.01" /></td>
+                    </tr></tbody>
+                  </table>
+                </template>
+                <template v-else>
+                  <div class="fee-row" style="margin-top: 10px;">
+                    <span>每单统一收取</span>
+                    <span style="display: flex; align-items: center; gap: 2px;">
+                      <span class="tip">¥</span>
+                      <input type="number" class="fi-input" v-model.number="rule.fixedFee" min="0" step="0.01" style="width: 100px; text-align: center;" />
+                    </span>
                   </div>
                 </template>
               </div>
@@ -345,22 +344,45 @@ onMounted(() => {
           </template>
 
           <!-- 完全包邮提示 -->
-          <div v-if="form.freeShippingMode === 'all'" class="all-free-note">
-            完全包邮，所有买家免运费
-          </div>
+          <div v-if="form.freeShippingMode === 'all'" class="all-free">完全包邮，所有买家免运费</div>
 
-          <!-- ====== ④ 运费预览 ====== -->
+          <!-- ④ 运费预览 -->
           <template v-if="showFeeSection && previewExamples.length > 0">
-            <div class="section-divider"></div>
-            <div class="section-header">④ 运费预览</div>
-            <div class="preview-grid">
-              <div v-for="(ex, i) in previewExamples" :key="i" class="preview-item">
-                <span class="preview-label">{{ ex.label }}</span>
-                <span class="preview-fee">{{ ex.fee }}</span>
+            <div class="sd"></div>
+            <div class="sec-title">④ 运费预览</div>
+            <div class="pv-grid">
+              <div v-for="(ex, i) in previewExamples" :key="i" class="pv-item">
+                <span class="pv-label">{{ ex.label }}</span>
+                <span class="pv-fee">{{ ex.fee }}</span>
               </div>
             </div>
           </template>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- 省份选择弹窗 -->
+    <div v-if="showProvinceModal" class="modal-overlay" @click.self="showProvinceModal = false">
+      <div class="modal-content modal-md">
+        <div class="modal-header">
+          <h3>选择省份</h3>
+          <span class="modal-close" @click="showProvinceModal = false">
+            <svg class="modal-close-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </span>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="fi-input" v-model="provinceSearch" placeholder="搜索省份…" style="width: 100%; margin-bottom: 12px;" />
+          <div class="pv-grid">
+            <div v-for="p in filteredProvinces" :key="p" class="pv-item" :class="{ on: tempProvinces.includes(p) }" @click="toggleProvince(p)">
+              <span class="cb" :class="{ chk: tempProvinces.includes(p) }"><span v-if="tempProvinces.includes(p)">✓</span></span>
+              {{ p }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="showProvinceModal = false">取消</button>
+          <button class="btn btn-primary" @click="confirmProvinces">确定 ({{ tempProvinces.length }})</button>
         </div>
       </div>
     </div>
@@ -370,98 +392,75 @@ onMounted(() => {
 <style scoped>
 @import '../assets/wallet-common.css';
 
-.freight-publish {
-  background-color: #F5F7FA; min-height: calc(100vh - 60px); color: #1D2129;
-  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-}
-.fixed-top-area { position: sticky; top: 0; z-index: 999; background-color: #F5F7FA; }
-.page-header {
-  height: 60px; background-color: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-  display: flex; justify-content: space-between; align-items: center; padding: 0 24px;
-}
-.breadcrumb { font-size: 15px; font-weight: 600; color: #1D2129; }
-.breadcrumb-link { color: #4F6EF7; cursor: pointer; }
-.breadcrumb-link:hover { text-decoration: underline; }
-.breadcrumb-sep { margin: 0 10px; color: #86909C; }
-.header-actions { display: flex; gap: 8px; }
-.container { padding: 20px 24px 40px; max-width: 750px; }
-
-/* 错误 */
-.error-banner {
-  background-color: #FFF1F0; border: 1px solid #FFCCC7; border-radius: 8px;
-  padding: 12px 16px; font-size: 13px; color: #CF1322; margin-bottom: 16px;
-}
-
-/* 区块标题 */
-.section-header {
-  font-size: 15px; font-weight: 700; color: #4F6EF7; margin-bottom: 20px;
-  padding-bottom: 8px; border-bottom: 2px solid #E8F3FF;
-}
-.section-divider { height: 1px; background-color: #E5E6EB; margin: 24px 0; }
+.fp { background-color: #F5F7FA; min-height: calc(100vh - 60px); color: #1D2129; font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+.fp-top { position: sticky; top: 0; z-index: 999; background: #F5F7FA; }
+.fp-header { height: 60px; background: #FFF; box-shadow: 0 1px 2px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; }
+.fp-bread { font-size: 15px; font-weight: 600; color: #1D2129; }
+.fp-link { color: #4F6EF7; cursor: pointer; }
+.fp-link:hover { text-decoration: underline; }
+.fp-sep { margin: 0 10px; color: #86909C; }
+.fp-actions { display: flex; gap: 8px; }
+.fp-body { padding: 20px 24px 40px; max-width: 750px; }
+.err-bar { background: #FFF1F0; border: 1px solid #FFCCC7; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #CF1322; margin-bottom: 16px; }
+.panel { background: #FFF; border-radius: 10px; border: 1px solid #E5E6EB; }
+.panel-inner { padding: 28px; max-width: 680px; }
+.sec-title { font-size: 15px; font-weight: 700; color: #4F6EF7; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid #E8F3FF; }
+.sd { height: 1px; background: #E5E6EB; margin: 24px 0; }
+.fi { display: flex; align-items: center; }
+.fl { width: 90px; font-size: 14px; color: #4E5969; flex-shrink: 0; }
+.fi-input { height: 32px; border: 1px solid #E5E6EB; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; transition: border-color 0.1s; }
+.fi-input:focus { border-color: #4F6EF7; }
+.tip { font-size: 13px; color: #86909C; }
 
 /* 单选卡片 */
-.radio-card {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 12px 20px; border: 2px solid #E5E6EB; border-radius: 10px;
-  cursor: pointer; font-size: 14px; color: #4E5969; transition: all 0.15s ease; min-width: 90px;
-}
-.radio-card.sm { flex-direction: row; padding: 6px 14px; border-radius: 6px; min-width: auto; }
-.radio-card:hover { border-color: #4F6EF7; }
-.radio-card.active { border-color: #4F6EF7; background-color: #F0F5FF; color: #4F6EF7; font-weight: 600; }
+.rc { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 18px; border: 2px solid #E5E6EB; border-radius: 10px; cursor: pointer; font-size: 14px; color: #4E5969; transition: all 0.12s; min-width: 80px; }
+.rc.sm { flex-direction: row; padding: 6px 14px; border-radius: 6px; min-width: auto; }
+.rc:hover { border-color: #4F6EF7; }
+.rc.on { border-color: #4F6EF7; background: #F0F5FF; color: #4F6EF7; font-weight: 600; }
 
-/* 包邮策略卡片（内联展开） */
-.policy-cards { display: flex; gap: 12px; }
-.policy-card {
-  flex: 1; padding: 16px 12px; border: 2px solid #E5E6EB; border-radius: 12px;
-  cursor: pointer; transition: all 0.15s ease; text-align: center; position: relative;
-}
-.policy-card:hover { border-color: #4F6EF7; }
-.policy-card.active { border-color: #4F6EF7; background-color: #F0F5FF; }
-.policy-card-icon { height: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; color: #86909C; }
-.policy-card.active .policy-card-icon { color: #4F6EF7; }
-.policy-card-title { font-size: 14px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
-.policy-card.active .policy-card-title { color: #4F6EF7; }
-.policy-card-desc { font-size: 11px; color: #86909C; }
-.policy-card-expand {
-  margin-top: 12px; padding: 12px; background-color: #FFFFFF; border-radius: 8px;
-  border: 1px solid #E5E6EB; text-align: left;
-}
-.policy-inline-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4E5969; }
+/* 包邮策略卡片 */
+.pcards { display: flex; gap: 12px; }
+.pcard { flex: 1; padding: 16px 12px; border: 2px solid #E5E6EB; border-radius: 12px; cursor: pointer; transition: all 0.12s; text-align: center; }
+.pcard:hover { border-color: #4F6EF7; }
+.pcard.on { border-color: #4F6EF7; background: #F0F5FF; }
+.pcard-tt { font-size: 14px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
+.pcard.on .pcard-tt { color: #4F6EF7; }
+.pcard-desc { font-size: 11px; color: #86909C; }
+
+/* 嵌套区 */
+.nested { background: #F7F8FA; border-radius: 10px; padding: 20px; margin-top: 12px; border-left: 3px solid #4F6EF7; }
+
+/* 默认运费 */
+.def-rule { margin-top: 20px; }
+.def-label { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 10px; }
 
 /* 规则表格 */
-.rule-table { width: 100%; border-collapse: collapse; font-size: 14px; border: 1px solid #E5E6EB; border-radius: 8px; }
-.rule-table th, .rule-table td { border: 1px solid #E5E6EB; padding: 10px; text-align: left; }
-.rule-table th { background-color: #FAFAFA; color: #86909C; font-weight: 600; font-size: 12px; white-space: nowrap; }
-.rule-table.compact th, .rule-table.compact td { padding: 6px 8px; }
-.rule-input { width: 72px !important; text-align: center; }
+.rt { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid #E5E6EB; border-radius: 6px; }
+.rt th, .rt td { border: 1px solid #E5E6EB; padding: 8px; text-align: left; }
+.rt th { background: #FAFAFA; color: #86909C; font-weight: 600; font-size: 11px; white-space: nowrap; }
+.ri { width: 68px !important; text-align: center; border: 1px solid #E5E6EB; border-radius: 4px; padding: 4px; font-size: 13px; outline: none; }
+.ri:focus { border-color: #4F6EF7; }
 
 /* 固定运费行 */
-.fee-row { display: flex; align-items: center; gap: 8px; padding: 16px; background-color: #FAFAFA; border-radius: 8px; border: 1px solid #E5E6EB; }
-.fee-input-wrap { position: relative; display: inline-flex; align-items: center; }
-.fee-currency { position: absolute; left: 10px; font-size: 14px; color: #86909C; pointer-events: none; }
+.fee-row { display: flex; align-items: center; gap: 8px; padding: 14px; background: #FAFAFA; border-radius: 8px; border: 1px solid #E5E6EB; }
 
-/* 偏远地区合并区 */
-.remote-section {
-  margin-top: 20px; border: 1px solid #E5E6EB; border-radius: 10px; padding: 16px;
-  background-color: #FAFAFA;
-}
-.remote-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 12px; }
-.remote-options { display: flex; flex-direction: column; gap: 10px; }
-.remote-option { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4E5969; cursor: pointer; }
-.remote-fee-inputs { margin: 8px 0 0 22px; display: flex; align-items: center; gap: 8px; }
+/* 自定义地区 */
+.cus-rules { margin-top: 20px; }
+.cus-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #4E5969; }
+.cus-empty { padding: 24px; text-align: center; background: #FAFAFA; border-radius: 8px; color: #86909C; font-size: 13px; border: 1px dashed #E5E6EB; }
+.cus-card { border: 1px solid #E5E6EB; border-radius: 10px; padding: 14px; margin-bottom: 10px; background: #FDFDFD; }
+.cus-card-hd { display: flex; justify-content: space-between; align-items: center; }
+.cus-idx { width: 22px; height: 22px; border-radius: 50%; background: #4F6EF7; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.cb { width: 14px; height: 14px; border-radius: 3px; border: 2px solid #C9CDD4; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.cb.chk { background: #4F6EF7; border-color: #4F6EF7; color: #FFF; }
 
-/* 完全包邮提示 */
-.all-free-note {
-  text-align: center; font-size: 15px; color: #0E7B3A; font-weight: 500;
-  padding: 32px 0; background-color: #E8F8EE; border-radius: 10px; margin-top: 20px;
-}
+/* 完成包邮 */
+.all-free { text-align: center; font-size: 15px; color: #0E7B3A; font-weight: 500; padding: 32px 0; background: #E8F8EE; border-radius: 10px; margin-top: 20px; }
 
-/* 运费预览 */
-.preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.preview-item {
-  display: flex; flex-direction: column; gap: 4px; padding: 12px;
-  background-color: #FAFAFA; border-radius: 8px; border: 1px solid #E5E6EB;
-}
-.preview-label { font-size: 12px; color: #86909C; }
-.preview-fee { font-size: 16px; font-weight: 700; color: #CF1322; }
+/* 预览 */
+.pv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.pv-item { display: flex; flex-direction: column; gap: 4px; padding: 10px; background: #FAFAFA; border-radius: 8px; border: 1px solid #E5E6EB; cursor: default; }
+.pv-item.on { background: #E8F3FF; border-color: #4F6EF7; }
+.pv-label { font-size: 11px; color: #86909C; }
+.pv-fee { font-size: 15px; font-weight: 700; color: #CF1322; }
 </style>

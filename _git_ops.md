@@ -72,3 +72,5 @@
 | 2026-07-16 11:45 | commit | feature/freight-optimization | feat: 运费模板计费方式新增「按金额」维度 | bcb806d |
 
 | 2026-07-16 12:01 | commit | feature/freight-optimization | feat: 新增计费模式选择（首续费/固定运费），计费方式新增按金额 | f7d08f7 |
+
+| 2026-07-16 12:35 | commit | feature/freight-optimization | feat: 运费模板大优化——动态表单、阶梯/固定计费、偏远合并、实时预览、字段重命名 | 0034502 |
