@@ -483,7 +483,12 @@ const isOccupied = (prov: string) => {
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as WeightConfig).additionalFee" min="0" step="0.01" />
                 <span>元</span>
               </div>
-              <div class="calc-hint">运费 = 首费 + ⌈(总重 − 首重) / 续重⌉ × 续费。当总重 ≤ 首重时，只收首费，不加续费。⌈⌉ 表示向上取整，除不尽时按一个续费单位计算。例如：首3kg¥10续2kg¥5，4kg → 10+⌈(4-3)/2⌉×5 = 15元；6kg → 10+⌈(6-3)/2⌉×5 = 20元</div>
+              <div class="calc-hint">
+                运费 = 首费 + ⌈(总重 − 首重) / 续重⌉ × 续费。
+                <br>当总重 ≤ 首重时，只收首费，不加续费。
+                <br>⌈⌉ 表示向上取整，除不尽时按一个续费单位计算。
+                <br>例如：首3kg¥10续2kg¥5，4kg → 10+⌈(4-3)/2⌉×5 = 15元；6kg → 10+⌈(6-3)/2⌉×5 = 20元
+              </div>
             </template>
 
             <!-- BY_ORDER_AMOUNT -->
