@@ -259,14 +259,14 @@ const addRangeRowWithThreshold = () => {
   const threshold = tempForm.value.isFreeShipping && tempForm.value.freeThreshold !== null && tempForm.value.freeThreshold > 0 ? tempForm.value.freeThreshold : null
   if (!threshold) { addRangeRow(); return }
   const last = ranges[ranges.length - 1]
-  if (last.max! >= threshold) { alert('已达到包邮门槛上限，无法添加更多区间'); return }
-  const newMax = Math.min((last.min || 0) + Math.ceil((threshold - last.min) / 2), threshold - 1)
-  if (newMax <= last.min) { alert('区间间距太小'); return }
+  const gap = threshold - last.min
+  if (gap <= 1) { alert('区间间距太小，无法继续拆分'); return }
+  const splitPoint = last.min + Math.ceil(gap / 2)
   const oldMin = last.min
   const oldFee = last.fee
-  last.min = newMax
+  last.min = splitPoint
   last.max = threshold
-  ranges.splice(ranges.length - 1, 0, { min: oldMin, max: newMax, fee: oldFee })
+  ranges.splice(ranges.length - 1, 0, { min: oldMin, max: splitPoint, fee: oldFee })
 }
 
 const removeRangeRow = (index: number) => {
@@ -359,7 +359,7 @@ const isOccupied = (prov: string) => {
       <!-- 默认运费 -->
       <div class="card">
         <div class="card-hd">
-          <div class="card-tt"><span class="dot def"></span> 默认运费（全国适用） <span class="badge info">兜底规则</span></div>
+          <div class="card-tt"><span class="dot def"></span> 默认运费 <span class="badge info">兜底规则</span></div>
           <button class="btn btn-default btn-sm" @click="openModal('default', defaultRule)">编辑</button>
         </div>
         <div class="summary-box">
@@ -382,7 +382,9 @@ const isOccupied = (prov: string) => {
         <div v-if="specialRules.length === 0" class="empty-hint">暂无特殊地区规则，点击上方按钮添加</div>
         <div v-for="rule in specialRules" :key="rule.id" class="rule-card">
           <div class="rule-card-hd">
-            <div class="tags">{{ rule.regions.map(r => ({name:r,cls:'sp'})).map(t => `<span class="tag sp">${t.name}</span>`).join(' ') }}</div>
+          <div class="tags">
+            <span v-for="reg in rule.regions" :key="reg" class="tag sp">{{ reg }}</span>
+          </div>
             <div><button class="btn-link" @click="openModal('editSpecial', rule)">编辑</button><button class="btn-link danger" @click="specialRules = specialRules.filter(r => r.id !== rule.id)">删除</button></div>
           </div>
           <div class="rule-card-bd">
@@ -404,7 +406,7 @@ const isOccupied = (prov: string) => {
           <!-- 地区选择 -->
           <div v-if="modalMode === 'default'" class="form-group">
             <label class="fl">适用地区</label>
-            <div class="region-default-display">全国适用（默认兜底规则）</div>
+            <div class="region-default-display">全国</div>
           </div>
           <div v-else class="form-group">
             <label class="fl">选择适用地区 <span class="tip">（可多选）</span></label>
