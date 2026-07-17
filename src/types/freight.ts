@@ -4,7 +4,7 @@
 export type ChargeType = 'piece' | 'weight' | 'amount'
 
 /** 计费模式 */
-export type BillingMode = 'first_next' | 'fixed'
+export type BillingMode = 'tiered' | 'fixed'
 
 /** 包邮模式 */
 export type FreeShippingMode = 'all' | 'amount' | 'none'
@@ -53,7 +53,7 @@ export const CHARGE_TYPE_UNIT: Record<ChargeType, string> = {
 }
 
 export const BILLING_MODE_LABEL: Record<BillingMode, string> = {
-  first_next: '首续费',
+  tiered: '阶梯运费',
   fixed: '固定运费'
 }
 

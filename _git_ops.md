@@ -70,3 +70,5 @@
 | 2026-07-16 11:35 | commit | feature/freight-optimization | style: 优化运费模板列表页排版——列宽分配、操作按钮间距、信息精简 | 59fa33e |
 
 | 2026-07-16 11:45 | commit | feature/freight-optimization | feat: 运费模板计费方式新增「按金额」维度 | bcb806d |
+
+| 2026-07-16 12:01 | commit | feature/freight-optimization | feat: 新增计费模式选择（首续费/固定运费），计费方式新增按金额 | f7d08f7 |

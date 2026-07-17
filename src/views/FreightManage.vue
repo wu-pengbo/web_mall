@@ -129,7 +129,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
                 :class="item.chargeType === 'piece' ? 'normal' : item.chargeType === 'weight' ? 'processing' : 'paid'"
               >{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span>
             </td>
-            <td><span class="status-tag" :class="item.billingMode === 'first_next' ? 'refund' : 'draft'">{{ BILLING_MODE_LABEL[item.billingMode] }}</span></td>
+            <td><span class="status-tag" :class="item.billingMode === 'tiered' ? 'refund' : 'draft'">{{ BILLING_MODE_LABEL[item.billingMode] }}</span></td>
             <td>
               <span class="free-tag" :class="item.freeShippingMode">
                 {{ getFreeShippingText(item) }}
