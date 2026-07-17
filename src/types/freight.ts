@@ -17,10 +17,8 @@ export interface QuantityConfig {
 
 export interface WeightConfig {
   firstWeight: number
-  firstWeightUnit: 'kg' | 'g'
   firstFee: number
   additionalWeight: number
-  additionalWeightUnit: 'kg' | 'g'
   additionalFee: number
 }
 
@@ -70,7 +68,7 @@ export function getDefaultChargeConfig(chargeType: ChargeType): ChargeConfig {
     case 'BY_QUANTITY':
       return { firstQty: 1, firstFee: 8, additionalQty: 1, additionalFee: 3 } as QuantityConfig
     case 'BY_WEIGHT':
-      return { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 10, additionalWeight: 0.5, additionalWeightUnit: 'kg', additionalFee: 5 } as WeightConfig
+      return { firstWeight: 1, firstFee: 10, additionalWeight: 0.5, additionalFee: 5 } as WeightConfig
     case 'BY_ORDER_AMOUNT':
       return { amountRanges: [{ min: 0, max: null, fee: 10 }] } as AmountConfig
     case 'FIXED':
@@ -116,9 +114,7 @@ export function getChargeConfigSummary(chargeType: ChargeType, config: ChargeCon
     }
     case 'BY_WEIGHT': {
       const c = config as WeightConfig
-      const u1 = c.firstWeightUnit
-      const u2 = c.additionalWeightUnit
-      return `首重${c.firstWeight}${u1} / ${c.firstFee}元，续重${c.additionalWeight}${u2} / ${c.additionalFee}元`
+      return `首重${c.firstWeight}kg / ${c.firstFee}元，续重${c.additionalWeight}kg / ${c.additionalFee}元`
     }
     case 'BY_ORDER_AMOUNT': {
       const c = config as AmountConfig

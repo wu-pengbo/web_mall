@@ -43,8 +43,13 @@ const pageNumbers = computed(() => {
 const goPublish = (id?: string) => router.push(id ? `/freight/publish?id=${id}` : '/freight/publish')
 
 const confirmDelete = (item: FreightTemplate) => {
-  if (item.productCount > 0) { alert(`该模板已被 ${item.productCount} 个商品使用，无法删除`); return }
-  if (confirm(`确定删除「${item.name}」？`)) alert('删除成功')
+  if (item.productCount > 0) {
+    alert(`「${item.name}」已被 ${item.productCount} 个商品使用中，无法删除`)
+    return
+  }
+  if (confirm(`「${item.name}」未关联商品，确定删除？`)) {
+    alert('删除成功')
+  }
 }
 
 const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: number | null }) => {
@@ -71,8 +76,6 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
             <th>计费方式</th>
             <th>默认规则</th>
             <th>特殊地区</th>
-            <th style="text-align:center;">商品数</th>
-            <th>状态</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -86,12 +89,10 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
             </td>
             <td>
               <template v-if="item.specialRules.length > 0">
-                <span class="status-tag draft">{{ item.specialRules.length }} 条</span>
+                <span v-for="cr in item.specialRules" :key="cr.id" class="status-tag draft" style="font-size:10px;margin-right:3px;margin-bottom:2px;">{{ cr.regions.length }}省</span>
               </template>
               <span v-else class="sub-text">—</span>
             </td>
-            <td style="text-align:center;"><span :class="item.productCount > 0 ? 'cb' : 'sub-text'">{{ item.productCount }}</span></td>
-            <td><span class="status-tag" :class="item.status === 'active' ? 'success' : 'frozen'">{{ item.status === 'active' ? '启用' : '停用' }}</span></td>
             <td><div class="act"><span class="action-link" @click="goPublish(item.id)">编辑</span><span class="action-link danger" @click="confirmDelete(item)">删除</span></div></td>
           </tr>
         </tbody>
@@ -124,7 +125,6 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
 .free-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
 .free-tag.all { background-color: #E8F8EE; color: #0E7B3A; }
 .free-tag.none { background-color: #F2F3F5; color: #86909C; }
-.cb { display: inline-block; min-width: 22px; height: 22px; line-height: 22px; text-align: center; background-color: #F2F3F5; color: #4E5969; border-radius: 11px; font-size: 12px; font-weight: 500; padding: 0 6px; }
 .act { display: flex; gap: 12px; align-items: center; }
 .freight-table { table-layout: auto; width: 100%; }
 .freight-table th, .freight-table td { padding: 16px 14px !important; }

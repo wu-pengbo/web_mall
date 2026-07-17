@@ -429,14 +429,18 @@ const isOccupied = (prov: string) => {
               <label class="sw"><input type="checkbox" :checked="tempForm.isFreeShipping" @change="toggleFreeShipping" /><span class="sl"></span></label>
               <span style="font-size:14px;font-weight:500;">{{ tempForm.isFreeShipping ? '开启包邮' : '不包邮' }}</span>
             </div>
-          </div>
-          <div v-if="tempForm.isFreeShipping" class="form-group">
-            <label class="fl">包邮门槛（元）<span class="tip">填0表示无条件包邮</span></label>
-            <input type="number" class="fi fi-sm" :value="tempForm.freeThreshold !== null ? tempForm.freeThreshold : ''" min="0" step="0.01" placeholder="0=无条件包邮" @input="updateFreeThreshold(($event.target as HTMLInputElement).value)" />
+            <!-- 包邮门槛（放在包邮设置内部） -->
+            <div v-if="tempForm.isFreeShipping" style="margin-top:12px;">
+              <label class="fl" style="margin-bottom:4px;">包邮门槛（元）<span class="tip">填0表示无条件包邮</span></label>
+              <input type="number" class="fi fi-sm" :value="tempForm.freeThreshold !== null ? tempForm.freeThreshold : ''" min="0" step="0.01" placeholder="0=无条件包邮" @input="updateFreeThreshold(($event.target as HTMLInputElement).value)" />
+            </div>
           </div>
 
+          <!-- 分隔线 -->
+          <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
           <!-- 计费参数 -->
-          <div v-if="shouldShowChargeConfig" class="form-group">
+          <div v-if="shouldShowChargeConfig" class="form-group" style="margin-top:16px;">
             <label class="fl">计费参数 <span class="tip">（未达包邮门槛时生效）</span></label>
 
             <!-- BY_QUANTITY -->
@@ -455,6 +459,12 @@ const isOccupied = (prov: string) => {
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as QuantityConfig).additionalFee" min="0" step="0.01" />
                 <span>元</span>
               </div>
+              <div class="calc-hint">
+                运费 = 首费 + ⌈(购买件数 − 首件) / 续件⌉ × 续费。
+                <br>当购买件数 ≤ 首件时，只收首费，不加续费。
+                <br>⌈⌉ 表示向上取整：除不尽时按一个续费单位计算。
+                <br>例如：首3件¥10续2件¥5，买4件 → 10+⌈(4-3)/2⌉×5 = 15元；买6件 → 10+⌈(6-3)/2⌉×5 = 20元
+              </div>
             </template>
 
             <!-- BY_WEIGHT -->
@@ -462,19 +472,18 @@ const isOccupied = (prov: string) => {
               <div class="form-row">
                 <span>首重</span>
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as WeightConfig).firstWeight" min="0.01" step="0.01" />
-                <select class="fs" v-model="(tempForm.chargeConfig as WeightConfig).firstWeightUnit" style="width:70px;"><option value="kg">kg</option><option value="g">g</option></select>
-                <span>，运费</span>
+                <span>kg，运费</span>
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as WeightConfig).firstFee" min="0" step="0.01" />
                 <span>元</span>
               </div>
               <div class="form-row" style="margin-top:8px;">
                 <span>续重</span>
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as WeightConfig).additionalWeight" min="0.01" step="0.01" />
-                <select class="fs" v-model="(tempForm.chargeConfig as WeightConfig).additionalWeightUnit" style="width:70px;"><option value="kg">kg</option><option value="g">g</option></select>
-                <span>，运费</span>
+                <span>kg，运费</span>
                 <input type="number" class="fi fi-sm" v-model.number="(tempForm.chargeConfig as WeightConfig).additionalFee" min="0" step="0.01" />
                 <span>元</span>
               </div>
+              <div class="calc-hint">运费 = 首费 + ⌈(总重 − 首重) / 续重⌉ × 续费。当总重 ≤ 首重时，只收首费，不加续费。⌈⌉ 表示向上取整，除不尽时按一个续费单位计算。例如：首3kg¥10续2kg¥5，4kg → 10+⌈(4-3)/2⌉×5 = 15元；6kg → 10+⌈(6-3)/2⌉×5 = 20元</div>
             </template>
 
             <!-- BY_ORDER_AMOUNT -->
@@ -627,6 +636,9 @@ const isOccupied = (prov: string) => {
 
 /* 无条件包邮提示 */
 .free-hint { padding: 14px; background: var(--sl); border-radius: 6px; color: var(--success); font-size: 13px; }
+
+/* 计算说明 */
+.calc-hint { margin-top: 8px; padding: 8px 12px; background: #f5f7fa; border-radius: 4px; font-size: 12px; color: var(--c3); line-height: 1.5; }
 
 /* 开关 */
 .sw { position: relative; width: 44px; height: 24px; cursor: pointer; display: inline-block; }

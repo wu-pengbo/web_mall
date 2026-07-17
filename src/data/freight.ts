@@ -28,11 +28,11 @@ export const mockTemplates: FreightTemplate[] = [
     chargeType: 'BY_WEIGHT',
     defaultRule: {
       regions: ['全国'], isFreeShipping: true, freeThreshold: 99,
-      chargeConfig: { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 10, additionalWeight: 0.5, additionalWeightUnit: 'kg', additionalFee: 5 }
+      chargeConfig: { firstWeight: 1, firstFee: 10, additionalWeight: 0.5, additionalFee: 5 }
     },
     specialRules: [
       { id: 1, regions: ['新疆维吾尔自治区', '西藏自治区', '内蒙古自治区', '青海省', '甘肃省'], isFreeShipping: false, freeThreshold: null,
-        chargeConfig: { firstWeight: 1, firstWeightUnit: 'kg', firstFee: 20, additionalWeight: 0.5, additionalWeightUnit: 'kg', additionalFee: 15 } }
+        chargeConfig: { firstWeight: 1, firstFee: 20, additionalWeight: 0.5, additionalFee: 15 } }
     ],
     status: 'active', productCount: 56,
     createdAt: '2026-01-10 10:00:00', updatedAt: '2026-07-14 14:20:00'
