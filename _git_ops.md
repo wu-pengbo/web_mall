@@ -64,3 +64,5 @@
 | 2026-07-16 10:52 | commit | feature/freight-optimization | feat: 运费模板v2——新增区域组/包邮规则/运费上限/不配送地区/按金额阶梯，5步表单 | 06ce132 |
 
 | 2026-07-16 11:16 | commit | feature/freight-optimization | feat: 运费模板v3简化版——包邮优先三选一、默认运费+偏远加收、单页表单 | 727e4ab |
+
+| 2026-07-16 11:29 | commit | feature/freight-optimization | style: 移除运费模块中的 emoji，使用 SVG 图标替代三卡片图标 | 61cc5f0 |

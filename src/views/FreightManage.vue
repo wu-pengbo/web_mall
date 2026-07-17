@@ -98,27 +98,27 @@ const getRuleSummary = (t: FreightTemplate): string => {
         </div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
         <div class="table-title">运费模板列表</div>
         <button class="btn btn-primary" @click="goPublish()">+ 新建模板</button>
       </div>
 
-      <table class="data-table" v-if="pagedList.length > 0">
+      <table class="data-table" v-if="pagedList.length > 0" style="table-layout: fixed; width: 100%;">
         <thead>
           <tr>
-            <th>模板名称</th>
-            <th>计费方式</th>
-            <th>包邮方式</th>
-            <th>运费规则</th>
-            <th>偏远加收</th>
-            <th style="text-align: center;">商品数</th>
-            <th>状态</th>
-            <th>操作</th>
+            <th style="width: 200px;">模板名称</th>
+            <th style="width: 90px;">计费方式</th>
+            <th style="width: 180px;">包邮方式</th>
+            <th style="width: 180px;">运费规则</th>
+            <th style="width: 100px;">偏远加收</th>
+            <th style="width: 80px; text-align: center;">商品数</th>
+            <th style="width: 80px;">状态</th>
+            <th style="width: 120px;">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in pagedList" :key="item.id">
-            <td class="freight-name">{{ item.name }}</td>
+            <td class="freight-name" :title="item.name">{{ item.name }}</td>
             <td><span class="status-tag" :class="item.chargeType === 'piece' ? 'normal' : 'processing'">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span></td>
             <td>
               <span class="free-tag" :class="item.freeShippingMode">
@@ -148,8 +148,10 @@ const getRuleSummary = (t: FreightTemplate): string => {
               </span>
             </td>
             <td>
-              <span class="action-link" @click="goPublish(item.id)">编辑</span>
-              <span class="action-link danger" @click="confirmDelete(item)">删除</span>
+              <div class="action-group">
+                <span class="action-link" @click="goPublish(item.id)">编辑</span>
+                <span class="action-link danger" @click="confirmDelete(item)">删除</span>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -182,8 +184,8 @@ const getRuleSummary = (t: FreightTemplate): string => {
 .page-header { margin-bottom: 20px; }
 .breadcrumb { font-size: 18px; font-weight: 700; color: #1D2129; }
 .table-title { font-size: 15px; font-weight: 600; color: #1D2129; }
-.freight-name { font-weight: 500; color: #1D2129; }
-.fee-text { font-size: 13px; color: #4E5969; }
+.freight-name { font-weight: 500; color: #1D2129; white-space: nowrap; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.fee-text { font-size: 13px; color: #4E5969; white-space: nowrap; }
 
 /* 包邮标签 */
 .free-tag {
@@ -199,4 +201,5 @@ const getRuleSummary = (t: FreightTemplate): string => {
   text-align: center; background-color: #F2F3F5; color: #4E5969;
   border-radius: 11px; font-size: 12px; font-weight: 500; padding: 0 6px;
 }
+.action-group { display: flex; gap: 12px; align-items: center; }
 </style>

@@ -56,7 +56,7 @@ export const mockTemplates: FreightTemplate[] = [
   },
   {
     id: 'tpl_005',
-    name: '满199包邮（旧版已停用）',
+    name: '满199包邮',
     chargeType: 'piece',
     freeShippingMode: 'amount',
     freeShippingThreshold: 199,
