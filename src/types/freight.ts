@@ -3,6 +3,9 @@
 /** 计费方式 */
 export type ChargeType = 'piece' | 'weight' | 'amount'
 
+/** 计费模式 */
+export type BillingMode = 'first_next' | 'fixed'
+
 /** 包邮模式 */
 export type FreeShippingMode = 'all' | 'amount' | 'none'
 
@@ -22,6 +25,8 @@ export interface FreightTemplate {
   id: string
   name: string
   chargeType: ChargeType
+  billingMode: BillingMode
+  fixedFee?: number
   freeShippingMode: FreeShippingMode        // 包邮模式：完全包邮/满额包邮/不包邮
   freeShippingThreshold?: number            // 满额包邮门槛
   freeShippingExcludeRemote: boolean        // 满额包邮时偏远除外？
@@ -45,6 +50,11 @@ export const CHARGE_TYPE_UNIT: Record<ChargeType, string> = {
   piece: '件',
   weight: 'kg',
   amount: '元'
+}
+
+export const BILLING_MODE_LABEL: Record<BillingMode, string> = {
+  first_next: '首续费',
+  fixed: '固定运费'
 }
 
 export const FREE_SHIPPING_MODE_LABEL: Record<FreeShippingMode, string> = {

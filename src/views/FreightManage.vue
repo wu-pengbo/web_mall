@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { mockTemplates } from '../data/freight'
-import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, FREE_SHIPPING_MODE_LABEL, DEFAULT_REMOTE_AREAS } from '../types/freight'
+import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL, FREE_SHIPPING_MODE_LABEL, DEFAULT_REMOTE_AREAS } from '../types/freight'
 import type { FreightTemplate } from '../types/freight'
 
 const router = useRouter()
@@ -73,6 +73,9 @@ const getFreeShippingText = (t: FreightTemplate) => {
 
 const getRuleSummary = (t: FreightTemplate): string => {
   if (t.freeShippingMode === 'all') return '—'
+  if (t.billingMode === 'fixed') {
+    return `固定 ¥${t.fixedFee ?? t.defaultRule.firstFee}`
+  }
   const unit = CHARGE_TYPE_UNIT[t.chargeType]
   let s = `首${t.defaultRule.firstQty}${unit}¥${t.defaultRule.firstFee}`
   s += ` 续${t.defaultRule.additionalQty}${unit}¥${t.defaultRule.additionalFee}`
@@ -108,6 +111,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
           <tr>
             <th>模板名称</th>
             <th style="white-space: nowrap;">计费方式</th>
+            <th>计费模式</th>
             <th>包邮方式</th>
             <th>运费规则</th>
             <th>偏远加收</th>
@@ -125,6 +129,7 @@ const getRuleSummary = (t: FreightTemplate): string => {
                 :class="item.chargeType === 'piece' ? 'normal' : item.chargeType === 'weight' ? 'processing' : 'paid'"
               >{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span>
             </td>
+            <td><span class="status-tag" :class="item.billingMode === 'first_next' ? 'refund' : 'draft'">{{ BILLING_MODE_LABEL[item.billingMode] }}</span></td>
             <td>
               <span class="free-tag" :class="item.freeShippingMode">
                 {{ getFreeShippingText(item) }}

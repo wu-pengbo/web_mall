@@ -2,8 +2,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { mockTemplates } from '../data/freight'
-import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, DEFAULT_REMOTE_AREAS } from '../types/freight'
-import type { ChargeType, FreeShippingMode, FreightTemplate } from '../types/freight'
+import { CHARGE_TYPE_LABEL, CHARGE_TYPE_UNIT, BILLING_MODE_LABEL, DEFAULT_REMOTE_AREAS } from '../types/freight'
+import type { ChargeType, BillingMode, FreeShippingMode, FreightTemplate } from '../types/freight'
 
 const router = useRouter()
 const route = useRoute()
@@ -12,6 +12,8 @@ const isEdit = !!route.query.id
 const form = reactive({
   name: '',
   chargeType: 'piece' as ChargeType,
+  billingMode: 'first_next' as BillingMode,
+  fixedFee: 10,
   freeShippingMode: 'none' as FreeShippingMode,
   freeShippingThreshold: 99,
   freeShippingExcludeRemote: true,
@@ -43,16 +45,24 @@ const validate = (): boolean => {
   formErrors.value = []
   if (!form.name.trim()) formErrors.value.push('请填写模板名称')
   if (needsDefaultRule.value) {
-    if (form.defaultRule.firstQty < 1) formErrors.value.push('默认运费：首件/重不能小于 1')
-    if (form.defaultRule.firstFee < 0) formErrors.value.push('默认运费：首费不能为负数')
-    if (form.defaultRule.additionalQty < 1) formErrors.value.push('默认运费：续件/重不能小于 1')
-    if (form.defaultRule.additionalFee < 0) formErrors.value.push('默认运费：续费不能为负数')
+    if (form.billingMode === 'fixed') {
+      if (form.fixedFee < 0) formErrors.value.push('默认运费：固定运费不能为负数')
+    } else {
+      if (form.defaultRule.firstQty < 1) formErrors.value.push('默认运费：首件/重不能小于 1')
+      if (form.defaultRule.firstFee < 0) formErrors.value.push('默认运费：首费不能为负数')
+      if (form.defaultRule.additionalQty < 1) formErrors.value.push('默认运费：续件/重不能小于 1')
+      if (form.defaultRule.additionalFee < 0) formErrors.value.push('默认运费：续费不能为负数')
+    }
   }
   if (form.enableRemoteRule) {
-    if (form.remoteRule.firstQty < 1) formErrors.value.push('偏远加收：首件/重不能小于 1')
-    if (form.remoteRule.firstFee < 0) formErrors.value.push('偏远加收：首费不能为负数')
-    if (form.remoteRule.additionalQty < 1) formErrors.value.push('偏远加收：续件/重不能小于 1')
-    if (form.remoteRule.additionalFee < 0) formErrors.value.push('偏远加收：续费不能为负数')
+    if (form.billingMode === 'fixed') {
+      if (form.remoteRule.firstFee < 0) formErrors.value.push('偏远加收：运费不能为负数')
+    } else {
+      if (form.remoteRule.firstQty < 1) formErrors.value.push('偏远加收：首件/重不能小于 1')
+      if (form.remoteRule.firstFee < 0) formErrors.value.push('偏远加收：首费不能为负数')
+      if (form.remoteRule.additionalQty < 1) formErrors.value.push('偏远加收：续件/重不能小于 1')
+      if (form.remoteRule.additionalFee < 0) formErrors.value.push('偏远加收：续费不能为负数')
+    }
   }
   return formErrors.value.length === 0
 }
@@ -73,6 +83,8 @@ onMounted(() => {
     if (tpl) {
       form.name = tpl.name
       form.chargeType = tpl.chargeType
+      form.billingMode = tpl.billingMode
+      form.fixedFee = tpl.fixedFee ?? 10
       form.freeShippingMode = tpl.freeShippingMode
       form.freeShippingThreshold = tpl.freeShippingThreshold ?? 99
       form.freeShippingExcludeRemote = tpl.freeShippingExcludeRemote
@@ -142,6 +154,30 @@ onMounted(() => {
           <!-- 分隔线 -->
           <div class="divider"></div>
 
+          <!-- 计费模式 -->
+          <div class="section-label">计费模式</div>
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <label
+              class="radio-card"
+              :class="{ active: form.billingMode === 'first_next' }"
+              @click="form.billingMode = 'first_next'"
+            >
+              <span>首续费</span>
+              <span class="sub-text" style="font-size: 11px;">首 X {{ unitLabel }} ¥N，续 X {{ unitLabel }} ¥M</span>
+            </label>
+            <label
+              class="radio-card"
+              :class="{ active: form.billingMode === 'fixed' }"
+              @click="form.billingMode = 'fixed'"
+            >
+              <span>固定运费</span>
+              <span class="sub-text" style="font-size: 11px;">每单统一收 ¥N</span>
+            </label>
+          </div>
+
+          <!-- 分隔线 -->
+          <div class="divider"></div>
+
           <!-- 包邮方式 — 三段式 -->
           <div class="section-label">包邮方式</div>
 
@@ -182,7 +218,7 @@ onMounted(() => {
               <div class="form-control-row">
                 <span class="form-tip">满</span>
                 <input type="number" class="form-input form-input-sm" v-model.number="form.freeShippingThreshold" min="0" />
-                <span class="form-tip">{{ form.chargeType === 'piece' ? '件' : 'kg' }}</span>
+                <span class="form-tip">{{ unitLabel }}</span>
               </div>
             </div>
             <div class="form-item" style="margin-top: 16px;">
@@ -204,34 +240,48 @@ onMounted(() => {
           <div v-if="needsDefaultRule">
             <div class="section-label">默认运费</div>
 
-            <table class="rule-table">
-              <thead>
-                <tr>
-                  <th style="width: 130px;">首{{ unitLabel }}</th>
-                  <th style="width: 100px;">首费</th>
-                  <th style="width: 130px;">续{{ unitLabel }}</th>
-                  <th style="width: 100px;">续费</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstQty" min="1" /></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                      <span class="form-tip">¥</span>
-                      <input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstFee" min="0" step="0.01" />
-                    </div>
-                  </td>
-                  <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalQty" min="1" /></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                      <span class="form-tip">¥</span>
-                      <input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalFee" min="0" step="0.01" />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- 首续费 -->
+            <template v-if="form.billingMode === 'first_next'">
+              <table class="rule-table">
+                <thead>
+                  <tr>
+                    <th style="width: 130px;">首{{ unitLabel }}</th>
+                    <th style="width: 100px;">首费</th>
+                    <th style="width: 130px;">续{{ unitLabel }}</th>
+                    <th style="width: 100px;">续费</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstQty" min="1" /></td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span class="form-tip">¥</span>
+                        <input type="number" class="form-input rule-input" v-model.number="form.defaultRule.firstFee" min="0" step="0.01" />
+                      </div>
+                    </td>
+                    <td><input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalQty" min="1" /></td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span class="form-tip">¥</span>
+                        <input type="number" class="form-input rule-input" v-model.number="form.defaultRule.additionalFee" min="0" step="0.01" />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+            <!-- 固定运费 -->
+            <template v-if="form.billingMode === 'fixed'">
+              <div class="fixed-fee-row">
+                <span style="font-size: 14px; color: #4E5969;">每单统一收取</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span class="form-tip">¥</span>
+                  <input type="number" class="form-input" v-model.number="form.fixedFee" min="0" step="0.01" style="width: 100px; text-align: center;" />
+                </div>
+                <span style="font-size: 14px; color: #4E5969;">运费</span>
+              </div>
+            </template>
 
             <!-- 偏远加收开关 -->
             <div class="remote-toggle">
@@ -245,39 +295,53 @@ onMounted(() => {
             </div>
 
             <div v-if="form.enableRemoteRule" class="nested-section">
-              <table class="rule-table">
-                <thead>
-                  <tr>
-                    <th style="width: 130px;">首{{ unitLabel }}</th>
-                    <th style="width: 100px;">首费</th>
-                    <th style="width: 130px;">续{{ unitLabel }}</th>
-                    <th style="width: 100px;">续费</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstQty" min="1" /></td>
-                    <td>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span class="form-tip">¥</span>
-                        <input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstFee" min="0" step="0.01" />
-                      </div>
-                    </td>
-                    <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalQty" min="1" /></td>
-                    <td>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span class="form-tip">¥</span>
-                        <input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalFee" min="0" step="0.01" />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <template v-if="form.billingMode === 'first_next'">
+                <table class="rule-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 130px;">首{{ unitLabel }}</th>
+                      <th style="width: 100px;">首费</th>
+                      <th style="width: 130px;">续{{ unitLabel }}</th>
+                      <th style="width: 100px;">续费</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstQty" min="1" /></td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                          <span class="form-tip">¥</span>
+                          <input type="number" class="form-input rule-input" v-model.number="form.remoteRule.firstFee" min="0" step="0.01" />
+                        </div>
+                      </td>
+                      <td><input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalQty" min="1" /></td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                          <span class="form-tip">¥</span>
+                          <input type="number" class="form-input rule-input" v-model.number="form.remoteRule.additionalFee" min="0" step="0.01" />
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </template>
+              <template v-if="form.billingMode === 'fixed'">
+                <div class="fixed-fee-row">
+                  <span style="font-size: 14px; color: #4E5969;">每单统一加收</span>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span class="form-tip">¥</span>
+                    <input type="number" class="form-input" v-model.number="form.remoteRule.firstFee" min="0" step="0.01" style="width: 100px; text-align: center;" />
+                  </div>
+                </div>
+              </template>
             </div>
 
             <!-- 费率说明 -->
-            <div class="form-tip-box">
+            <div v-if="form.billingMode === 'first_next'" class="form-tip-box">
               <strong>运费计算：</strong>运费 = 首费 + ⌈(数量 − 首{{ unitLabel }}) / 续{{ unitLabel }}⌉ × 续费
+            </div>
+            <div v-if="form.billingMode === 'fixed'" class="form-tip-box">
+              <strong>运费计算：</strong>每单统一收取固定金额，与商品数量无关
             </div>
           </div>
 
@@ -370,5 +434,11 @@ onMounted(() => {
 .all-free-note {
   text-align: center; font-size: 16px; color: #0E7B3A; font-weight: 500;
   padding: 40px 0; background-color: #E8F8EE; border-radius: 10px; margin-top: 16px;
+}
+
+/* 固定运费行 */
+.fixed-fee-row {
+  display: flex; align-items: center; gap: 8px; padding: 16px;
+  background-color: #FAFAFA; border-radius: 8px; border: 1px solid #E5E6EB;
 }
 </style>
