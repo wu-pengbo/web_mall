@@ -101,10 +101,10 @@ export function createSpecialRule(chargeType: ChargeType): ShippingRule {
 // ==================== 标签映射 ====================
 
 export const CHARGE_TYPE_LABEL: Record<ChargeType, string> = {
+  FIXED: '固定邮费',
   BY_QUANTITY: '按件计费',
   BY_WEIGHT: '按重量计费',
-  BY_ORDER_AMOUNT: '按金额阶梯',
-  FIXED: '固定邮费'
+  BY_ORDER_AMOUNT: '按金额阶梯'
 }
 
 /** 获取计费配置的文字描述 */

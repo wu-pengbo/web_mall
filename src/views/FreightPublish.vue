@@ -11,10 +11,52 @@ const router = useRouter()
 const route = useRoute()
 const isEdit = !!route.query.id
 
+// --- 判断规则是否为空（新建时无数据） ---
+function isEmptyRule(rule: ShippingRule): boolean {
+  const c = rule.chargeConfig
+  switch (chargeType.value) {
+    case 'FIXED': return (c as FixedConfig).fixedFee === 0
+    case 'BY_QUANTITY': {
+      const q = c as QuantityConfig
+      return q.firstFee === 0 && q.additionalFee === 0
+    }
+    case 'BY_WEIGHT': {
+      const w = c as WeightConfig
+      return w.firstFee === 0 && w.additionalFee === 0
+    }
+    case 'BY_ORDER_AMOUNT': {
+      const a = c as AmountConfig
+      return a.amountRanges.length === 1 && a.amountRanges[0].fee === 0
+    }
+  }
+}
+
+function createEmptyDefaultRule(type: ChargeType): ShippingRule {
+  const rule = createDefaultRule(type)
+  // 将费用字段置零
+  const c = rule.chargeConfig
+  switch (type) {
+    case 'FIXED': (c as FixedConfig).fixedFee = 0; break
+    case 'BY_QUANTITY': {
+      const q = c as QuantityConfig
+      q.firstFee = 0; q.additionalFee = 0; break
+    }
+    case 'BY_WEIGHT': {
+      const w = c as WeightConfig
+      w.firstFee = 0; w.additionalFee = 0; break
+    }
+    case 'BY_ORDER_AMOUNT': {
+      const a = c as AmountConfig
+      if (a.amountRanges.length > 0) a.amountRanges[0].fee = 0; break
+    }
+  }
+  return rule
+}
+
 // --- 主状态 ---
 const templateName = ref('')
-const chargeType = ref<ChargeType>('BY_WEIGHT')
-const defaultRule = ref<ShippingRule>(createDefaultRule('BY_WEIGHT'))
+const chargeType = ref<ChargeType>('FIXED')
+const defaultRule = ref<ShippingRule>(createEmptyDefaultRule('FIXED'))
 const specialRules = ref<ShippingRule[]>([])
 
 // --- 弹窗状态 ---
@@ -50,9 +92,11 @@ onMounted(() => {
 // --- 切换计费方式 ---
 const switchChargeType = async (newType: ChargeType) => {
   if (newType === chargeType.value) return
-  if (!confirm(`切换计费方式将清空所有已配置的费率参数，是否继续？`)) return
+  if (!isEmptyRule(defaultRule.value) || specialRules.value.length > 0) {
+    if (!confirm(`切换计费方式将清空所有已配置的费率参数，是否继续？`)) return
+  }
   chargeType.value = newType
-  defaultRule.value = createDefaultRule(newType)
+  defaultRule.value = createEmptyDefaultRule(newType)
   specialRules.value = []
 }
 
@@ -482,7 +526,7 @@ const isOccupied = (prov: string) => {
   </div>
 </template>
 
-<style scoped>
+<style>
 @import '../assets/wallet-common.css';
 
 :root {
@@ -493,7 +537,9 @@ const isOccupied = (prov: string) => {
   --warning: #e6a23c;
   --border: #e4e7ed; --bg: #f5f6f8;
 }
+</style>
 
+<style scoped>
 .fp { background: var(--bg); min-height: calc(100vh - 60px); color: var(--c1); font-family: -apple-system,'SF Pro Display','PingFang SC','Microsoft YaHei',sans-serif; }
 .fp-top { position: sticky; top: 0; z-index: 100; background: var(--bg); }
 .fp-bar { height: 60px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; }

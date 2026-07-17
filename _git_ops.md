@@ -76,3 +76,5 @@
 | 2026-07-16 12:35 | commit | feature/freight-optimization | feat: 运费模板大优化——动态表单、阶梯/固定计费、偏远合并、实时预览、字段重命名 | 0034502 |
 
 | 2026-07-16 13:50 | commit | feature/freight-optimization | feat: 去掉硬编码偏远地区，改为默认运费+用户自定义地区运费 | 221c593 |
+
+| 2026-07-16 14:22 | commit | feature/freight-optimization | feat: 运费模板按HTML重构——4种计费方式、默认+特殊规则、弹窗编辑、金额阶梯、地区冲突检测 | 2df914c |

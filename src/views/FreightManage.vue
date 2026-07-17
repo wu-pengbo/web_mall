@@ -109,9 +109,11 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
   </div>
 </template>
 
-<style scoped>
+<style>
 @import '../assets/wallet-common.css';
+</style>
 
+<style scoped>
 .fm { background-color: #F5F7FA; min-height: calc(100vh - 60px); color: #1D2129; padding: 20px; font-family: -apple-system,'SF Pro Display','PingFang SC','Microsoft YaHei',sans-serif; }
 .pg-hd { margin-bottom: 20px; }
 .tt { font-size: 18px; font-weight: 700; color: #1D2129; }
