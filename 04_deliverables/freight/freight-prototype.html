@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运费管理系统 - 原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ==================== 布局 ==================== */
+        .left-panel { width: 78%; overflow-y: auto; }
+        .right-panel { width: 22%; background: #FFFBF0; border-left: 1px solid #E5E7EB; overflow-y: auto; }
+        @media (max-width: 900px) { .left-panel { width: 100%; } .right-panel { display: none; } }
+
+        /* ==================== 视图切换 ==================== */
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        /* ==================== 连线 ==================== */
+        .proto-line { stroke: #165DFF; stroke-width: 2; fill: none; pointer-events: none; }
+        .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+        .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; }
+        
+        /* ==================== 弹窗 ==================== */
+        .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 680px; max-height: 85vh; overflow-y: auto; margin: 1rem; width: 100%; }
+
+        /* ==================== 标签 ==================== */
+        .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .tag-blue { background: #E8F3FF; color: #165DFF; }
+        .tag-green { background: #E8F8EE; color: #00B42A; }
+        .tag-gray { background: #F2F3F5; color: #86909C; }
+        .tag-orange { background: #FFF7E6; color: #D46B08; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-yes { background: #E8F8EE; color: #00B42A; }
+        .badge-no { background: #F2F3F5; color: #86909C; }
+
+        /* ==================== 计费方式卡片 ==================== */
+        .rc { cursor: pointer; border: 2px solid #E5E6EB; border-radius: 8px; padding: 10px 16px; text-align: center; font-size: 13px; font-weight: 500; transition: all 0.2s; user-select: none; min-width: 90px; flex: 1; position: relative; }
+        .rc:hover { border-color: #b3d8ff; }
+        .rc.active { border-color: #165DFF; background: #F0F5FF; color: #165DFF; font-weight: 600; box-shadow: 0 0 0 1px rgba(22,93,255,0.1); }
+        .rc .check-mark { display: none; position: absolute; top: 4px; right: 6px; font-size: 12px; color: #165DFF; }
+        .rc.active .check-mark { display: block; }
+
+        /* ==================== 规则卡片 ==================== */
+        .rule-card { background: #FAFBFC; border: 1px solid #E5E6EB; border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
+        .rule-card:hover { border-color: #c0c4cc; }
+
+        /* ==================== 区域选择器 ==================== */
+        .region-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1.5px solid #E5E6EB; background: #fff; transition: all 0.15s; user-select: none; white-space: nowrap; display: inline-block; margin: 2px; }
+        .region-chip:hover { border-color: #165DFF; }
+        .region-chip.selected { background: #165DFF; color: #fff; border-color: #165DFF; }
+        .region-chip.disabled { background: #f0f0f0; color: #bbb; cursor: not-allowed; border-color: #e0e0e0; text-decoration: line-through; }
+
+        /* ==================== Toast ==================== */
+        .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }
+        .toast.show { opacity: 1; }
+        .toast-success { background: #E8F8EE; color: #00B42A; border: 1px solid #b7eb8f; }
+        .toast-error { background: #FFF1F0; color: #F53F3F; border: 1px solid #ffccc7; }
+
+        /* ==================== 确认弹窗 ==================== */
+        .confirm-overlay { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+        .confirm-overlay.active { display: flex; }
+        .confirm-box { background: white; border-radius: 12px; padding: 24px; width: 360px; max-width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center; }
+        .confirm-box .icon { font-size: 36px; margin-bottom: 8px; }
+        .confirm-box p { font-size: 14px; color: #333; margin-bottom: 16px; line-height: 1.5; }
+
+        /* ==================== Toggle 开关 ==================== */
+        .toggle-switch { position: relative; width: 44px; height: 24px; border-radius: 12px; background: #c0c4cc; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+        .toggle-switch.toggle-on { background: #165DFF; }
+        .toggle-switch .toggle-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: left 0.2s; }
+        .toggle-switch.toggle-on .toggle-knob { left: 23px; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- SVG 连线层 -->
+    <svg id="svg-lines" class="fixed inset-0 w-full h-full pointer-events-none z-50"></svg>
+
+    <div class="flex h-screen">
+        <!-- ==================== 左侧面板 ==================== -->
+        <div id="left-panel" class="left-panel p-6 overflow-y-auto">
+
+            <!-- ===================== 视图1：列表页 ===================== -->
+            <div id="page-list" class="page-view active">
+                <!-- 标题+新建按钮 -->
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-xl font-bold text-gray-800">运费模板管理</h1>
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition" onclick="showPage('page-form')">+ 新建模板</button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <!-- 搜索 -->
+                    <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-gray-500">模板名称</label>
+                            <input type="text" class="px-3 py-2 border border-gray-200 rounded-lg text-sm w-48 focus:outline-none focus:border-blue-400" placeholder="搜索…" />
+                        </div>
+                        <button class="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm" onclick="showToast('查询完成', 'success')">查询</button>
+                        <button class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm" onclick="var inp=this.parentElement.previousElementSibling.querySelector('input');if(inp)inp.value='';showToast('已重置', 'success')">重置</button>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold">运费模板列表</h2>
+                        <span class="text-sm text-gray-400">共 5 条</span>
+                    </div>
+
+                    <!-- 表格 -->
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="text-left p-3 font-semibold">模板名称</th>
+                                <th class="text-left p-3 font-semibold">计费方式</th>
+                                <th class="text-left p-3 font-semibold">默认规则</th>
+                                <th class="text-left p-3 font-semibold">特殊地区</th>
+                                <th class="text-left p-3 font-semibold">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-t border-gray-100 hover:bg-gray-50 transition" data-pid="1">
+                                <td class="p-3 font-medium truncate max-w-[160px]" title="全国包邮">全国包邮</td>
+                                <td class="p-3"><span class="tag tag-blue">固定邮费</span></td>
+                                <td class="p-3">
+                                    <span class="badge badge-yes">完全包邮</span>
+                                    <div class="text-xs text-gray-400 mt-1">固定运费 0 元</div>
+                                </td>
+                                <td class="p-3"><span class="text-gray-400">—</span></td>
+                                <td class="p-3"><span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-form')">编辑</span> <span class="text-red-400 cursor-pointer hover:underline ml-3" onclick="showConfirm('确定删除「全国包邮」？未关联商品，可删除。',function(){showToast('删除成功','success')})">删除</span></td>
+                            </tr>
+                            <tr class="border-t border-gray-100 hover:bg-gray-50 transition">
+                                <td class="p-3 font-medium truncate max-w-[160px]" title="阶梯运费+偏远加收">阶梯运费+偏远加收</td>
+                                <td class="p-3"><span class="tag tag-blue">按重量计费</span></td>
+                                <td class="p-3">
+                                    <span class="badge badge-yes">满99元包邮</span>
+                                    <div class="text-xs text-gray-400 mt-1">首重1kg/10元，续重0.5kg/5元</div>
+                                </td>
+                                <td class="p-3"><span class="tag tag-orange">1条</span></td>
+                                <td class="p-3"><span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-form')">编辑</span> <span class="text-red-400 cursor-pointer hover:underline ml-3" onclick="showConfirm('该模板已被56个商品使用中，无法删除。',function(){showToast('删除失败：模板使用中','error')})">删除</span></td>
+                            </tr>
+                            <tr class="border-t border-gray-100 hover:bg-gray-50 transition">
+                                <td class="p-3 font-medium truncate max-w-[160px]" title="图书按件计费">图书按件计费</td>
+                                <td class="p-3"><span class="tag tag-blue">按件计费</span></td>
+                                <td class="p-3">
+                                    <span class="badge badge-no">不包邮</span>
+                                    <div class="text-xs text-gray-400 mt-1">首1件/5元，续1件/2元</div>
+                                </td>
+                                <td class="p-3"><span class="tag tag-orange">1条</span></td>
+                                <td class="p-3"><span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-form')">编辑</span> <span class="text-red-400 cursor-pointer hover:underline ml-3" onclick="showConfirm('确定删除「图书按件计费」？未关联商品，可删除。',function(){showToast('删除成功','success')})">删除</span></td>
+                            </tr>
+                            <tr class="border-t border-gray-100 hover:bg-gray-50 transition">
+                                <td class="p-3 font-medium truncate max-w-[160px]" title="金额阶梯满199包邮">金额阶梯满199包邮</td>
+                                <td class="p-3"><span class="tag tag-blue">按金额阶梯</span></td>
+                                <td class="p-3">
+                                    <span class="badge badge-yes">满199元包邮</span>
+                                    <div class="text-xs text-gray-400 mt-1">0~199元: 10元</div>
+                                </td>
+                                <td class="p-3"><span class="text-gray-400">—</span></td>
+                                <td class="p-3"><span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-form')">编辑</span> <span class="text-red-400 cursor-pointer hover:underline ml-3" onclick="showConfirm('确定删除「金额阶梯满199包邮」？未关联商品，可删除。',function(){showToast('删除成功','success')})">删除</span></td>
+                            </tr>
+                            <tr class="border-t border-gray-100 hover:bg-gray-50 transition">
+                                <td class="p-3 font-medium truncate max-w-[160px]" title="固定运费10元">固定运费10元</td>
+                                <td class="p-3"><span class="tag tag-blue">固定邮费</span></td>
+                                <td class="p-3">
+                                    <span class="badge badge-no">不包邮</span>
+                                    <div class="text-xs text-gray-400 mt-1">固定运费 10 元</div>
+                                </td>
+                                <td class="p-3"><span class="tag tag-orange">1条</span></td>
+                                <td class="p-3"><span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-form')">编辑</span> <span class="text-red-400 cursor-pointer hover:underline ml-3" onclick="showConfirm('该模板已被35个商品使用中，无法删除。',function(){showToast('删除失败：模板使用中','error')})">删除</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 分页 -->
+                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                        <span class="text-sm text-gray-400">共 5 条</span>
+                        <div class="flex gap-1">
+                            <button class="px-3 py-1 text-sm border border-gray-200 rounded bg-white text-gray-400 cursor-not-allowed">上一页</button>
+                            <button class="px-3 py-1 text-sm border border-blue-500 rounded bg-blue-500 text-white" onclick="showToast('当前第 1 页', 'success')">1</button>
+                            <button class="px-3 py-1 text-sm border border-gray-200 rounded bg-white text-gray-500 cursor-not-allowed">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== 视图2：新建/编辑表单页 ===================== -->
+            <div id="page-form" class="page-view">
+                <!-- 顶部面包屑+保存 -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-blue-500 cursor-pointer hover:underline" onclick="showPage('page-list')">运费模板管理</span>
+                        <span class="text-gray-300">/</span>
+                        <span class="text-gray-800 font-medium">新建模板</span>
+                    </div>
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition" onclick="showToast('模板保存成功！', 'success');setTimeout(function(){showPage('page-list')},500)">保存模板</button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <!-- 模板名称 -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">模板名称</label>
+                        <input type="text" class="w-full max-w-md px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" placeholder="请输入模板名称" value="" />
+                    </div>
+
+                    <!-- 计费方式 -->
+                    <div class="mb-5" data-pid="2">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">计费方式（全局统一）</label>
+                        <div class="flex gap-2">
+                            <div class="rc active" data-pid="7">
+                                <span class="check-mark">✓</span>
+                                <span>固定邮费</span>
+                            </div>
+                            <div class="rc" data-pid="8">
+                                <span class="check-mark">✓</span>
+                                <span>按件计费</span>
+                            </div>
+                            <div class="rc">
+                                <span class="check-mark">✓</span>
+                                <span>按重量计费</span>
+                            </div>
+                            <div class="rc">
+                                <span class="check-mark">✓</span>
+                                <span>按金额阶梯</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分隔线 -->
+                    <div class="border-t border-gray-100 my-5"></div>
+
+                    <!-- 默认运费 -->
+                    <div class="mb-5" data-pid="3">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                                <span class="text-sm font-semibold">默认运费</span>
+                                <span class="tag tag-blue text-xs">兜底规则</span>
+                            </div>
+                            <button class="text-blue-500 text-sm hover:underline flex items-center gap-1" onclick="openModal('modal-default-rule')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                编辑
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">全国适用</span>
+                            <span class="badge badge-yes">完全包邮</span>
+                        </div>
+                        <div class="text-xs text-gray-400" id="default-rule-desc">固定运费 0 元</div>
+                    </div>
+
+                    <!-- 分隔线 -->
+                    <div class="border-t border-gray-100 my-5"></div>
+
+                    <!-- 特殊地区规则 -->
+                    <div data-pid="10">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-orange-400 inline-block"></span>
+                                <span class="text-sm font-semibold">特殊地区规则（覆盖默认）</span>
+                                <span class="tag tag-orange text-xs">1条</span>
+                            </div>
+                            <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition" onclick="openModal('modal-special-rule')">+ 添加特殊地区</button>
+                        </div>
+
+                        <!-- 已有规则 -->
+                        <div class="rule-card" data-pid="4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="region-chip selected" style="cursor:default;">新疆</span>
+                                    <span class="region-chip selected" style="cursor:default;">西藏</span>
+                                    <span class="region-chip selected" style="cursor:default;">青海</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs flex-shrink-0">
+                                    <button class="text-blue-500 hover:underline flex items-center gap-1" onclick="openModal('modal-special-rule')">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        编辑
+                                    </button>
+                                    <span class="text-red-400 cursor-pointer hover:underline" onclick="showConfirm('确定删除该特殊地区规则？',function(){var el=this;if(el){var card=el.closest('.rule-card');if(card)card.style.display='none';showToast('特殊地区规则已删除','success')}}.bind(this))">删除</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-sm">
+                                <span class="badge badge-no">不包邮</span>
+                                <span class="text-gray-500 text-xs ml-2">首1件/12元，续1件/8元</span>
+                            </div>
+                        </div>
+
+                        <!-- 空状态 -->
+                        <div class="text-center py-8 text-gray-400 text-sm hidden">
+                            暂无特殊地区规则，点击上方按钮添加
+                        </div>
+                    </div>
+
+                    <!-- 保存按钮（右下角） -->
+                    <div class="flex justify-end mt-6 pt-4 border-t border-gray-100">
+                        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 mr-2" onclick="showPage('page-list')">取消</button>
+                        <button class="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition" onclick="showToast('模板保存成功！', 'success');setTimeout(function(){showPage('page-list')},500)">保存模板</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 右侧：功能说明 ==================== -->
+        <div id="right-panel" class="right-panel p-4 overflow-y-auto">
+            <div class="text-xs font-semibold text-amber-700 mb-3 uppercase tracking-wider">功能说明</div>
+            <div class="space-y-2">
+                <div data-pid="1" class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed"><span class="font-bold text-amber-600">①</span> 列表操作：超长省略、10条/页分页、删除保护（有关联商品不可删）</div>
+                <div data-pid="2" class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed"><span class="font-bold text-amber-600">②</span> 计费方式：固定邮费/按件/按重量/按金额阶梯四种，切换时清空规则需二次确认。<br><span class="text-gray-400">【按件计费】运费 = 首费 + ⌈(购买件数 − 首件) / 续件⌉ × 续费。<br>当购买件数 ≤ 首件时，只收首费，不加续费。⌈⌉ 表示向上取整：除不尽时按一个续费单位计算。<br>例如：首3件¥10续2件¥5，买4件 → 10+⌈(4-3)/2⌉×5 = 15元；买6件 → 10+⌈(6-3)/2⌉×5 = 20元<br><br>【按重量计费】运费 = 首费 + ⌈(总重 − 首重) / 续重⌉ × 续费。<br>当总重 ≤ 首重时，只收首费，不加续费。⌈⌉ 表示向上取整，除不尽时按一个续费单位计算。<br>例如：首3kg¥10续2kg¥5，4kg → 10+⌈(4-3)/2⌉×5 = 15元；6kg → 10+⌈(6-3)/2⌉×5 = 20元<br><br>【按金额阶梯】订单金额落在哪个区间就收对应运费。区间之间连续不可跳跃。</span></div>
+                <div data-pid="3" class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed"><span class="font-bold text-amber-600">③</span> 默认规则：全国兜底不可删除，弹窗编辑包邮设置+计费参数。<br><span class="text-gray-400">包邮门槛=0时无条件包邮，计费参数自动隐藏。</span></div>
+                <div data-pid="4" class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed"><span class="font-bold text-amber-600">④</span> 特殊规则：支持多条，地区冲突检测（已占用省份灰色禁选），每条独立配置包邮+计费覆盖默认。<br><span class="text-gray-400">匹配优先级：买家收货地址优先匹配特殊规则，未命中则使用默认规则。</span></div>
+
+                <!-- 金额阶梯逻辑说明 -->
+                <div class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed" style="background:#fef7e6;border-color:#fde68a;">
+                    <span class="font-bold text-amber-600">⑤</span> <strong>金额阶梯区间逻辑：</strong>每次添加区间时自动从最后一个区间中间拆分。<br>
+                    <span class="text-gray-400">例：阈值199，起始[0~199]→加1次→[0~99][99~199]→加1次→[0~49][49~99][99~199]。<br>有包邮门槛时最后区间 max 锁定为门槛值不可编辑。区间必须连续，不可跳跃。</span>
+                </div>
+
+                <!-- 页面切换说明 -->
+                <div class="proto-desc p-2.5 rounded-lg text-xs leading-relaxed" style="background:#e8f4fd;border-color:#b6d4fe;">
+                    <span class="font-bold text-blue-600">↕</span> 点击「新建模板」或「编辑」切换到表单页；点击面包屑「运费模板管理」返回列表
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗：编辑默认规则 ==================== -->
+    <div id="modal-default-rule" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold">编辑默认规则</h2>
+                <button onclick="closeModal('modal-default-rule')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center text-lg">&times;</button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-1">适用地区</label>
+                <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-blue-600 font-semibold">全国（默认兜底规则）</div>
+            </div>
+            <div class="mb-4 pb-4 border-b border-gray-100">
+                <label class="block text-sm font-medium text-gray-600 mb-2">包邮设置</label>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="toggle-switch toggle-on" data-target="def-free-threshold" onclick="toggleFreeShipping(this)">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="toggle-label text-sm font-medium" style="color:#00B42A;">开启包邮</span>
+                </div>
+                <div id="def-free-threshold">
+                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）<span class="text-gray-300 font-normal">填0表示无条件包邮，无需计费参数</span></label>
+                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="0" oninput="toggleChargeForm(this.value, 'def-modal-charge-form')" />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-2">计费参数 <span class="text-gray-300 font-normal">（未达包邮门槛时生效）</span></label>
+                <div id="def-modal-charge-form"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button onclick="closeModal('modal-default-rule')" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
+                <button onclick="closeModal('modal-default-rule');showToast('默认规则已更新','success')" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗：添加/编辑特殊地区规则 ==================== -->
+    <div id="modal-special-rule" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="modal-special-title text-lg font-bold">添加特殊地区规则</h2>
+                <button onclick="closeModal('modal-special-rule')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center text-lg">&times;</button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-1">选择适用地区 <span class="text-gray-300 font-normal">（可多选）</span></label>
+                <div class="flex flex-wrap gap-1 p-3 border border-gray-200 rounded-lg bg-gray-50 max-h-32 overflow-y-auto" id="region-chip-container">
+                </div>
+                <div class="text-xs text-gray-400 mt-1">灰色划线地区已被其他特殊规则占用，不可选择</div>
+            </div>
+            <div class="mb-4 pb-4 border-b border-gray-100">
+                <label class="block text-sm font-medium text-gray-600 mb-2">包邮设置</label>
+                <div class="flex items-center gap-3">
+                    <div class="toggle-switch" data-target="sp-free-threshold" onclick="toggleFreeShipping(this)">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="toggle-label text-sm font-medium text-gray-500">不包邮</span>
+                </div>
+                <div id="sp-free-threshold" style="display:none;margin-top:10px;">
+                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）<span class="text-gray-300 font-normal">填0表示无条件包邮</span></label>
+                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm" value="99" oninput="toggleChargeForm(this.value, 'sp-modal-charge-form')" />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-2">计费参数 <span class="text-gray-300 font-normal">（未达包邮门槛时生效）</span></label>
+                <div id="sp-modal-charge-form"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button onclick="closeModal('modal-special-rule')" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
+                <button onclick="closeModal('modal-special-rule');showToast('特殊地区规则已保存','success')" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 全局 Toast ==================== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ==================== 全局确认弹窗 ==================== -->
+    <div id="confirm-overlay" class="confirm-overlay">
+        <div class="confirm-box">
+            <div class="icon">&#9888;</div>
+            <p id="confirm-message"></p>
+            <div class="flex justify-center gap-2">
+                <button class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onclick="closeConfirm()">取消</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 页面切换 ====================
+        function showPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
+            var page = document.getElementById(pageId);
+            if (page) page.classList.add('active');
+            // 重新绘制连线（延迟等DOM渲染）
+            setTimeout(drawLines, 50);
+        }
+
+        // ==================== 弹窗控制 ====================
+        function getChargeFormHTML(ct) {
+            if (ct === '固定邮费') return '<div class="bg-gray-50 p-3 rounded-lg"><div class="flex items-center gap-2 text-sm flex-wrap"><span>固定运费</span><input type="number" class="w-20 px-2 py-1 border border-gray-200 rounded text-sm text-center" value="0" /><span>元</span></div><div class="text-xs text-gray-400 mt-2">每单统一收取该固定金额。</div></div>';
+            var unit = ct === '按重量计费' ? 'kg' : '件';
+            var firstLabel = ct === '按重量计费' ? '首重' : '首';
+            var addLabel = ct === '按重量计费' ? '续重' : '续';
+            var hint = '';
+            if (ct === '按件计费') hint = '运费 = 首费 + ⌈(购买件数 − 首件) / 续件⌉ × 续费。当购买件数 ≤ 首件时，只收首费，不加续费。⌈⌉ 表示向上取整：除不尽时按一个续费单位计算。例如：首3件¥10续2件¥5，买4件→15元；买6件→20元。';
+            if (ct === '按重量计费') hint = '运费 = 首费 + ⌈(总重 − 首重) / 续重⌉ × 续费。当总重 ≤ 首重时，只收首费，不加续费。⌈⌉ 表示向上取整，除不尽时按一个续费单位计算。例如：首3kg¥10续2kg¥5，4kg→15元；6kg→20元。';
+            if (ct === '按金额阶梯') {
+                return '<div class="bg-gray-50 p-3 rounded-lg"><div id="amount-range-container"></div><div style="margin-top:8px;"><button class="text-blue-500 text-xs hover:underline" onclick="addAmountRange()">+ 添加区间</button></div><div class="text-xs text-gray-400 mt-2" id="amount-range-hint">订单金额所在区间对应运费。有包邮门槛时，最后区间上限锁定为门槛值。</div></div>';
+            }
+            return '<div class="bg-gray-50 p-3 rounded-lg"><div class="flex items-center gap-2 text-sm flex-wrap"><span>' + firstLabel + '</span><input type="number" class="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" value="1" /><span>' + unit + '，运费</span><input type="number" class="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" value="10" /><span>元</span></div><div class="flex items-center gap-2 text-sm flex-wrap mt-2"><span>' + addLabel + '</span><input type="number" class="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" value="1" /><span>' + unit + '，运费</span><input type="number" class="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" value="5" /><span>元</span></div><div class="mt-2 p-2 bg-white rounded text-xs text-gray-400 leading-relaxed">' + hint + '</div></div>';
+        }
+        function getCurrentChargeTypeName() {
+            var active = document.querySelector('#page-form .rc.active span:not(.check-mark)');
+            return active ? active.textContent.trim() : '固定邮费';
+        }
+        function updateModalContent() {
+            var ct = getCurrentChargeTypeName();
+            var defForm = document.getElementById('def-modal-charge-form');
+            var spForm = document.getElementById('sp-modal-charge-form');
+            if (defForm) defForm.innerHTML = getChargeFormHTML(ct);
+            if (spForm) spForm.innerHTML = getChargeFormHTML(ct);
+            // 初始化计费参数显隐（根据默认门槛值）
+            var defThreshold = document.querySelector('#def-free-threshold input');
+            if (defThreshold) toggleChargeForm(defThreshold.value, 'def-modal-charge-form');
+            var spThreshold = document.querySelector('#sp-free-threshold input');
+            if (spThreshold) toggleChargeForm(spThreshold.value, 'sp-modal-charge-form');
+            // 初始化金额阶梯区间
+            if (ct === '按金额阶梯') {
+                var thr = null;
+                var thrInp = document.querySelector('#def-free-threshold input');
+                if (thrInp) { var tv = parseFloat(thrInp.value); if (!isNaN(tv) && tv > 0) thr = tv; }
+                initAmountRanges(thr);
+            }
+            // 填充地区芯片
+            var chipContainer = document.getElementById('region-chip-container');
+            if (chipContainer) {
+                var provinces = ['北京市','天津市','河北省','山西省','内蒙古自治区','辽宁省','吉林省','黑龙江省','上海市','江苏省','浙江省','安徽省','福建省','江西省','山东省','河南省','湖北省','湖南省','广东省','广西壮族自治区','海南省','重庆市','四川省','贵州省','云南省','西藏自治区','陕西省','甘肃省','青海省','宁夏回族自治区','新疆维吾尔自治区'];
+                chipContainer.innerHTML = provinces.map(function(p) { return '<span class="region-chip" onclick="toggleRegionChip(this)">' + p + '</span>'; }).join('');
+            }
+        }
+        function openModal(id) {
+            var modal = document.getElementById(id);
+            if (!modal) return;
+            // 打开弹窗前更新内容
+            updateModalContent();
+            modal.classList.add('active');
+            setTimeout(drawLines, 50);
+        }
+        function closeModal(id) {
+            var modal = document.getElementById(id);
+            if (modal) modal.classList.remove('active');
+            setTimeout(drawLines, 50);
+        }
+
+        // ==================== Toggle 开关 ====================
+        function toggleFreeShipping(el) {
+            el.classList.toggle('toggle-on');
+            var targetId = el.getAttribute('data-target');
+            var target = document.getElementById(targetId);
+            var label = el.parentElement.querySelector('.toggle-label');
+            var isOn = el.classList.contains('toggle-on');
+            if (target) target.style.display = isOn ? 'block' : 'none';
+            if (label) {
+                label.textContent = isOn ? '开启包邮' : '不包邮';
+                label.style.color = isOn ? '#00B42A' : '#86909C';
+            }
+            // 关闭包邮时恢复显示计费参数，开启包邮时检查门槛值
+            if (!isOn) {
+                // 不包邮 → 显示计费参数
+                var formId = targetId === 'def-free-threshold' ? 'def-modal-charge-form' : 'sp-modal-charge-form';
+                var form = document.getElementById(formId);
+                if (form) form.style.display = 'block';
+            } else {
+                // 打开包邮 → 检查门槛值
+                var inp = target ? target.querySelector('input[type=number]') : null;
+                if (inp) toggleChargeForm(inp.value, targetId === 'def-free-threshold' ? 'def-modal-charge-form' : 'sp-modal-charge-form');
+            }
+        }
+
+        // ==================== 金额阶梯区间管理 ====================
+        var amountRanges = [];
+        function initAmountRanges(threshold) {
+            amountRanges = [{ min: 0, max: threshold && threshold > 0 ? threshold : null, fee: 10 }];
+            renderAmountRanges();
+        }
+        function renderAmountRanges() {
+            var container = document.getElementById('amount-range-container');
+            if (!container) return;
+            if (amountRanges.length === 0) { container.innerHTML = '<div class="text-xs text-gray-400 p-2">暂无区间</div>'; return; }
+            var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+            html += '<thead><tr style="border-bottom:1px solid #ddd;"><th style="text-align:left;padding:4px;color:#909399;font-weight:500;font-size:11px;">最低(元)</th><th style="padding:4px;width:20px;"></th><th style="text-align:left;padding:4px;color:#909399;font-weight:500;font-size:11px;">最高(元)</th><th style="text-align:left;padding:4px;color:#909399;font-weight:500;font-size:11px;">运费(元)</th><th style="width:24px;"></th></tr></thead><tbody>';
+            for (var i = 0; i < amountRanges.length; i++) {
+                var r = amountRanges[i];
+                var isLast = i === amountRanges.length - 1;
+                var maxVal = r.max === null ? '' : r.max;
+                var maxDisabled = isLast ? 'disabled' : '';
+                var maxPlaceholder = isLast ? '以上' : '';
+                html += '<tr style="border-bottom:1px solid #eee;">';
+                html += '<td style="padding:3px;"><input type="number" class="w-16 px-1 py-1 border border-gray-200 rounded text-sm text-center" value="' + r.min + '" disabled style="background:#f5f7fa;" /></td>';
+                html += '<td style="padding:3px;text-align:center;color:#c0c4cc;">~</td>';
+                html += '<td style="padding:3px;"><input type="number" class="range-max w-16 px-1 py-1 border border-gray-200 rounded text-sm text-center" value="' + maxVal + '" placeholder="' + maxPlaceholder + '" ' + maxDisabled + ' onchange="updateRangeMax(' + i + ',this.value)" /></td>';
+                html += '<td style="padding:3px;"><input type="number" class="w-16 px-1 py-1 border border-gray-200 rounded text-sm text-center" value="' + r.fee + '" min="0" step="0.01" onchange="amountRanges[' + i + '].fee=parseFloat(this.value)||0" /></td>';
+                html += '<td style="padding:3px;">';
+                if (amountRanges.length > 1) html += '<span class="text-red-400 cursor-pointer text-xs" onclick="removeAmountRange(' + i + ')">&times;</span>';
+                html += '</td></tr>';
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        function addAmountRange() {
+            if (amountRanges.length === 0) { initAmountRanges(null); return; }
+            var last = amountRanges[amountRanges.length - 1];
+            // 判断是否有包邮门槛
+            var thresholdInput = document.querySelector('#def-free-threshold input, #sp-free-threshold input');
+            var threshold = null;
+            if (thresholdInput) {
+                var val = parseFloat(thresholdInput.value);
+                if (!isNaN(val) && val > 0) threshold = val;
+            }
+            if (threshold) {
+                // 有门槛：拆分最后一个区间
+                var gap = threshold - last.min;
+                if (gap <= 1) { showToast('区间间距太小，无法继续拆分', 'error'); return; }
+                var splitPoint = last.min + Math.ceil(gap / 2);
+                var oldMin = last.min;
+                var oldFee = last.fee;
+                last.min = splitPoint;
+                last.max = threshold;
+                amountRanges.splice(amountRanges.length - 1, 0, { min: oldMin, max: splitPoint, fee: oldFee });
+            } else {
+                // 无门槛：在末尾添加
+                if (last.max === null) last.max = (last.min || 0) + 50;
+                amountRanges.push({ min: last.max, max: null, fee: last.fee });
+            }
+            renderAmountRanges();
+        }
+        function removeAmountRange(index) {
+            if (amountRanges.length <= 1) { showToast('至少保留一个金额区间', 'error'); return; }
+            amountRanges.splice(index, 1);
+            // 确保连续性
+            for (var i = 1; i < amountRanges.length; i++) amountRanges[i].min = amountRanges[i - 1].max;
+            renderAmountRanges();
+        }
+        function updateRangeMax(index, val) {
+            var num = parseFloat(val);
+            var thresholdInput = document.querySelector('#def-free-threshold input, #sp-free-threshold input');
+            var threshold = null;
+            if (thresholdInput) {
+                var tVal = parseFloat(thresholdInput.value);
+                if (!isNaN(tVal) && tVal > 0) threshold = tVal;
+            }
+            var r = amountRanges[index];
+            if (index < amountRanges.length - 1) {
+                r.max = (val === '' || isNaN(num)) ? null : num;
+                if (threshold && r.max !== null && r.max > threshold) r.max = threshold;
+                for (var i = index + 1; i < amountRanges.length; i++) {
+                    amountRanges[i].min = amountRanges[i - 1].max;
+                    if (threshold && amountRanges[i].min >= threshold) { amountRanges.splice(i); break; }
+                }
+                if (threshold) amountRanges[amountRanges.length - 1].max = threshold;
+            }
+            renderAmountRanges();
+        }
+        function toggleChargeForm(val, formId) {
+            var form = document.getElementById(formId);
+            if (!form) return;
+            var num = parseFloat(val);
+            form.style.display = (val === '' || val === '0' || isNaN(num)) && num === 0 ? 'none' : 'block';
+        }
+
+        // ==================== 地区芯片切换 ====================
+        function toggleRegionChip(el) {
+            if (el.classList.contains('disabled')) return;
+            el.classList.toggle('selected');
+        }
+
+        // ==================== 连线绘制 ====================
+        function drawLines() {
+            var svg = document.getElementById('svg-lines');
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            var rightPanel = document.getElementById('right-panel');
+            if (!rightPanel || rightPanel.offsetParent === null) { svg.style.display = 'none'; return; }
+            svg.style.display = 'block';
+
+            // 只连线当前可见页面中的元素
+            var activePage = document.querySelector('.page-view.active');
+            if (!activePage) return;
+
+            activePage.querySelectorAll('[data-pid]').forEach(function(el) {
+                var pid = el.getAttribute('data-pid');
+                var rightEl = rightPanel.querySelector('[data-pid="' + pid + '"]');
+                if (!rightEl) return;
+
+                var lRect = el.getBoundingClientRect();
+                var rRect = rightEl.getBoundingClientRect();
+
+                var x1 = lRect.right;
+                var y1 = lRect.top + lRect.height / 2;
+                var x2 = rRect.left;
+                var y2 = rRect.top + rRect.height / 2;
+
+                // 连线
+                var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                var d = 'M' + x1 + ',' + y1 + ' C' + (x1 + 20) + ',' + y1 + ' ' + (x2 - 20) + ',' + y2 + ' ' + x2 + ',' + y2;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'proto-line');
+                svg.appendChild(path);
+
+                // 编号圆
+                var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x1);
+                circle.setAttribute('cy', y1);
+                circle.setAttribute('r', 9);
+                circle.setAttribute('fill', '#165DFF');
+                svg.appendChild(circle);
+
+                var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x1);
+                text.setAttribute('y', y1 + 3);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', 'white');
+                text.setAttribute('font-size', 10);
+                text.textContent = pid;
+                svg.appendChild(text);
+            });
+        }
+
+        // ==================== Toast ====================
+        function showToast(msg, type) {
+            var el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.className = 'toast toast-' + (type || 'success') + ' show';
+            setTimeout(function() { el.classList.remove('show'); }, 2000);
+        }
+
+        // ==================== 确认弹窗 ====================
+        var confirmCallback = null;
+        function showConfirm(msg, callback) {
+            var overlay = document.getElementById('confirm-overlay');
+            var msgEl = document.getElementById('confirm-message');
+            if (!overlay || !msgEl) return;
+            msgEl.textContent = msg;
+            overlay.classList.add('active');
+            confirmCallback = callback;
+        }
+        function closeConfirm() {
+            var overlay = document.getElementById('confirm-overlay');
+            if (overlay) overlay.classList.remove('active');
+            confirmCallback = null;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var okBtn = document.getElementById('confirm-ok-btn');
+            if (okBtn) {
+                okBtn.addEventListener('click', function() {
+                    if (confirmCallback) confirmCallback();
+                    closeConfirm();
+                });
+            }
+        });
+
+        // ==================== 计费方式卡片切换 ====================
+        var chargeTypeData = {
+            '固定邮费': { badge: '完全包邮', desc: '固定运费 0 元' },
+            '按件计费': { badge: '不包邮', desc: '首1件/8元，续1件/3元' },
+            '按重量计费': { badge: '不包邮', desc: '首重1kg/10元，续重0.5kg/5元' },
+            '按金额阶梯': { badge: '不包邮', desc: '0~199元: 10元' }
+        };
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.rc').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    var parent = this.parentElement;
+                    if (!parent) return;
+                    var name = this.querySelector('span:not(.check-mark)');
+                    if (!name) return;
+                    var data = chargeTypeData[name.textContent.trim()];
+                    var hasActive = parent.querySelector('.rc.active');
+                    if (hasActive && hasActive !== this) {
+                        showConfirm('切换计费方式将清空所有已配置的费率参数，是否继续？', function() {
+                            parent.querySelectorAll('.rc').forEach(function(c) { c.classList.remove('active'); });
+                            this.classList.add('active');
+                            // 更新默认运费描述
+                            if (data) {
+                                var badge = document.querySelector('#page-form .badge');
+                                var desc = document.getElementById('default-rule-desc');
+                                if (badge) badge.textContent = data.badge;
+                                if (badge) { badge.className = 'badge'; badge.classList.add(data.badge === '完全包邮' ? 'badge-yes' : 'badge-no'); }
+                                if (desc) desc.textContent = data.desc;
+                            }
+                            showToast('已切换为「' + name.textContent.trim() + '」', 'success');
+                        }.bind(this));
+                    } else {
+                        parent.querySelectorAll('.rc').forEach(function(c) { c.classList.remove('active'); });
+                        this.classList.add('active');
+                        if (data) {
+                            var badge = document.querySelector('#page-form .badge');
+                            var desc = document.getElementById('default-rule-desc');
+                            if (badge) badge.textContent = data.badge;
+                            if (badge) { badge.className = 'badge'; badge.classList.add(data.badge === '完全包邮' ? 'badge-yes' : 'badge-no'); }
+                            if (desc) desc.textContent = data.desc;
+                        }
+                    }
+                });
+            });
+        });
+
+        // ==================== 遮罩层关闭弹窗 ====================
+        document.querySelectorAll('.modal-overlay').forEach(function(m) {
+            m.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+
+        // ==================== ESC键关闭 ====================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(function(m) { m.classList.remove('active'); });
+                closeConfirm();
+            }
+        });
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() { drawLines(); window.addEventListener('resize', drawLines); });
+    </script>
+</body>
+</html>
