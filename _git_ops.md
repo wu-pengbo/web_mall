@@ -84,6 +84,10 @@
 
 | 2026-07-17 09:48 | push | feature/freight-optimization | git push github feature/freight-optimization | 671caef |
 
+| 2026-07-17 10:25 | commit | feature/freight-optimization | feat: 运费模板增加模板ID字段显示 | 45a256d |
+
+| 2026-07-17 10:25 | push | feature/freight-optimization | git push origin feature/freight-optimization | 45a256d |
+
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
