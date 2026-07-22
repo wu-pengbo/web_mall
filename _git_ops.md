@@ -90,6 +90,10 @@
 
 | 2026-07-17 11:30 | commit | feature/freight-optimization | docs: PRD补充运费计算流程、拆单分摊方案，去掉多地址拆分，文件重命名 | 65b8e04 |
 
+| 2026-07-17 11:35 | merge | feature/freight-optimization → main | Fast-forward 合并 | 56dac38 |
+
+| 2026-07-17 11:35 | push | main | git push origin main && git push github main | 56dac38 |
+
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
