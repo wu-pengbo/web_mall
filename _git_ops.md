@@ -94,6 +94,8 @@
 
 | 2026-07-17 11:35 | push | main | git push origin main && git push github main | 56dac38 |
 
+| 2026-07-17 11:40 | delete branch | feature/freight-optimization | 本地 + Gitee 远程删除（GitHub 待补删） | — |
+
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
