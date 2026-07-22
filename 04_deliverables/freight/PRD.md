@@ -98,6 +98,7 @@
 
 | 字段 | 说明 |
 |------|------|
+| 模板ID | 模板唯一标识 |
 | 模板名称 | 模板的标识名称 |
 | 计费方式 | 固定邮费/按件计费/按重量计费/按金额阶梯 |
 | 默认规则 | 包邮状态 + 计费参数描述 |
@@ -228,7 +229,19 @@ FreightTemplate (1) ──── 运费模板
         └── chargeConfig: 按计费方式不同
 ```
 
-### 6.2 计费方式配置
+### 6.2 运费模板字段说明
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 模板唯一标识（如 tpl_001） |
+| name | string | 模板名称 |
+| chargeType | enum | 计费方式（见下方） |
+| defaultRule | ShippingRule | 默认运费规则 |
+| specialRules | ShippingRule[] | 特殊地区规则列表 |
+| productCount | number | 关联商品数量 |
+| status | enum | active / disabled |
+| createdAt | string | 创建时间 |
+| updatedAt | string | 更新时间 |
 
 #### 固定邮费 (FIXED)
 

@@ -341,6 +341,7 @@ const isOccupied = (prov: string) => {
         <div class="form-group" style="margin-bottom:0;">
           <label class="fl">模板名称</label>
           <input type="text" class="fi" v-model="templateName" placeholder="请输入模板名称" style="max-width:400px;" />
+          <span v-if="isEdit && route.query.id" style="margin-left:16px;font-size:12px;color:#909399;font-family:monospace;">ID: {{ route.query.id }}</span>
         </div>
       </div>
 

@@ -78,6 +78,11 @@
 | 2026-07-16 13:50 | commit | feature/freight-optimization | feat: 去掉硬编码偏远地区，改为默认运费+用户自定义地区运费 | 221c593 |
 
 | 2026-07-16 14:22 | commit | feature/freight-optimization | feat: 运费模板按HTML重构——4种计费方式、默认+特殊规则、弹窗编辑、金额阶梯、地区冲突检测 | 2df914c |
+| 2026-07-17 09:47 | commit | feature/freight-optimization | docs: 添加运费管理原型HTML(交互版) | 671caef |
+
+| 2026-07-17 09:48 | push | feature/freight-optimization | git push origin feature/freight-optimization | 671caef |
+
+| 2026-07-17 09:48 | push | feature/freight-optimization | git push github feature/freight-optimization | 671caef |
 
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 

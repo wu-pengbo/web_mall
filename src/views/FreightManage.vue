@@ -72,6 +72,7 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
       <table class="data-table freight-table" v-if="pagedList.length > 0">
         <thead>
           <tr>
+            <th>模板ID</th>
             <th>模板名称</th>
             <th>计费方式</th>
             <th>默认规则</th>
@@ -81,6 +82,7 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
         </thead>
         <tbody>
           <tr v-for="item in pagedList" :key="item.id">
+            <td class="id-col">{{ item.id }}</td>
             <td class="nm" :title="item.name">{{ item.name }}</td>
             <td><span class="status-tag normal">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span></td>
             <td>
@@ -121,6 +123,7 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
 .tb-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
 .tb-tt { font-size: 15px; font-weight: 600; color: #1D2129; }
 .nm { font-weight: 500; color: #1D2129; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.id-col { font-size: 12px; color: #86909C; font-family: 'Geist Mono', 'SF Mono', monospace; white-space: nowrap; }
 .fee-txt { font-size: 12px; color: #86909C; margin-top: 4px; line-height: 1.4; }
 .free-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
 .free-tag.all { background-color: #E8F8EE; color: #0E7B3A; }
