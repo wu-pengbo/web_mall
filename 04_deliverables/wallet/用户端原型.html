@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的钱包 - 移动端原型</title>
+    <style>
+        /* ==========================================
+           设计 Token（钱包用户端规范）
+           ========================================== */
+        :root {
+            --primary: #4F6EF7;          /* 主色（按钮/本金/链接） */
+            --primary-bg: #F0F5FF;       /* 主色浅底 */
+            --primary-border: #D6E4FF;   /* 主色浅边框 */
+            --bonus: #D46B08;            /* 赠送橙 */
+            --bonus-bg: #FFF7E6;         /* 赠送浅底 */
+            --income: #CF1322;           /* 收入红 */
+            --income-bg: #FFF1F0;        /* 收入浅底 */
+            --expense: #0E7B3A;          /* 支出绿 */
+            --expense-bg: #E8F8EE;       /* 支出浅底 */
+            --gray-text: #86909C;        /* 辅助灰 */
+            --gray-bg: #F5F6F8;          /* 浅灰底 */
+            --text-main: #1D2129;        /* 主文字 */
+            --text-sub: #4E5969;         /* 次文字 */
+            --pure-white: #FFFFFF;
+            --overlay-bg: rgba(0, 0, 0, 0.45);
+            --btn-gradient: linear-gradient(135deg, #6C8BFF 0%, #4F6EF7 100%);
+            --btn-shadow: 0 4px 12px rgba(79, 110, 247, 0.3);
+            --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+            --radius-card: 12px;
+            --radius-modal: 16px;
+            --radius-pill: 20px;
+            --radius-chip: 6px;
+
+            --fs-money: 26px;
+            --fs-title: 16px;
+            --fs-body: 14px;
+            --fs-sub: 12px;
+            --fs-tag: 11px;
+            --fw-medium: 500;
+            --fw-semibold: 600;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #F0F0F4;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; font-family: -apple-system, "PingFang SC", sans-serif;
+            padding: 30px;
+        }
+
+        /* ========== 左右分栏 ========== */
+        .split-layout {
+            display: flex; flex-direction: row; justify-content: center; align-items: flex-start;
+            gap: 60px; flex-wrap: wrap; width: 100%; max-width: 900px;
+        }
+        .left-panel { width: 399px; flex-shrink: 0; }
+        .right-panel { width: 375px; flex-shrink: 0; flex-grow: 0; align-self: stretch; }
+
+        /* ========== 手机壳 ========== */
+        .device-wrapper {
+            width: 399px; background: #2C2E31; border-radius: 48px; padding: 12px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08);
+            position: relative;
+        }
+        .device-screen {
+            width: 100%; background: #F5F6F8; border-radius: 34px; overflow: hidden;
+            position: relative; height: 760px;
+        }
+        .dynamic-island {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            width: 110px; height: 28px; background: #000; border-radius: 20px; z-index: 50;
+        }
+
+        /* ========== 顶部状态栏 + 标题栏 ========== */
+        .top-overlay { position: relative; z-index: 10; padding: 0 12px; padding-top: 6px; background: var(--pure-white); }
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 36px; color: #333333; font-size: 14px; font-weight: 600; padding: 0 4px;
+        }
+        .status-icons { display: flex; align-items: center; gap: 4px; }
+        .status-icons svg { width: 16px; height: 16px; fill: #333333; }
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 44px; color: #333333; padding: 0 2px;
+        }
+        .header-bar .back-btn { cursor: pointer; display: flex; align-items: center; }
+        .header-bar .back-btn.disabled { visibility: hidden; pointer-events: none; }
+        .header-bar .back-btn svg { stroke: #333333; }
+        .header-bar .header-title { font-size: 16px; font-weight: 500; }
+        .header-bar .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-bar .header-right svg { fill: #333333; }
+
+        /* ========== APP 内容区 ========== */
+        .app-content {
+            position: relative; z-index: 1;
+            padding: 12px 12px 90px;
+            height: calc(100% - 86px); /* 减去状态栏36px + 标题栏44px + 顶部padding 6px */
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            /* 隐藏式滚动条：不占右侧空间，平时不可见，滚动功能保留 */
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .app-content::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        /* ========== 通用组件 ========== */
+        .card { background: var(--pure-white); border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px; }
+        .card-title { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 12px; }
+        .money { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-feature-settings: 'tnum'; }
+        .toast {
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            z-index: 80; background: rgba(0,0,0,0.75); color: #fff; font-size: 13px;
+            padding: 8px 18px; border-radius: 20px; white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s var(--transition-ease);
+        }
+        .toast.show { opacity: 1; }
+
+        /* ========== 钱包首页 ========== */
+        .balance-card {
+            background: linear-gradient(135deg, #4F6EF7 0%, #6C8BFF 100%);
+            border-radius: var(--radius-card); padding: 20px 18px; margin-bottom: 12px;
+            color: #fff; position: relative; overflow: hidden;
+        }
+        .balance-card::after {
+            content: ''; position: absolute; right: -30px; top: -30px; width: 130px; height: 130px;
+            border-radius: 50%; background: rgba(255,255,255,0.08);
+        }
+        .balance-label { font-size: 12px; opacity: 0.85; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .balance-status { font-size: 10px; padding: 1px 8px; border-radius: 10px; background: rgba(255,255,255,0.2); }
+        .balance-status.frozen { background: rgba(255,80,80,0.9); }
+        .balance-main { font-size: 30px; font-weight: 700; font-feature-settings: 'tnum'; letter-spacing: -0.02em; margin-bottom: 14px; }
+        .balance-split { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; }
+        .balance-split-item { flex: 1; }
+        .balance-split-item + .balance-split-item { border-left: 1px solid rgba(255,255,255,0.2); padding-left: 12px; }
+        .bs-label { font-size: 11px; opacity: 0.8; margin-bottom: 3px; }
+        .bs-value { font-size: 14px; font-weight: 600; font-feature-settings: 'tnum'; }
+        .bs-hint { font-size: 10px; opacity: 0.7; margin-top: 1px; }
+        .freeze-banner {
+            background: var(--income-bg); border: 1px solid #FFCCC7; border-radius: 8px;
+            color: #CF1322; font-size: 12px; padding: 8px 12px; margin-bottom: 12px; display: none;
+        }
+        .freeze-banner.show { display: block; }
+
+        .action-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .action-btn {
+            flex: 1; height: 42px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .action-btn:active { transform: scale(0.97); }
+        .action-btn.primary { background: var(--btn-gradient); color: #fff; box-shadow: var(--btn-shadow); border: none; }
+        .action-btn.ghost { background: var(--pure-white); color: var(--primary); border: 1px solid var(--primary-border); }
+        .action-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+        /* ========== 最近交易 ========== */
+        .recent-list .recent-item {
+            display: flex; align-items: center; padding: 10px 0;
+            border-bottom: 1px solid #F2F3F5;
+        }
+        .recent-item:last-child { border-bottom: none; }
+        .ri-icon {
+            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; margin-right: 10px; flex-shrink: 0;
+        }
+        .ri-icon svg { width: 16px; height: 16px; }
+        .ri-icon.recharge { background: var(--income-bg); } .ri-icon.recharge svg { fill: var(--income); }
+        .ri-icon.consume { background: var(--expense-bg); } .ri-icon.consume svg { fill: var(--expense); }
+        .ri-icon.refund { background: var(--income-bg); } .ri-icon.refund svg { fill: var(--income); }
+        .ri-icon.withdraw { background: var(--gray-bg); } .ri-icon.withdraw svg { fill: var(--gray-text); }
+        .ri-icon.freeze { background: var(--gray-bg); } .ri-icon.freeze svg { fill: var(--gray-text); }
+        .ri-main { flex: 1; min-width: 0; }
+        .ri-name { font-size: 13px; color: var(--text-main); font-weight: 500; }
+        .ri-time { font-size: 11px; color: var(--gray-text); margin-top: 2px; }
+        .ri-amount { font-size: 13px; font-weight: 600; font-feature-settings: 'tnum'; }
+        .ri-amount.in { color: var(--income); }
+        .ri-amount.out { color: var(--expense); }
+        .view-all { text-align: center; padding: 8px 0 0; font-size: 12px; color: var(--primary); cursor: pointer; }
+
+        /* ========== 充值页 ========== */
+        .merchant-bar {
+            display: flex; align-items: center; gap: 8px; background: var(--gray-bg);
+            border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text-sub);
+        }
+        .merchant-bar svg { width: 14px; height: 14px; fill: var(--primary); flex-shrink: 0; }
+        .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+        .preset-item {
+            border: 1.5px solid #E5E6EB; border-radius: 10px; padding: 12px 0; text-align: center;
+            cursor: pointer; background: var(--pure-white); transition: all 0.15s;
+        }
+        .preset-item .p-amount { font-size: 16px; font-weight: 600; color: var(--text-main); font-feature-settings: 'tnum'; }
+        .preset-item .p-tag { font-size: 10px; color: var(--bonus); margin-top: 2px; display: none; }
+        .preset-item.selected { border-color: var(--primary); background: var(--primary-bg); }
+        .preset-item.selected .p-amount { color: var(--primary); }
+        .preset-item.selected .p-tag { display: block; }
+        .preset-item.has-bonus .p-tag { display: block; }
+        .custom-input-row {
+            display: flex; align-items: center; gap: 8px; border: 1.5px solid #E5E6EB;
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; background: var(--pure-white);
+        }
+        .custom-input-row.focus { border-color: var(--primary); }
+        .custom-input-row span { font-size: 14px; color: var(--gray-text); }
+        .custom-input-row input {
+            flex: 1; border: none; outline: none; font-size: 15px; font-weight: 600;
+            font-family: inherit; font-feature-settings: 'tnum';
+        }
+        .custom-input-row .limit-hint { font-size: 11px; color: var(--gray-text); white-space: nowrap; }
+        .activity-card {
+            background: var(--bonus-bg); border: 1px solid #FFE0B2; border-radius: 8px;
+            padding: 10px 12px; margin-bottom: 12px;
+        }
+        .activity-card .ac-title { font-size: 12px; font-weight: 600; color: var(--bonus); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .activity-card .ac-title svg { width: 13px; height: 13px; fill: var(--bonus); }
+        .activity-card .ac-row { font-size: 12px; color: var(--text-sub); line-height: 1.7; }
+        .amount-preview {
+            background: var(--gray-bg); border-radius: 8px; padding: 10px 14px;
+            display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-bottom: 12px;
+        }
+        .amount-preview .ap-value { font-weight: 600; font-feature-settings: 'tnum'; color: var(--text-main); }
+        .amount-preview .ap-value.bonus { color: var(--bonus); }
+
+        /* ========== 提现页 ========== */
+        .withdrawable-card {
+            background: var(--primary-bg); border: 1px solid var(--primary-border);
+            border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px;
+        }
+        .wd-label { font-size: 12px; color: var(--primary); margin-bottom: 4px; }
+        .wd-amount { font-size: 26px; font-weight: 700; color: var(--primary); font-feature-settings: 'tnum'; }
+        .wd-hint { font-size: 11px; color: var(--primary); opacity: 0.8; margin-top: 4px; }
+        .amount-input-card { background: var(--pure-white); border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px; }
+        .ai-row { display: flex; align-items: center; gap: 8px; border-bottom: 1.5px solid #E5E6EB; padding-bottom: 10px; }
+        .ai-row span { font-size: 20px; font-weight: 600; color: var(--gray-text); flex-shrink: 0; }
+        .ai-row input {
+            flex: 1; min-width: 0; border: none; outline: none; font-size: 24px; font-weight: 700;
+            font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-feature-settings: 'tnum';
+        }
+        .ai-row .all-btn { font-size: 12px; color: var(--primary); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .fee-row { display: flex; justify-content: space-between; font-size: 13px; padding: 10px 0 0; color: var(--text-sub); }
+        .fee-row .fr-value { font-weight: 600; color: var(--text-main); font-feature-settings: 'tnum'; }
+        .fee-row .fr-value.free { color: var(--expense); }
+        .rule-list { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E6EB; }
+        .rule-item { font-size: 11px; color: var(--gray-text); line-height: 1.8; }
+        .rule-item.error { color: var(--income); }
+
+        /* ========== 明细页 ========== */
+        .filter-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; }
+        .filter-chips::-webkit-scrollbar { display: none; }
+        .chip {
+            flex-shrink: 0; padding: 5px 14px; border-radius: 16px; font-size: 12px;
+            background: var(--pure-white); color: var(--text-sub); border: 1px solid #E5E6EB; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .tx-item {
+            display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #F2F3F5;
+            background: var(--pure-white); cursor: pointer;
+        }
+        .tx-item:last-child { border-bottom: none; }
+        .tx-item .ri-main .ri-sub { font-size: 11px; color: var(--gray-text); margin-top: 2px; }
+        .tx-item .ri-amount .tx-balance { font-size: 11px; color: var(--gray-text); font-weight: 400; margin-top: 2px; text-align: right; }
+
+        /* ========== 底部吸底栏 ========== */
+        .demo-footer {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: var(--pure-white); border-top: 1px solid #F0F0F0;
+            padding: 10px 14px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            z-index: 5; display: flex; align-items: center;
+        }
+        .footer-btn-group {
+            flex: 1; height: 42px; background: var(--btn-gradient); border-radius: var(--radius-pill);
+            box-shadow: var(--btn-shadow); display: flex; overflow: hidden; position: relative; cursor: pointer;
+        }
+        .footer-btn-group::after { content: none; }
+        .footer-btn-group button {
+            flex: 1; background: transparent; border: none; color: white;
+            font-size: 14px; font-weight: 500; cursor: pointer;
+        }
+        .footer-btn-group:active { transform: scale(0.97); }
+        .footer-btn-group:disabled { opacity: 0.45; cursor: not-allowed; }
+        /* 单按钮模式：按钮全宽居中（伪元素已禁用，无分隔线） */
+        .footer-btn-group.single button { flex: 1; }
+
+        /* ========== 底部弹窗 ========== */
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 60;
+            background: var(--overlay-bg);
+            display: flex; justify-content: center; align-items: flex-end;
+            border-radius: 34px; overflow: hidden;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s var(--transition-ease);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-wrapper {
+            width: 100%; background: var(--pure-white);
+            border-radius: var(--radius-modal) var(--radius-modal) 0 0;
+            padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            transform: translateY(100%); transition: transform 0.3s var(--transition-ease);
+        }
+        .overlay.active .modal-wrapper { transform: translateY(0); }
+        .drag-handle { width: 32px; height: 4px; background: #E0E0E0; border-radius: 2px; margin: 0 auto 16px auto; }
+        .modal-close {
+            position: absolute; right: 16px; top: 16px; width: 28px; height: 28px;
+            background: var(--gray-bg); border-radius: 50%; font-size: 14px; color: #999;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .modal-title { font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 14px; text-align: center; }
+        .modal-body { font-size: 13px; color: var(--text-sub); line-height: 1.7; margin-bottom: 16px; }
+        .confirm-summary { background: var(--gray-bg); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+        .cs-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+        .cs-row .cs-label { color: var(--gray-text); }
+        .cs-row .cs-value { font-weight: 600; color: var(--text-main); font-feature-settings: 'tnum'; }
+        .cs-row .cs-value.bonus { color: var(--bonus); }
+        .cs-row .cs-value.big { font-size: 20px; color: var(--income); }
+        .modal-btn {
+            width: 100%; height: 42px; border-radius: var(--radius-pill); border: none;
+            background: var(--btn-gradient); color: #fff; font-size: 14px; font-weight: 500;
+            cursor: pointer; box-shadow: var(--btn-shadow);
+        }
+        .modal-btn:active { transform: scale(0.97); }
+        .modal-btn.cancel { background: var(--gray-bg); color: var(--text-sub); box-shadow: none; margin-bottom: 10px; }
+        .success-icon { text-align: center; margin: 10px 0 14px; }
+        .success-icon svg { width: 56px; height: 56px; }
+        .tx-detail-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #F7F8FA; }
+        .tx-detail-row .td-label { color: var(--gray-text); }
+        .tx-detail-row .td-value { color: var(--text-main); font-weight: 500; text-align: right; max-width: 60%; word-break: break-all; }
+        .bucket-panel { background: var(--gray-bg); border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+        .bucket-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 8px; }
+        .bucket-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; color: var(--text-sub); }
+        .bucket-row .br-amount { font-weight: 500; font-feature-settings: 'tnum'; }
+        .bucket-row .br-amount.out { color: var(--expense); }
+        .bucket-row .br-amount.in { color: var(--income); }
+        .bucket-expand { font-size: 11px; color: var(--primary); cursor: pointer; margin-top: 6px; }
+
+        /* ========== 右侧 DS 卡 ========== */
+        .design-system-card {
+            width: 100%; background: var(--pure-white); border-radius: var(--radius-modal);
+            padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+        .ds-title {
+            font-size: 18px; font-weight: var(--fw-semibold); color: #333;
+            margin-bottom: 20px; border-left: 3px solid var(--primary); padding-left: 12px;
+        }
+        .ds-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        .ds-item { display: flex; flex-direction: column; gap: 8px; }
+        .ds-subtitle {
+            font-size: 13px; font-weight: 500; color: #666; margin-bottom: 4px;
+            border-bottom: 1px solid #F0F0F0; padding-bottom: 6px;
+        }
+        .ds-color-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ds-color-block {
+            display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666;
+            background: #FAFAFA; padding: 4px 10px; border-radius: 4px;
+        }
+        .ds-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+        .ds-text-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; }
+        .ds-font-example { display: flex; flex-direction: column; background: #FAFAFA; padding: 6px 14px; border-radius: 4px; }
+        .ds-font-example span:first-child { color: #333; }
+        .ds-font-example span:last-child { font-size: 11px; color: #999; margin-top: 2px; }
+        .ds-margin-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .ds-tag { background: #F0F0F0; padding: 4px 12px; border-radius: 4px; font-size: 12px; color: #666; }
+        .ds-note { font-size: 12px; color: #666; line-height: 1.8; background: #FAFAFA; padding: 12px; border-radius: 8px; }
+
+        @media screen and (max-width: 830px) {
+            .split-layout { flex-direction: column; align-items: center; gap: 40px; }
+            .left-panel { width: 100%; max-width: 399px; align-self: auto; }
+            .right-panel { width: 100%; max-width: 375px; align-self: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="split-layout">
+
+        <!-- ======= 左侧：手机界面 ======= -->
+        <div class="left-panel">
+            <div class="device-wrapper">
+                <div class="device-screen">
+
+                    <div class="dynamic-island"></div>
+                    <div class="toast" id="toast"></div>
+
+                    <!-- 状态栏与标题栏 -->
+                    <div class="top-overlay">
+                        <div class="status-bar">
+                            <span class="time">9:41</span>
+                            <div class="status-icons">
+                                <svg viewBox="0 0 18 18"><path d="M1 16h2v-2H1v2zm4 0h2v-5H5v5zm4 0h2v-8H9v8zm4 0h2v-11h-2v11z"/></svg>
+                                <svg viewBox="0 0 24 24"><path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"/></svg>
+                                <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/><path fill="#FFFFFF" d="M10 17h4v-2h-4v2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="header-bar">
+                            <div class="back-btn" id="backBtn" onclick="goHome()">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </div>
+                            <span class="header-title" id="headerTitle">我的钱包</span>
+                            <div class="header-right">
+                                <span id="freezeToggle" onclick="toggleFreeze()" style="font-size:11px;color:#86909C;cursor:pointer;">冻结演示</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ★★★ 内容区 ★★★ -->
+                    <div class="app-content">
+
+                        <!-- ===== 页面1：钱包首页 ===== -->
+                        <div id="page-home" class="page-view active">
+                            <!-- 余额总览 -->
+                            <div class="balance-card">
+                                <div class="balance-label">总余额（元）
+                                    <span class="balance-status" id="walletStatusTag">正常</span>
+                                </div>
+                                <div class="balance-main money" id="balanceMain">1,280.50</div>
+                                <div class="balance-split">
+                                    <div class="balance-split-item">
+                                        <div class="bs-label">本金（可提现）</div>
+                                        <div class="bs-value money" id="principalValue">1,024.00</div>
+                                    </div>
+                                    <div class="balance-split-item">
+                                        <div class="bs-label">赠送（不可提现）</div>
+                                        <div class="bs-value money" id="bonusValue">256.50</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="freeze-banner" id="freezeBanner">钱包已被冻结，原因：疑似异常交易。冻结期间无法充值、提现。</div>
+
+                            <!-- 冻结/提现中 -->
+                            <div class="card" style="padding:12px 16px;display:flex;justify-content:space-between;">
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:11px;color:#86909C;margin-bottom:4px;">冻结金额</div>
+                                    <div class="money" style="font-size:15px;font-weight:600;color:#4E5969;">200.00</div>
+                                </div>
+                                <div style="width:1px;background:#F2F3F5;margin:0 12px;"></div>
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:11px;color:#86909C;margin-bottom:4px;">提现中</div>
+                                    <div class="money" style="font-size:15px;font-weight:600;color:#4E5969;">50.00</div>
+                                </div>
+                            </div>
+
+                            <!-- 快捷操作 -->
+                            <div class="action-row">
+                                <button class="action-btn primary" id="goRechargeBtn" onclick="goRecharge()">去充值</button>
+                                <button class="action-btn ghost" id="goWithdrawBtn" onclick="goWithdraw()">去提现</button>
+                            </div>
+
+                            <!-- 最近交易 -->
+                            <div class="card">
+                                <div class="card-title">最近交易</div>
+                                <div class="recent-list" id="recentList"></div>
+                                <div class="view-all" onclick="goTransactions()">查看全部流水</div>
+                            </div>
+                        </div>
+
+                        <!-- ===== 页面2：充值 ===== -->
+                        <div id="page-recharge" class="page-view">
+                            <div class="merchant-bar">
+                                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                                收款商户：平台自营商户
+                            </div>
+                            <div class="card">
+                                <div class="card-title">选择充值金额</div>
+                                <div class="preset-grid" id="presetGrid"></div>
+                                <div class="custom-input-row" id="customRow">
+                                    <span>¥</span>
+                                    <input type="number" id="customAmount" placeholder="自定义金额" min="1" max="50000" oninput="onCustomInput()" onfocus="onCustomFocus()" />
+                                    <span class="limit-hint">1~50000元</span>
+                                </div>
+                                <div class="activity-card">
+                                    <div class="ac-title">
+                                        <svg viewBox="0 0 24 24"><path d="M12 2l1.9 5.7h6.1l-5 3.6 1.9 5.7-4.9-3.6-4.9 3.6 1.9-5.7-5-3.6h6.1z"/></svg>
+                                        充值活动
+                                    </div>
+                                    <div class="ac-row">充 100 元 送 10 元（赠送）</div>
+                                    <div class="ac-row">充 500 元 打 95 折</div>
+                                </div>
+                                <div class="amount-preview">
+                                    <span>支付金额</span>
+                                    <span class="ap-value" id="payAmount">¥0.00</span>
+                                </div>
+                                <div class="amount-preview" style="margin-bottom:0;">
+                                    <span>预计到账（含赠送）</span>
+                                    <span class="ap-value bonus" id="receiveAmount">¥0.00</span>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">充值记录</div>
+                                <div class="recent-list" id="rechargeRecords"></div>
+                            </div>
+                        </div>
+
+                        <!-- ===== 页面3：提现 ===== -->
+                        <div id="page-withdraw" class="page-view">
+                            <div class="withdrawable-card">
+                                <div class="wd-label">可提现金额（本金，元）</div>
+                                <div class="wd-amount money" id="withdrawableAmount">1,024.00</div>
+                                <div class="wd-hint">赠送金额不可提现</div>
+                            </div>
+                            <div class="amount-input-card">
+                                <div class="ai-row">
+                                    <span>¥</span>
+                                    <input type="number" id="withdrawInput" placeholder="0.00" oninput="calcWithdrawFee()" />
+                                    <span class="all-btn" onclick="withdrawAll()">全部提现</span>
+                                </div>
+                                <div class="fee-row">
+                                    <span>手续费</span>
+                                    <span class="fr-value" id="withdrawFee">0.00</span>
+                                </div>
+                                <div class="fee-row">
+                                    <span>实际到账</span>
+                                    <span class="fr-value" id="actualAmount">0.00</span>
+                                </div>
+                                <div class="rule-list">
+                                    <div class="rule-item" id="ruleMin">最低提现金额：10 元</div>
+                                    <div class="rule-item" id="ruleMax">最高提现金额：50,000 元 / 单</div>
+                                    <div class="rule-item" id="ruleBalance">不可超过可提现金额</div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">提现记录</div>
+                                <div class="recent-list" id="withdrawRecords"></div>
+                            </div>
+                        </div>
+
+                        <!-- ===== 页面4：交易明细 ===== -->
+                        <div id="page-transactions" class="page-view">
+                            <div class="filter-chips" id="filterChips">
+                                <div class="chip active" data-type="all" onclick="filterTx('all')">全部</div>
+                                <div class="chip" data-type="recharge" onclick="filterTx('recharge')">充值</div>
+                                <div class="chip" data-type="consume" onclick="filterTx('consume')">消费</div>
+                                <div class="chip" data-type="refund" onclick="filterTx('refund')">退款</div>
+                                <div class="chip" data-type="withdraw" onclick="filterTx('withdraw')">提现</div>
+                                <div class="chip" data-type="freeze" onclick="filterTx('freeze')">冻结</div>
+                            </div>
+                            <div class="card" style="padding:4px 16px;" id="txList"></div>
+                        </div>
+
+                    </div>
+
+                    <!-- 底部吸底栏 -->
+                    <div class="demo-footer" id="footer">
+                        <div class="footer-btn-group" id="footerGroup"></div>
+                    </div>
+
+                    <!-- ===== 弹窗：确认充值 ===== -->
+                    <div id="rechargeConfirm" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="modal-close js-close-modal">✕</div>
+                            <div class="modal-title">确认充值</div>
+                            <div class="confirm-summary">
+                                <div class="cs-row"><span class="cs-label">支付金额</span><span class="cs-value big" id="cfPay">¥0.00</span></div>
+                                <div class="cs-row"><span class="cs-label">活动赠送</span><span class="cs-value bonus" id="cfBonus">+¥0.00</span></div>
+                                <div class="cs-row"><span class="cs-label">预计到账</span><span class="cs-value" id="cfReceive">¥0.00</span></div>
+                                <div class="cs-row"><span class="cs-label">收款商户</span><span class="cs-value" style="font-weight:400;">平台自营商户</span></div>
+                            </div>
+                            <button class="modal-btn" onclick="doRecharge()">确认支付</button>
+                        </div>
+                    </div>
+
+                    <!-- ===== 弹窗：支付成功 ===== -->
+                    <div id="rechargeSuccess" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="success-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#00A854" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
+                            </div>
+                            <div class="modal-title">充值成功</div>
+                            <div class="modal-body" style="text-align:center;">
+                                支付 ¥<span id="succPay" class="money">0.00</span>，到账 ¥<span id="succReceive" class="money" style="color:#D46B08;">0.00</span><br/>
+                                已计入余额，可在交易明细中查看
+                            </div>
+                            <button class="modal-btn js-close-modal" onclick="refreshAfterRecharge()">完成</button>
+                        </div>
+                    </div>
+
+                    <!-- ===== 弹窗：提现确认 ===== -->
+                    <div id="withdrawConfirm" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="modal-close js-close-modal">✕</div>
+                            <div class="modal-title">确认提现</div>
+                            <div class="confirm-summary">
+                                <div class="cs-row"><span class="cs-label">提现金额</span><span class="cs-value" id="wfAmount">¥0.00</span></div>
+                                <div class="cs-row"><span class="cs-label">手续费</span><span class="cs-value" id="wfFee">¥0.00</span></div>
+                                <div class="cs-row"><span class="cs-label">实际到账</span><span class="cs-value big" id="wfActual">¥0.00</span></div>
+                            </div>
+                            <button class="modal-btn" onclick="doWithdraw()">确认提现</button>
+                        </div>
+                    </div>
+
+                    <!-- ===== 弹窗：交易详情 ===== -->
+                    <div id="txDetail" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="modal-close js-close-modal">✕</div>
+                            <div class="modal-title">交易详情</div>
+                            <div class="modal-body" id="txDetailBody"></div>
+                            <button class="modal-btn js-close-modal">关闭</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= 右侧：设计规范 DS 卡 ======= -->
+        <div class="right-panel">
+            <div class="design-system-card">
+                <div class="ds-title">我的钱包 · 设计规范 (DS)</div>
+                <div class="ds-grid">
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">色彩规范</div>
+                        <div class="ds-color-row">
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#4F6EF7;"></div>主色 #4F6EF7</div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#D46B08;"></div>赠送橙 #D46B08</div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#CF1322;"></div>收入红 #CF1322</div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#0E7B3A;"></div>支出绿 #0E7B3A</div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#86909C;"></div>辅助灰 #86909C</div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:#F5F6F8;"></div>浅灰底 #F5F6F8</div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">字号 / 字重</div>
+                        <div class="ds-text-row">
+                            <div class="ds-font-example"><span style="font-size:26px; font-weight:700; font-feature-settings:'tnum';">¥1,280.50</span><span>余额 / 700 / Tabular</span></div>
+                            <div class="ds-font-example"><span style="font-size:15px; font-weight:600;">充值金额 15px</span><span>标题 / 600</span></div>
+                            <div class="ds-font-example"><span style="font-size:13px; font-weight:400;">流水正文 13px</span><span>内容 / 400</span></div>
+                            <div class="ds-font-example"><span style="font-size:11px; font-weight:400; color:#86909C;">辅助 11px</span><span>辅助 / 400</span></div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">圆角分级</div>
+                        <div class="ds-margin-row">
+                            <div class="ds-tag">6px 标签/步进器</div>
+                            <div class="ds-tag">8px 提示条</div>
+                            <div class="ds-tag">10px 档位卡片</div>
+                            <div class="ds-tag">12px 卡片</div>
+                            <div class="ds-tag">20px 胶囊按钮</div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">间距 / 热区</div>
+                        <div class="ds-margin-row">
+                            <div class="ds-tag">12px 左右边距</div>
+                            <div class="ds-tag">12px 模块间距</div>
+                            <div class="ds-tag">≥ 44px 点击热区</div>
+                            <div class="ds-tag">底部 safe-area</div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">交互说明</div>
+                        <div class="ds-note">
+                            1. 页面切换：首页 → 充值/提现/明细，返回按钮回首页<br/>
+                            2. 充值：档位选中联动到账预览，自定义输入清档位<br/>
+                            3. 提现：金额输入实时计算手续费与到账，四项校验<br/>
+                            4. 明细：类型筛选 + 点击查看详情（FIFO 资金来源）<br/>
+                            5. 右上角「冻结演示」可切换钱包冻结状态
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 交互控制 -->
+    <script>
+        // ==================== 全局状态 ====================
+        var state = {
+            page: 'home',
+            wallet: { balance: 1280.50, principal: 1024.00, bonus: 256.50, frozen: 200.00, withdrawFrozen: 50.00, status: 'normal', frozenReason: '疑似异常交易' },
+            selectedPreset: null,
+            customAmount: '',
+            rechargeSeq: 2,
+            withdrawSeq: 1
+        };
+
+        // ==================== Mock 数据 ====================
+        var PRESETS = [ { amount: 50, bonus: null }, { amount: 100, bonus: 10 }, { amount: 200, bonus: null }, { amount: 500, discount: 0.95 }, { amount: 1000, bonus: 50 } ];
+        var TX_ICONS = {
+            recharge: '<svg viewBox="0 0 24 24"><path d="M13 2L3 14h7v8l10-12h-7z"/></svg>',
+            consume: '<svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>',
+            refund: '<svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
+            withdraw: '<svg viewBox="0 0 24 24"><path d="M12 2L1 12h4v8h14v-8h4L12 2zm-1 8V8h2v2h-2zm0 4v-2h2v2h-2zm0 4v-2h2v2h-2z"/></svg>',
+            freeze: '<svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg>'
+        };
+        var TX_TYPE_LABEL = { recharge: '充值', consume: '消费', refund: '退款', withdraw: '提现', freeze: '冻结' };
+
+        var mockTx = [
+            { id: 1, type: 'recharge', amount: 100, balance: 1380.50, relatedNo: 'RCH-20260805-001', time: '2026-08-05 10:30', remark: '线上充值', bonus: 10 },
+            { id: 2, type: 'consume', amount: -188, balance: 1192.50, relatedNo: 'ORD-20260804-003', time: '2026-08-04 14:20', remark: '订单消费', buckets: [{ no: 'RCH-20260728-001', time: '2026-07-28 09:00', deduct: 100, remain: 0 }, { no: 'RCH-20260715-002', time: '2026-07-15 16:30', deduct: 88, remain: 312 }] },
+            { id: 3, type: 'refund', amount: 40, balance: 1232.50, relatedNo: 'ORD-20260730-001', time: '2026-08-02 09:15', remark: '订单退款', buckets: [{ no: 'RCH-20260715-002', time: '2026-07-15 16:30', deduct: 40, remain: 352 }] },
+            { id: 4, type: 'withdraw', amount: -200, balance: 1032.50, relatedNo: 'WDR-20260729-001', time: '2026-07-29 11:00', remark: '用户提现' },
+            { id: 5, type: 'freeze', amount: -50, balance: 1232.50, relatedNo: 'TXN-FRZ-001', time: '2026-07-25 15:00', remark: '异常交易冻结' },
+            { id: 6, type: 'recharge', amount: 500, balance: 1330.50, relatedNo: 'RCH-20260728-001', time: '2026-07-28 09:00', remark: '线上充值' },
+            { id: 7, type: 'consume', amount: -59, balance: 830.50, relatedNo: 'ORD-20260722-002', time: '2026-07-22 10:10', remark: '订单消费', buckets: [{ no: 'RCH-20260715-002', time: '2026-07-15 16:30', deduct: 59, remain: 392 }] },
+            { id: 8, type: 'refund', amount: 12, balance: 842.50, relatedNo: 'ORD-20260720-005', time: '2026-07-21 13:40', remark: '订单退款' }
+        ];
+        var mockRechargeRecords = [
+            { no: 'RCH-20260805-001', pay: 100, receive: 110, bonus: 10, status: 'success', time: '2026-08-05 10:30' },
+            { no: 'RCH-20260728-001', pay: 500, receive: 500, bonus: 0, status: 'success', time: '2026-07-28 09:00' },
+            { no: 'RCH-20260715-002', pay: 200, receive: 200, bonus: 0, status: 'success', time: '2026-07-15 16:30' }
+        ];
+        var mockWithdrawRecords = [
+            { no: 'WDR-20260729-001', amount: 200, fee: 0, actual: 200, status: 'approved', time: '2026-07-29 11:00' },
+            { no: 'WDR-20260710-001', amount: 100, fee: 0, actual: 100, status: 'success', time: '2026-07-10 09:20' },
+            { no: 'WDR-20260628-001', amount: 500, fee: 2.50, actual: 497.50, status: 'rejected', reason: '提现申请超出规定期限', time: '2026-06-28 14:00' }
+        ];
+        var WITHDRAW_STATUS = { pending: '待审核', processing: '处理中', approved: '审核通过', success: '已到账', rejected: '已拒绝' };
+
+        // ==================== 工具 ====================
+        function fmt(n) { return Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function moneyClass(v) { return v >= 0 ? 'in' : 'out'; }
+        function signAmt(v) { return (v >= 0 ? '+' : '') + fmt(v); }
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(function() { t.classList.remove('show'); }, 1800);
+        }
+        function openOverlay(id) { document.getElementById(id).classList.add('active'); }
+        function closeOverlay(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ==================== 页面路由 ====================
+        var PAGE_TITLES = { home: '我的钱包', recharge: '充值', withdraw: '提现', transactions: '交易明细' };
+        var PAGE_FOOTER = {
+            home: '',
+            recharge: '<div class="footer-btn-group single" id="footerRechargeBtn"><button onclick="confirmRecharge()">确认充值</button></div>',
+            withdraw: '<div class="footer-btn-group single" id="footerWithdrawBtn"><button onclick="confirmWithdraw()">确认提现</button></div>',
+            transactions: ''
+        };
+        function goPage(page) {
+            state.page = page;
+            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('page-' + page).classList.add('active');
+            document.getElementById('headerTitle').textContent = PAGE_TITLES[page];
+            // 首页/明细页不显示吸底栏（页面自带返回导航），充值/提现页显示主操作按钮
+            var footer = document.getElementById('footer');
+            if (page === 'home' || page === 'transactions') {
+                footer.style.display = 'none';
+                document.querySelector('.app-content').style.paddingBottom = '30px';
+            } else {
+                footer.style.display = 'block';
+                document.getElementById('footerGroup').innerHTML = PAGE_FOOTER[page];
+                document.querySelector('.app-content').style.paddingBottom = '90px';
+            }
+            document.getElementById('backBtn').classList.toggle('disabled', page === 'home');
+            document.getElementById('freezeToggle').style.display = page === 'home' ? '' : 'none';
+            // 页面进入时刷新状态
+            if (page === 'recharge') refreshRechargePage();
+            if (page === 'withdraw') refreshWithdrawPage();
+            if (page === 'transactions') renderTxList('all');
+            if (page === 'home') renderHome();
+        }
+        function goHome() { goPage('home'); }
+        function goRecharge() { if (state.wallet.status === 'frozen') { showToast('钱包已冻结，无法充值'); return; } goPage('recharge'); }
+        function goWithdraw() { if (state.wallet.status === 'frozen') { showToast('钱包已冻结，无法提现'); return; } goPage('withdraw'); }
+        function goTransactions() { goPage('transactions'); }
+
+        // ==================== 冻结演示 ====================
+        function toggleFreeze() {
+            var w = state.wallet;
+            w.status = w.status === 'normal' ? 'frozen' : 'normal';
+            renderHome();
+            var tag = document.getElementById('walletStatusTag');
+            if (w.status === 'frozen') { tag.textContent = '已冻结'; tag.classList.add('frozen'); }
+            else { tag.textContent = '正常'; tag.classList.remove('frozen'); }
+            document.getElementById('freezeBanner').classList.toggle('show', w.status === 'frozen');
+            showToast(w.status === 'frozen' ? '已模拟冻结钱包' : '已模拟解冻钱包');
+        }
+
+        // ==================== 首页渲染 ====================
+        function renderHome() {
+            var w = state.wallet;
+            document.getElementById('balanceMain').textContent = fmt(w.balance);
+            document.getElementById('principalValue').textContent = fmt(w.principal);
+            document.getElementById('bonusValue').textContent = fmt(w.bonus);
+            document.getElementById('goRechargeBtn').disabled = w.status === 'frozen';
+            document.getElementById('goWithdrawBtn').disabled = w.status === 'frozen';
+            // 最近交易前5条
+            var html = '';
+            mockTx.slice(0, 5).forEach(function(tx) {
+                html += '<div class="recent-item">' +
+                    '<div class="ri-icon ' + tx.type + '">' + TX_ICONS[tx.type] + '</div>' +
+                    '<div class="ri-main"><div class="ri-name">' + TX_TYPE_LABEL[tx.type] + (tx.remark ? ' · ' + tx.remark : '') + '</div>' +
+                    '<div class="ri-time">' + tx.time + '</div></div>' +
+                    '<div class="ri-amount ' + moneyClass(tx.amount) + '">' + signAmt(tx.amount) + '</div></div>';
+            });
+            document.getElementById('recentList').innerHTML = html;
+        }
+
+        // ==================== 充值 ====================
+        function renderPresets() {
+            var html = '';
+            PRESETS.forEach(function(p, i) {
+                var tag = '';
+                if (p.bonus) tag = '送' + p.bonus + '元';
+                if (p.discount) tag = '打' + (p.discount * 10).toFixed(1) + '折';
+                html += '<div class="preset-item' + (tag ? ' has-bonus' : '') + (state.selectedPreset === i ? ' selected' : '') + '" onclick="selectPreset(' + i + ')">' +
+                    '<div class="p-amount">¥' + p.amount + '</div><div class="p-tag">' + tag + '</div></div>';
+            });
+            document.getElementById('presetGrid').innerHTML = html;
+        }
+        function selectPreset(i) {
+            state.selectedPreset = i;
+            state.customAmount = '';
+            document.getElementById('customAmount').value = '';
+            document.getElementById('customRow').classList.remove('focus');
+            renderPresets();
+            updateRechargePreview();
+        }
+        function onCustomInput() {
+            state.customAmount = document.getElementById('customAmount').value;
+            state.selectedPreset = null;
+            renderPresets();
+            updateRechargePreview();
+        }
+        function onCustomFocus() { document.getElementById('customRow').classList.add('focus'); }
+        function getPayAmount() {
+            if (state.selectedPreset !== null) return PRESETS[state.selectedPreset].amount;
+            return parseFloat(state.customAmount) || 0;
+        }
+        function getBonusAmount(pay) {
+            if (state.selectedPreset !== null) {
+                var p = PRESETS[state.selectedPreset];
+                if (p.bonus) return p.bonus;
+                if (p.discount) return Math.round(pay * (1 - p.discount) * 100) / 100;
+                return 0;
+            }
+            // 自定义金额命中活动规则：满100送10、满500送25（按5%）
+            if (pay >= 500) return Math.round(pay * 0.05 * 100) / 100;
+            if (pay >= 100) return 10;
+            return 0;
+        }
+        function updateRechargePreview() {
+            var pay = getPayAmount();
+            var bonus = getBonusAmount(pay);
+            var receive = pay + bonus;
+            document.getElementById('payAmount').textContent = '¥' + fmt(pay);
+            document.getElementById('receiveAmount').textContent = '¥' + fmt(receive);
+            var btn = document.getElementById('footerRechargeBtn');
+            if (btn) btn.style.opacity = pay > 0 ? '1' : '0.45';
+        }
+        function refreshRechargePage() {
+            renderPresets();
+            updateRechargePreview();
+            renderRechargeRecords();
+        }
+        function confirmRecharge() {
+            var pay = getPayAmount();
+            if (pay <= 0) { showToast('请选择或输入充值金额'); return; }
+            if (pay < 1 || pay > 50000) { showToast('充值金额需在 1~50000 元之间'); return; }
+            var bonus = getBonusAmount(pay);
+            document.getElementById('cfPay').textContent = '¥' + fmt(pay);
+            document.getElementById('cfBonus').textContent = '+¥' + fmt(bonus);
+            document.getElementById('cfReceive').textContent = '¥' + fmt(pay + bonus);
+            openOverlay('rechargeConfirm');
+        }
+        function doRecharge() {
+            closeOverlay('rechargeConfirm');
+            var pay = getPayAmount();
+            var bonus = getBonusAmount(pay);
+            // 模拟支付 loading
+            showToast('支付处理中...');
+            setTimeout(function() {
+                // 入账：本金 + 赠送
+                state.wallet.principal += pay;
+                state.wallet.bonus += bonus;
+                state.wallet.balance = state.wallet.principal + state.wallet.bonus;
+                // 新增流水
+                state.rechargeSeq += 1;
+                var now = new Date();
+                var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                var no = 'RCH-202608' + String(state.rechargeSeq).padStart(2, '0') + '-00' + state.rechargeSeq;
+                mockTx.unshift({ id: Date.now(), type: 'recharge', amount: pay, balance: state.wallet.balance, relatedNo: no, time: timeStr, remark: '线上充值', bonus: bonus });
+                mockRechargeRecords.unshift({ no: no, pay: pay, receive: pay + bonus, bonus: bonus, status: 'success', time: timeStr });
+                // 展示成功弹窗
+                document.getElementById('succPay').textContent = fmt(pay);
+                document.getElementById('succReceive').textContent = fmt(pay + bonus);
+                renderRechargeRecords();
+                openOverlay('rechargeSuccess');
+            }, 1200);
+        }
+        function refreshAfterRecharge() {
+            closeOverlay('rechargeSuccess');
+            renderHome();
+            goHome();
+            showToast('充值成功，余额已更新');
+        }
+        function renderRechargeRecords() {
+            var html = '';
+            mockRechargeRecords.slice(0, 4).forEach(function(r) {
+                var statusTxt = { success: '已到账', pending: '待支付', failed: '入账失败' }[r.status] || r.status;
+                var statusColor = r.status === 'success' ? '#0E7B3A' : (r.status === 'pending' ? '#D46B08' : '#CF1322');
+                html += '<div class="recent-item">' +
+                    '<div class="ri-icon recharge">' + TX_ICONS.recharge + '</div>' +
+                    '<div class="ri-main"><div class="ri-name">' + r.no + '</div>' +
+                    '<div class="ri-time">' + r.time + ' · 到账 ¥' + fmt(r.receive) + '</div></div>' +
+                    '<div><div style="font-size:11px;color:' + statusColor + ';">' + statusTxt + '</div></div></div>';
+            });
+            document.getElementById('rechargeRecords').innerHTML = html;
+        }
+
+        // ==================== 提现 ====================
+        var WITHDRAW_FEE_RATE = 0.005; // 0.5% 手续费（后台配置示例）
+        var WITHDRAW_MIN = 10, WITHDRAW_MAX = 50000;
+        function refreshWithdrawPage() {
+            document.getElementById('withdrawableAmount').textContent = fmt(state.wallet.principal);
+            document.getElementById('withdrawInput').value = '';
+            document.getElementById('withdrawFee').textContent = '0.00';
+            document.getElementById('actualAmount').textContent = '0.00';
+            document.querySelectorAll('.rule-item').forEach(function(r) { r.classList.remove('error'); });
+            renderWithdrawRecords();
+        }
+        function withdrawAll() {
+            document.getElementById('withdrawInput').value = state.wallet.principal;
+            calcWithdrawFee();
+        }
+        function calcWithdrawFee() {
+            var amt = parseFloat(document.getElementById('withdrawInput').value) || 0;
+            var fee = Math.round(amt * WITHDRAW_FEE_RATE * 100) / 100;
+            var actual = Math.round((amt - fee) * 100) / 100;
+            document.getElementById('withdrawFee').textContent = fmt(fee) + (fee > 0 ? '' : '（免）');
+            document.getElementById('withdrawFee').classList.toggle('free', fee === 0);
+            document.getElementById('actualAmount').textContent = fmt(actual);
+            // 校验
+            document.querySelectorAll('.rule-item').forEach(function(r) { r.classList.remove('error'); });
+            if (amt > 0 && amt < WITHDRAW_MIN) document.getElementById('ruleMin').classList.add('error');
+            if (amt > WITHDRAW_MAX) document.getElementById('ruleMax').classList.add('error');
+            if (amt > state.wallet.principal) document.getElementById('ruleBalance').classList.add('error');
+            var btn = document.getElementById('footerWithdrawBtn');
+            if (btn) btn.style.opacity = (amt > 0 && amt >= WITHDRAW_MIN && amt <= WITHDRAW_MAX && amt <= state.wallet.principal) ? '1' : '0.45';
+        }
+        function confirmWithdraw() {
+            var amt = parseFloat(document.getElementById('withdrawInput').value) || 0;
+            if (amt <= 0) { showToast('请输入提现金额'); return; }
+            if (amt < WITHDRAW_MIN) { showToast('最低提现金额为 10 元'); return; }
+            if (amt > WITHDRAW_MAX) { showToast('单笔最高提现 50,000 元'); return; }
+            if (amt > state.wallet.principal) { showToast('提现金额超过可提现余额'); return; }
+            if (state.wallet.withdrawFrozen + amt > 500) { showToast('已达每日提现限额'); return; }
+            var fee = Math.round(amt * WITHDRAW_FEE_RATE * 100) / 100;
+            document.getElementById('wfAmount').textContent = '¥' + fmt(amt);
+            document.getElementById('wfFee').textContent = '¥' + fmt(fee) + (fee > 0 ? '' : '（免）');
+            document.getElementById('wfActual').textContent = '¥' + fmt(amt - fee);
+            openOverlay('withdrawConfirm');
+        }
+        function doWithdraw() {
+            closeOverlay('withdrawConfirm');
+            var amt = parseFloat(document.getElementById('withdrawInput').value) || 0;
+            var fee = Math.round(amt * WITHDRAW_FEE_RATE * 100) / 100;
+            // 扣本金、转提现中
+            state.wallet.principal = Math.round((state.wallet.principal - amt) * 100) / 100;
+            state.wallet.withdrawFrozen += amt;
+            state.wallet.balance = state.wallet.principal + state.wallet.bonus;
+            state.withdrawSeq += 1;
+            var now = new Date();
+            var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            var no = 'WDR-202608' + String(state.withdrawSeq).padStart(2, '0') + '-00' + state.withdrawSeq;
+            mockTx.unshift({ id: Date.now() + 1, type: 'withdraw', amount: -amt, balance: state.wallet.balance, relatedNo: no, time: timeStr, remark: '用户提现' });
+            mockWithdrawRecords.unshift({ no: no, amount: amt, fee: fee, actual: amt - fee, status: 'pending', time: timeStr });
+            renderWithdrawRecords();
+            renderHome();
+            showToast('提现申请已提交，等待审核');
+            goHome();
+        }
+        function renderWithdrawRecords() {
+            var html = '';
+            mockWithdrawRecords.slice(0, 4).forEach(function(r) {
+                var statusColor = { pending: '#D46B08', processing: '#4F6EF7', approved: '#4F6EF7', success: '#0E7B3A', rejected: '#CF1322' }[r.status];
+                var st = WITHDRAW_STATUS[r.status] || r.status;
+                html += '<div class="recent-item">' +
+                    '<div class="ri-icon withdraw">' + TX_ICONS.withdraw + '</div>' +
+                    '<div class="ri-main"><div class="ri-name">' + r.no + '</div>' +
+                    '<div class="ri-time">' + r.time + ' · 到账 ¥' + fmt(r.actual) + '</div></div>' +
+                    '<div style="text-align:right;"><div style="font-size:11px;color:' + statusColor + ';">' + st + '</div>' +
+                    (r.reason ? '<div style="font-size:10px;color:#CF1322;margin-top:2px;">' + r.reason + '</div>' : '') + '</div></div>';
+            });
+            document.getElementById('withdrawRecords').innerHTML = html;
+        }
+
+        // ==================== 交易明细 ====================
+        function filterTx(type) {
+            document.querySelectorAll('.chip').forEach(function(c) { c.classList.toggle('active', c.getAttribute('data-type') === type); });
+            renderTxList(type);
+        }
+        function renderTxList(type) {
+            var list = mockTx.filter(function(tx) { return type === 'all' || tx.type === type; });
+            var html = '';
+            if (list.length === 0) {
+                html = '<div style="text-align:center;color:#86909C;padding:40px 0;font-size:13px;">暂无相关流水</div>';
+            } else {
+                list.forEach(function(tx) {
+                    html += '<div class="tx-item" onclick="openTxDetail(' + tx.id + ')">' +
+                        '<div class="ri-icon ' + tx.type + '">' + TX_ICONS[tx.type] + '</div>' +
+                        '<div class="ri-main"><div class="ri-name">' + TX_TYPE_LABEL[tx.type] + '</div>' +
+                        '<div class="ri-sub">' + tx.time + ' · ' + (tx.relatedNo || '-') + '</div></div>' +
+                        '<div class="ri-amount ' + moneyClass(tx.amount) + '">' + signAmt(tx.amount) +
+                        '<div class="tx-balance">余额 ¥' + fmt(tx.balance) + '</div></div></div>';
+                });
+            }
+            document.getElementById('txList').innerHTML = html;
+        }
+        function openTxDetail(id) {
+            var tx = mockTx.find(function(t) { return t.id === id; });
+            if (!tx) return;
+            var typeLabel = TX_TYPE_LABEL[tx.type];
+            var html = '';
+            html += '<div class="tx-detail-row"><span class="td-label">交易类型</span><span class="td-value">' + typeLabel + '</span></div>';
+            html += '<div class="tx-detail-row"><span class="td-label">金额</span><span class="td-value ' + (tx.amount >= 0 ? '' : '') + '" style="color:' + (tx.amount >= 0 ? '#CF1322' : '#0E7B3A') + ';">' + signAmt(tx.amount) + ' 元</span></div>';
+            html += '<div class="tx-detail-row"><span class="td-label">变动后余额</span><span class="td-value">¥' + fmt(tx.balance) + '</span></div>';
+            html += '<div class="tx-detail-row"><span class="td-label">关联单号</span><span class="td-value">' + (tx.relatedNo || '-') + '</span></div>';
+            html += '<div class="tx-detail-row"><span class="td-label">交易时间</span><span class="td-value">' + tx.time + '</span></div>';
+            html += '<div class="tx-detail-row"><span class="td-label">备注</span><span class="td-value">' + (tx.remark || '-') + '</span></div>';
+            // FIFO 资金去向
+            if (tx.buckets && tx.buckets.length > 0) {
+                var bucketTitle = tx.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）';
+                html += '<div class="bucket-panel"><div class="bucket-title">' + bucketTitle + '</div>';
+                tx.buckets.forEach(function(b) {
+                    var sign = tx.type === 'refund' ? '+' : '-';
+                    var cls = tx.type === 'refund' ? 'in' : 'out';
+                    html += '<div class="bucket-row"><span>' + b.no + ' · ' + b.time + '</span>' +
+                        '<span class="br-amount ' + cls + '">' + sign + '¥' + fmt(b.deduct) + ' / 剩余 ¥' + fmt(b.remain) + '</span></div>';
+                });
+                html += '</div>';
+            }
+            document.getElementById('txDetailBody').innerHTML = html;
+            openOverlay('txDetail');
+        }
+
+        // ==================== 弹窗通用控制 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.js-close-modal').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var overlay = btn.closest('.overlay');
+                    if (overlay) overlay.classList.remove('active');
+                });
+            });
+            document.querySelectorAll('.overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) this.classList.remove('active');
+                });
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.overlay.active').forEach(function(o) { o.classList.remove('active'); });
+                }
+            });
+            goPage('home');
+        });
+    </script>
+</body>
+</html>
