@@ -96,6 +96,12 @@
 
 | 2026-07-17 11:40 | delete branch | feature/freight-optimization | 本地 + Gitee 远程删除（GitHub 待补删） | — |
 
+| 2026-08-05 11:02 | commit | main | docs: 新增运费管理系统PRD(YXMALL-20260721-001) | 40f0ac0 |
+
+| 2026-08-05 11:02 | push | main | git push origin main（GitHub 网络失败待补） | 40f0ac0 |
+
+| 2026-08-05 11:05 | branch | feature/wallet-user-update | 从 main 建迭代开发分支（钱包用户端更新） | 40f0ac0 |
+
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
