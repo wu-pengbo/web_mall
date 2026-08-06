@@ -108,6 +108,10 @@
 
 | 2026-08-05 15:40 | commit | feature/wallet-user-update | docs: 钱包用户端PRD v2——对齐三栏原型，删除收款商户展示、补全局业务规则/配置联动/状态流转/特殊说明，去数据字典 | — |
 
+| 2026-08-05 16:00 | merge | feature/wallet-user-update → main | Fast-forward 合并（5 个提交） | 79fa89e |
+
+| 2026-08-05 16:00 | delete branch | feature/wallet-user-update | 合并后删除本地 + 远程分支 | — |
+
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
