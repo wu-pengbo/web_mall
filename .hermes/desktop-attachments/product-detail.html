@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商品详情示例 - 手机壳 + 设计规范 + 全局说明（三栏模板生成）</title>
+    <style>
+        /* 使用说明见 SKILL.md；本示例由三栏通用模板生成：改 :root 设计 token 即换主题，DS 卡色块 var 同源自动跟随。 */
+        :root {
+            --primary-red: #E24B4A;
+            --primary-orange: #EF9F27;
+            --tag-bg-light: #FFE9DB;
+            --tag-text-orange: #D9480F;
+            --selected-bg: #FCEBEB;
+            --gray-text: #888780;
+            --gray-bg: #F5F5F7;
+            --pure-white: #FFFFFF;
+            --overlay-bg: rgba(0, 0, 0, 0.45);
+            --btn-gradient: linear-gradient(135deg, #EF9F27 0%, #E24B4A 100%);
+            --btn-shadow: 0 4px 12px rgba(226, 75, 74, 0.3);
+            --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --radius-chip: 6px;
+            --radius-modal: 16px;
+            --radius-pill: 19px;
+            
+            --fs-title: 15px;
+            --fs-body: 13px;
+            --fs-price: 24px;
+            --fs-tag: 11px;
+            --fw-medium: 500;
+            --fw-semibold: 600;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: #F0F0F4; /* 保持外围浅色背景，突出手机 */
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; font-family: -apple-system, "PingFang SC", sans-serif;
+            padding: 30px; 
+        }
+
+        /* ==========================================
+           左右分栏核心布局
+           ========================================== */
+        .split-layout {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 60px;
+            flex-wrap: wrap; /* 小屏自动换行 */
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        .left-panel { width: 399px; flex-shrink: 0; }
+        .right-area { display: flex; flex-direction: row; gap: 40px; align-items: stretch; flex: 1; min-width: 0; max-width: 760px; }
+        .ds-panel { width: 340px; flex-shrink: 0; align-self: stretch; }
+        .note-panel { width: 340px; flex-shrink: 0; align-self: stretch; }
+
+
+        /* ==========================================
+           左侧：手机壳体结构
+           ========================================== */
+        .device-wrapper {
+            width: 399px;
+            background: #2C2E31; 
+            border-radius: 48px;
+            padding: 12px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35), 
+                        inset 0 0 0 1px rgba(255,255,255,0.08);
+            position: relative;
+        }
+
+        .device-screen {
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 34px;
+            overflow: hidden;
+            position: relative;
+            height: 760px; /* 与右侧卡片同高；需要自由高度时改回 min-height:720px */
+        }
+
+        /* 顶部的动态岛 */
+        .dynamic-island {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 28px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 50; 
+        }
+
+        /* ==========================================
+           顶部状态栏 + 标题栏 (纯白底)
+           ========================================== */
+        .top-overlay {
+            position: relative; 
+            z-index: 10;
+            padding: 0 12px;
+            padding-top: 6px;
+            background: #FFFFFF;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 36px;
+            color: #333333;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+        
+        .status-icons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-icons svg { width: 16px; height: 16px; fill: #333333; }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 44px;
+            color: #333333;
+            padding: 0 2px;
+        }
+        .header-bar .back-btn { cursor: pointer; display: flex; align-items: center; }
+        .header-bar .header-title { font-size: 16px; font-weight: 500; }
+        .header-bar .more-btn { cursor: pointer; display: flex; align-items: center; }
+        .header-bar .back-btn svg { stroke: #333333; }
+        .header-bar .more-btn svg { fill: #333333; }
+
+        /* ==========================================
+           左侧：内部 APP 内容 (轮播图已改为直角)
+           ========================================== */
+        .app-content {
+            position: relative;
+            z-index: 1;
+            padding-bottom: 80px; 
+        }
+
+        .detail-section {
+            margin: 0;
+            background: var(--pure-white);
+            border-radius: var(--radius-modal);
+            overflow: hidden;
+            padding: 0 12px 12px 12px;
+        }
+
+        /* 【修改】：去掉了轮播图的圆角，改为直角贴边 */
+        .detail-top-img {
+            height: 240px; background: #E88C84; margin: 0 -12px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            border-radius: 0; /* 强制取消圆角，成直角 */
+        }
+        .main-product {
+            background: #D75C50; width: 120px; height: 120px; border-radius: 12px;
+            color: white; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 600;
+        }
+        .share-btn {
+            position: absolute; top: 12px; right: 12px; 
+            width: 32px; height: 32px; background: rgba(255,255,255,0.95);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;
+        }
+        .share-btn:active { transform: scale(0.9); }
+        .carousel-indicators {
+            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 6px; padding: 4px 10px;
+            background: rgba(0,0,0,0.15); border-radius: 12px;
+            backdrop-filter: blur(2px);
+        }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); transition: all 0.3s; }
+        .dot.active { background: #FFFFFF; width: 12px; border-radius: 4px; }
+
+        .detail-content { padding-top: 12px; }
+        .detail-price { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+        .detail-price strong { font-size: var(--fs-price); color: var(--primary-red); font-feature-settings: "tnum"; letter-spacing: -0.5px; }
+        .detail-price small { font-size: 13px; color: var(--gray-text); text-decoration: line-through; }
+        .detail-price .sold { font-size: 12px; color: var(--gray-text); margin-left: auto; }
+        .detail-title { font-size: var(--fs-title); color: #333; font-weight: var(--fw-medium); line-height: 1.5; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .detail-tags { display: flex; gap: 6px; margin-bottom: 12px; }
+        .detail-tags span { font-size: var(--fs-tag); background: var(--tag-bg-light); color: var(--tag-text-orange); padding: 2px 6px; border-radius: 3px; }
+        
+        .selected-spec { 
+            background: var(--gray-bg); border-radius: 8px; height: 40px; padding: 0 12px; 
+            display: flex; align-items: center; font-size: var(--fs-body); color: #333; 
+            margin-bottom: 16px; cursor: pointer; transition: background 0.2s;
+        }
+        .selected-spec:active { background: #EAEAEC; }
+        
+        .detail-tabs { display: flex; border-bottom: 1px solid #F5F5F7; margin-bottom: 12px; height: 26px; }
+        .detail-tabs div { font-size: 12px; color: #666; margin-right: 20px; position: relative; cursor: pointer; }
+        .detail-tabs div.active { color: #333; font-weight: var(--fw-medium); }
+        .detail-tabs div.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--primary-red); border-radius: 2px; }
+        .detail-content-box { background: var(--selected-bg); height: 80px; border-radius: 8px; margin-bottom: 16px; }
+
+
+        /* ==========================================
+           左侧：底部冻结操作栏 (绝对定位吸底，20px留白)
+           ========================================== */
+        .detail-footer {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            background: var(--pure-white);
+            border-top: 1px solid #F0F0F0;
+            padding: 10px 12px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 5;
+            box-sizing: border-box;
+        }
+
+        .footer-icons { display: flex; gap: 16px; margin-right: 16px; }
+        .footer-icon-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #666; gap: 2px; }
+        .footer-icon-item svg { width: 18px; height: 18px; fill: #333; }
+        .footer-btn-group {
+            flex: 1; height: 36px; background: var(--btn-gradient);
+            border-radius: var(--radius-pill); box-shadow: var(--btn-shadow);
+            display: flex; overflow: hidden; position: relative; cursor: pointer;
+        }
+        .footer-btn-group::after { content: ''; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 1px; background: rgba(255,255,255,0.3); transform: translateX(-50%); }
+        .footer-btn-group button { flex: 1; background: transparent; border: none; color: white; font-size: 14px; font-weight: var(--fw-medium); cursor: pointer; }
+        .footer-btn-group:active { transform: scale(0.97); }
+
+
+        /* ========== 左侧：SKU 弹窗 ========== */
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 60;
+            background: var(--overlay-bg);
+            display: flex; justify-content: center; align-items: flex-end;
+            border-radius: 34px;
+            overflow: hidden;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s var(--transition-ease);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-wrapper {
+            width: 100%;
+            background: var(--pure-white);
+            border-radius: var(--radius-modal) var(--radius-modal) 0 0;
+            padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.3s var(--transition-ease);
+        }
+        .overlay.active .modal-wrapper { transform: translateY(0); }
+        
+        .drag-handle { width: 32px; height: 4px; background: #E0E0E0; border-radius: 2px; margin: 0 auto 16px auto; }
+
+        .sku-header { display: flex; gap: 12px; margin-bottom: 16px; position: relative; }
+        .sku-img { width: 64px; height: 64px; background: var(--selected-bg); border-radius: var(--radius-chip); display: flex; align-items: center; justify-content: center; color: var(--primary-red); font-weight: var(--fw-medium); flex-shrink: 0; }
+        .sku-info { flex: 1; }
+        .sku-price { font-size: var(--fs-price); color: var(--primary-red); font-weight: var(--fw-semibold); font-feature-settings: "tnum"; display: flex; align-items: baseline; gap: 6px; }
+        .sku-price-old { font-size: 13px; color: var(--gray-text); text-decoration: line-through; font-weight: 400; }
+        .sku-desc { font-size: var(--fs-body); color: #333; margin: 4px 0 2px 0; }
+        .sku-stock { font-size: var(--fs-tag); color: var(--gray-text); }
+        .sku-close { position: absolute; right: -6px; top: -6px; width: 28px; height: 28px; background: var(--gray-bg); border-radius: 50%; font-size: 14px; color: #999; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .specs-title { font-size: var(--fs-body); color: #333; margin-bottom: 10px; display: block;}
+        .specs-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .spec-item { height: 32px; padding: 0 12px; border-radius: var(--radius-chip); display: flex; align-items: center; font-size: var(--fs-body); border: 1px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .spec-item.normal { background: var(--gray-bg); color: #333; border-color: var(--gray-bg); }
+        .spec-item.active { background: var(--selected-bg); color: var(--primary-red); border-color: var(--primary-red); padding-right: 28px; font-weight: var(--fw-medium); position: relative; }
+        .spec-item.active::after { content: "✓"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 700; }
+        .spec-item.disabled { background: #F0F0F0; color: #C0C0C0; text-decoration: line-through; cursor: not-allowed; }
+        .step-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .step-title { font-size: var(--fs-body); color: #333; }
+        .stepper { display: flex; align-items: center; background: var(--gray-bg); border-radius: var(--radius-chip); overflow: hidden; }
+        .stepper button { width: 26px; height: 26px; background: transparent; border: none; font-size: 16px; color: #333; cursor: pointer; }
+        .stepper input { width: 34px; height: 26px; border: none; background: transparent; text-align: center; font-size: 14px; color: #333; font-feature-settings: "tnum"; outline: none; }
+        .btn-group { display: flex; height: 38px; background: var(--btn-gradient); border-radius: var(--radius-pill); box-shadow: var(--btn-shadow); overflow: hidden; position: relative; }
+        .btn-group::after { content: ''; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 1px; background: rgba(255,255,255,0.3); transform: translateX(-50%); }
+        .btn-half { flex: 1; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: var(--fw-medium); border: none; background: transparent; cursor: pointer; }
+        .btn-half:active { transform: scale(0.97); }
+
+
+        /* ==========================================
+           右侧：全局设计规范模块 (已恢复)
+           ========================================== */
+        .design-system-card {
+            width: 100%; background: var(--pure-white); border-radius: var(--radius-modal);
+            padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+        .ds-title { font-size: 18px; font-weight: var(--fw-semibold); color: #333; margin-bottom: 20px; border-left: 3px solid var(--primary-red); padding-left: 12px; }
+        .ds-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        .ds-item { display: flex; flex-direction: column; gap: 8px; }
+        .ds-subtitle { font-size: 13px; font-weight: var(--fw-medium); color: #666; margin-bottom: 4px; border-bottom: 1px solid #F0F0F0; padding-bottom: 6px; }
+        .ds-color-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ds-color-block { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; background: #FAFAFA; padding: 4px 10px; border-radius: 4px; }
+        .ds-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+        .ds-text-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; }
+        .ds-font-example { display: flex; flex-direction: column; background: #FAFAFA; padding: 6px 14px; border-radius: 4px; }
+        .ds-font-example span:first-child { color: #333; }
+        .ds-font-example span:last-child { font-size: 11px; color: #999; margin-top: 2px; }
+        .ds-margin-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .ds-tag { background: #F0F0F0; padding: 4px 12px; border-radius: 4px; font-size: 12px; color: #666; }
+        /* ========== 右侧卡片：与手机壳同高，内容超出内部滚动 ========== */
+        .collapsible-card {
+            height: 760px; overflow-y: auto; position: relative;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin; scrollbar-color: #B0B4BC #F2F3F5;
+        }
+        .collapsible-card::-webkit-scrollbar { width: 6px; }
+        .collapsible-card::-webkit-scrollbar-track { background: #F2F3F5; border-radius: 4px; }
+        .collapsible-card::-webkit-scrollbar-thumb { background: #B0B4BC; border-radius: 4px; }
+
+        /* ========== 全局说明卡组件 ========== */
+        .global-note-card {
+            width: 100%; background: var(--pure-white); border-radius: var(--radius-modal);
+            padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+        .gn-title {
+            font-size: 18px; font-weight: var(--fw-semibold); color: #333;
+            margin-bottom: 20px; border-left: 3px solid var(--primary-red); padding-left: 12px;
+        }
+        .gn-section { margin-bottom: 14px; background: #FAFBFC; border: 1px solid #F0F1F3; border-radius: 10px; padding: 14px 16px; }
+        .gn-section:last-child { margin-bottom: 0; }
+        .gn-subtitle {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: #1D2129; margin-bottom: 10px;
+            border-left: 3px solid var(--primary-red); padding-left: 10px; line-height: 1.3;
+        }
+        .gn-subtitle .gn-badge {
+            margin-left: auto; font-size: 10px; font-weight: 500; color: #D46B08;
+            background: #FFF7E6; border: 1px solid #FFE0B2; border-radius: 4px; padding: 0 6px; line-height: 16px;
+        }
+        .gn-body { font-size: 12px; color: #4E5969; line-height: 1.9; }
+        .gn-body .gn-item { display: flex; gap: 6px; margin-bottom: 4px; }
+        .gn-body .gn-item::before { content: ''; flex-shrink: 0; width: 4px; height: 4px; border-radius: 50%; background: var(--primary-red); margin-top: 8px; }
+        .gn-body .gn-kv { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px dashed #F2F3F5; }
+        .gn-body .gn-kv:last-child { border-bottom: none; }
+        .gn-body .gn-kv .k { color: #888780; flex-shrink: 0; }
+        .gn-body .gn-kv .v { text-align: right; font-weight: 500; color: #1D2129; }
+        .gn-body .gn-flow { background: #F7F8FA; border-radius: 6px; padding: 8px 12px; margin: 4px 0 8px; font-size: 12px; color: #1D2129; }
+        .gn-body .gn-flow .arrow { color: #888780; margin: 0 4px; }
+        .gn-warn { font-size: 12px; color: #CF1322; background: #FFF1F0; border-radius: 6px; padding: 8px 12px; margin-top: 6px; }
+
+        /* ========== 响应式兼容 ========== */
+        @media screen and (max-width: 1120px) {
+            .split-layout { flex-direction: column; align-items: center; gap: 40px; }
+            .left-panel { width: 100%; max-width: 399px; align-self: auto; }
+            .right-area { width: 100%; max-width: 760px; align-self: auto; }
+        }
+        @media screen and (max-width: 760px) {
+            .right-area { flex-direction: column; align-items: center; gap: 40px; }
+            .ds-panel { width: 100%; max-width: 375px; align-self: auto; }
+            .note-panel { width: 100%; max-width: 375px; align-self: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 左右分栏容器 -->
+    <div class="split-layout">
+
+        <!-- ======= 左侧：手机界面展示 ======= -->
+        <div class="left-panel">
+            <div class="device-wrapper">
+                <div class="device-screen">
+                    
+                    <div class="dynamic-island"></div>
+
+                    <!-- 状态栏与标题 -->
+                    <div class="top-overlay">
+                        <div class="status-bar">
+                            <span class="time">9:41</span>
+                            <div class="status-icons">
+                                <svg viewBox="0 0 18 18"><path d="M1 16h2v-2H1v2zm4 0h2v-5H5v5zm4 0h2v-8H9v8zm4 0h2v-11h-2v11z"/></svg>
+                                <svg viewBox="0 0 24 24"><path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"/></svg>
+                                <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/><path fill="#FFFFFF" d="M10 17h4v-2h-4v2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="header-bar">
+                            <div class="back-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </div>
+                            <span class="header-title">商品详情</span>
+                            <div class="more-btn">
+                                <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- App 内容区 -->
+                    <div class="app-content">
+                        <div class="detail-section">
+                            <div class="detail-top-img">
+                                <div class="main-product">五常大米<span>5kg 礼盒装</span></div>
+                                <div class="share-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#333"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                                </div>
+                                <div class="carousel-indicators">
+                                    <div class="dot active"></div>
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                </div>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-price">
+                                    <strong>¥0.01</strong> <small>¥69.99</small>
+                                    <span class="sold">已售 163</span>
+                                </div>
+                                <div class="detail-title">五常大米 5kg 礼盒装 当季新米 产地直发 真空锁鲜 送礼自吃两相宜</div>
+                                <div class="detail-tags"><span>包邮</span><span>支持退款</span></div>
+                                
+                                <div class="selected-spec js-open-modal" data-modal="skuOverlay">
+                                    已选 <span style="color:#333; margin:0 4px; font-weight:500;">5kg 礼盒装 × 1</span> 共 3 种规格 <span style="margin-left: auto;">›</span>
+                                </div>
+
+                                <div class="detail-tabs">
+                                    <div class="active">商品</div>
+                                    <div>详情</div>
+                                    <div>推荐</div>
+                                </div>
+                                <div class="detail-content-box"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 底部冻结操作栏 -->
+                    <div class="detail-footer">
+                        <div class="footer-icons">
+                            <div class="footer-icon-item">
+                                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> 首页
+                            </div>
+                            <div class="footer-icon-item">
+                                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg> 购物车
+                            </div>
+                        </div>
+                        <div class="footer-btn-group js-open-modal" data-modal="skuOverlay">
+                            <button>加入购物车</button>
+                            <button>立即购买</button>
+                        </div>
+                    </div>
+
+                    <!-- SKU 遮罩弹窗 -->
+                    <div id="skuOverlay" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="sku-header">
+                                <div class="sku-img">米</div>
+                                <div class="sku-info">
+                                    <div class="sku-price">¥0.01 <span class="sku-price-old">¥69.99</span></div>
+                                    <div class="sku-desc">已选：5kg 礼盒装，1件</div>
+                                    <div class="sku-stock">库存 236 件</div>
+                                </div>
+                                <div class="sku-close js-close-modal">✕</div>
+                            </div>
+                            <span class="specs-title">规格</span>
+                            <div class="specs-grid">
+                                <div class="spec-item active">5kg 礼盒装</div>
+                                <div class="spec-item normal">10kg 家庭装</div>
+                                <div class="spec-item disabled">2.5kg 尝鲜装-缺货</div>
+                            </div>
+                            <div class="step-wrapper">
+                                <div class="step-title">数量 <span style="font-size:12px;color:#888780;">限购 10 件</span></div>
+                                <div class="stepper">
+                                    <button class="disabled">-</button>
+                                    <input type="text" value="1" readonly>
+                                    <button>+</button>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn-half">加入购物车</button>
+                                <button class="btn-half">立即购买</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= 右侧区：设计规范 DS + 全局说明（两列） ======= -->
+        <div class="right-area">
+            <div class="ds-panel">
+                <div class="design-system-card collapsible-card" id="dsCard">
+                    <div class="ds-title">商品详情 · 设计规范 (DS)</div>
+                <div class="ds-grid">
+                    <div class="ds-item">
+                        <div class="ds-subtitle">🎨 色彩规范</div>
+                        <div class="ds-color-row">
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--primary-red);"></div>--primary-red <span class="ds-hex" data-var="--primary-red">--primary-red </span></div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--primary-orange);"></div>--primary-orange <span class="ds-hex" data-var="--primary-orange">--primary-orange </span></div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--tag-bg-light);"></div>--tag-bg-light <span class="ds-hex" data-var="--tag-bg-light">--tag-bg-light </span></div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--selected-bg);"></div>--selected-bg <span class="ds-hex" data-var="--selected-bg">--selected-bg </span></div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--gray-text);"></div>--gray-text <span class="ds-hex" data-var="--gray-text">--gray-text </span></div>
+                            <div class="ds-color-block"><div class="ds-dot" style="background:var(--gray-bg);"></div>--gray-bg <span class="ds-hex" data-var="--gray-bg">--gray-bg </span></div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">📐 字号 / 字重</div>
+                        <div class="ds-text-row">
+                            <div class="ds-font-example"><span style="font-size:24px; font-weight:600; font-feature-settings:'tnum';">¥0.01</span><span>价格 H1 / 600 / Tabular</span></div>
+                            <div class="ds-font-example"><span style="font-size:15px; font-weight:500; letter-spacing:0.5px;">标题 15px</span><span>商品标题 / 500</span></div>
+                            <div class="ds-font-example"><span style="font-size:13px; font-weight:400;">正文 13px</span><span>内容 / 400</span></div>
+                            <div class="ds-font-example"><span style="font-size:11px; font-weight:400; color:#888780;">辅助 11px</span><span>标签 / 400</span></div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">⚪ 圆角分级</div>
+                        <div class="ds-margin-row">
+                            <div class="ds-tag" style="background:#E24B4A; color:white;">3px 标签</div>
+                            <div class="ds-tag">6px Chips/步进器</div>
+                            <div class="ds-tag">8px 卡片/弹窗顶角</div>
+                            <div class="ds-tag" style="background:#EF9F27; color:white;">19px 胶囊按钮</div>
+                        </div>
+                    </div>
+
+                    <div class="ds-item">
+                        <div class="ds-subtitle">📏 间距 / 热区</div>
+                        <div class="ds-margin-row">
+                            <div class="ds-tag">14px 左右边距</div>
+                            <div class="ds-tag">12px 模块间距</div>
+                            <div class="ds-tag">≥ 44px 点击热区</div>
+                            <div class="ds-tag">底部 safe-area-inset-bottom</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- ======= 右栏：全局说明（商品详情业务规则） ======= -->
+            <div class="note-panel">
+                <div class="global-note-card collapsible-card" id="gnCard">
+                    <div class="gn-title">商品详情 · 全局说明</div>
+
+                    <div class="gn-section">
+                        <div class="gn-subtitle">页面导航</div>
+                        <div class="gn-body">
+                            <div class="gn-flow">商品列表 <span class="arrow">→</span> 商品详情</div>
+                            <div class="gn-flow">商品 / 详情 / 推荐 tabs 切换</div>
+                            <div class="gn-flow">详情页 <span class="arrow">←</span> 返回键回列表</div>
+                        </div>
+                    </div>
+
+                    <div class="gn-section">
+                        <div class="gn-subtitle">通用交互</div>
+                        <div class="gn-body">
+                            <div class="gn-item">SKU 弹窗：点「加入购物车/立即购买」或规格条打开</div>
+                            <div class="gn-item">规格三态：可选（蓝）/ 选中（实心）/ 缺货（灰）</div>
+                            <div class="gn-item">数量步进器：上限限购 10 件</div>
+                            <div class="gn-item">弹窗关闭：✕ / 遮罩 / Esc</div>
+                        </div>
+                    </div>
+
+                    <div class="gn-section">
+                        <div class="gn-subtitle">状态流转</div>
+                        <div class="gn-body">
+                            <div class="gn-flow">规格选择 <span class="arrow">→</span> 数量确认 <span class="arrow">→</span> 加购 / 购买</div>
+                            <div class="gn-flow">缺货规格 <span class="arrow">→</span> 置灰不可选</div>
+                        </div>
+                    </div>
+
+                    <div class="gn-section">
+                        <div class="gn-subtitle">业务规则<span class="gn-badge">项目相关</span></div>
+                        <div class="gn-body">
+                            <div class="gn-kv"><span class="k">价格展示</span><span class="v">促销价 + 原价划线</span></div>
+                            <div class="gn-kv"><span class="k">数量限制</span><span class="v">限购 10 件 / 库存 236</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JS 交互控制 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 打开：.js-open-modal 元素通过 data-modal 指定目标弹窗
+            document.querySelectorAll('.js-open-modal').forEach(function(trigger) {
+                trigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var overlay = document.getElementById(trigger.getAttribute('data-modal'));
+                    if (overlay) overlay.classList.add('active');
+                });
+            });
+            // 关闭：.js-close-modal 关闭所在弹窗（✕/按钮）
+            document.querySelectorAll('.js-close-modal').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var overlay = btn.closest('.overlay');
+                    if (overlay) overlay.classList.remove('active');
+                });
+            });
+            // 关闭：点遮罩空白处
+            document.querySelectorAll('.overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) this.classList.remove('active');
+                });
+            });
+            // 关闭：Esc 键
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.overlay.active').forEach(function(o) { o.classList.remove('active'); });
+                }
+            });
+        });
+    
+        // ========== DS 卡 hex 自动同步：改 :root 变量后色块文字自动刷新，无需手动改 hex ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.ds-hex').forEach(function(el) {
+                var v = el.getAttribute('data-var');
+                if (v) {
+                    var val = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+                    if (val) el.textContent = val;
+                }
+            });
+        });
+</script>
+</body>
+</html>
