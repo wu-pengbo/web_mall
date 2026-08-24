@@ -1,5 +1,4 @@
 // ==================== 钱包管理 - 共享数据 ====================
-import type { WalletConfig, UserWallet, RechargeRecord, WithdrawRecord, WalletTransaction, RechargePlan, MerchantSign, ConfigHistoryRecord } from '../types/wallet'
 
 /** 商户列表（各模块通用） */
 export const mockMerchants = [

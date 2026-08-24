@@ -1048,7 +1048,7 @@ const submitSign = () => {
       terminateTime: '',
       remark: signForm.remark,
     }
-      signForm.agreement,
+    newSign.agreement = signForm.agreement
     signList.value.unshift(newSign)
     alert('签约成功')
   }
