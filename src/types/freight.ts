@@ -41,6 +41,7 @@ export type ChargeConfig = QuantityConfig | WeightConfig | AmountConfig | FixedC
 /** 运费规则（默认规则或特殊地区规则） */
 export interface ShippingRule {
   id?: number
+  name?: string           // 规则自定义标签名（默认规则默认「全国适用」，特殊规则默认「偏远地区 N」）
   regions: string[]
   isFreeShipping: boolean
   freeThreshold: number | null   // null = 无条件包邮, >0 = 满额包邮
@@ -79,6 +80,7 @@ export function getDefaultChargeConfig(chargeType: ChargeType): ChargeConfig {
 /** 生成一个空的默认规则 */
 export function createDefaultRule(chargeType: ChargeType): ShippingRule {
   return {
+    name: '全国适用',
     regions: ['全国'],
     isFreeShipping: false,
     freeThreshold: null,
@@ -86,7 +88,7 @@ export function createDefaultRule(chargeType: ChargeType): ShippingRule {
   }
 }
 
-/** 生成一个空的特殊规则 */
+/** 生成一个空的特殊规则（name 由调用处按序号注入「偏远地区 N」） */
 export function createSpecialRule(chargeType: ChargeType): ShippingRule {
   return {
     regions: [],

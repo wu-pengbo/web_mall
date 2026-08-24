@@ -121,6 +121,7 @@ function openModal(mode: 'default' | 'addSpecial' | 'editSpecial', rule?: Shippi
     editingRuleId.value = null
   } else if (mode === 'addSpecial') {
     tempForm.value = createSpecialRule(chargeType.value)
+    tempForm.value.name = '偏远地区 ' + (specialRules.value.length + 1)
     editingRuleId.value = null
   } else if (mode === 'editSpecial' && rule) {
     tempForm.value = JSON.parse(JSON.stringify(rule))
@@ -157,6 +158,7 @@ function confirmModal() {
   } else if (modalMode.value === 'addSpecial') {
     const newRule = JSON.parse(JSON.stringify(form))
     newRule.id = nextRuleId++
+    if (!newRule.name) newRule.name = '偏远地区 ' + (specialRules.value.length + 1)
     specialRules.value.push(newRule)
   } else if (modalMode.value === 'editSpecial') {
     const idx = specialRules.value.findIndex(r => r.id === editingRuleId.value)
@@ -365,7 +367,7 @@ const isOccupied = (prov: string) => {
         </div>
         <div class="summary-box">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span class="tag def">全国适用</span>
+            <span class="tag def">{{ defaultRule.name || '全国适用' }}</span>
             <span class="free-badge" :class="defaultRule.isFreeShipping ? 'yes' : 'no'">
               {{ defaultRule.isFreeShipping ? (defaultRule.freeThreshold === 0 || defaultRule.freeThreshold === null ? '无条件包邮' : `满${defaultRule.freeThreshold}元包邮`) : '不包邮' }}
             </span>
@@ -384,6 +386,7 @@ const isOccupied = (prov: string) => {
         <div v-for="rule in specialRules" :key="rule.id" class="rule-card">
           <div class="rule-card-hd">
           <div class="tags">
+            <span class="tag sp-name">{{ rule.name || '偏远地区' }}</span>
             <span v-for="reg in rule.regions" :key="reg" class="tag sp">{{ reg }}</span>
           </div>
             <div><button class="btn-link" @click="openModal('editSpecial', rule)">编辑</button><button class="btn-link danger" @click="specialRules = specialRules.filter(r => r.id !== rule.id)">删除</button></div>
@@ -404,6 +407,12 @@ const isOccupied = (prov: string) => {
           <button class="modal-x" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
+          <!-- 规则名称（自定义标签名） -->
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="fl">规则名称</label>
+            <input type="text" class="fi" v-model="tempForm.name" :placeholder="modalMode === 'default' ? '如：全国适用 / 广东省内' : '如：偏远地区 / 外省偏远'" style="max-width:400px;" />
+            <span class="tip">用户端展示的规则标签</span>
+          </div>
           <!-- 地区选择 -->
           <div v-if="modalMode === 'default'" class="form-group">
             <label class="fl">适用地区</label>

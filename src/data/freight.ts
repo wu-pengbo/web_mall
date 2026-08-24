@@ -16,7 +16,7 @@ export const mockTemplates: FreightTemplate[] = [
     id: 'tpl_001', name: '全国包邮',
     chargeType: 'BY_QUANTITY',
     defaultRule: {
-      regions: ['全国'], isFreeShipping: true, freeThreshold: null,
+      name: '全国适用', regions: ['全国'], isFreeShipping: true, freeThreshold: null,
       chargeConfig: { firstQty: 1, firstFee: 0, additionalQty: 1, additionalFee: 0 }
     },
     specialRules: [],
@@ -27,11 +27,11 @@ export const mockTemplates: FreightTemplate[] = [
     id: 'tpl_002', name: '阶梯运费+偏远加收',
     chargeType: 'BY_WEIGHT',
     defaultRule: {
-      regions: ['全国'], isFreeShipping: true, freeThreshold: 99,
+      name: '全国适用', regions: ['全国'], isFreeShipping: true, freeThreshold: 99,
       chargeConfig: { firstWeight: 1, firstFee: 10, additionalWeight: 0.5, additionalFee: 5 }
     },
     specialRules: [
-      { id: 1, regions: ['新疆维吾尔自治区', '西藏自治区', '内蒙古自治区', '青海省', '甘肃省'], isFreeShipping: false, freeThreshold: null,
+      { id: 1, name: '偏远地区 1', regions: ['新疆维吾尔自治区', '西藏自治区', '内蒙古自治区', '青海省', '甘肃省'], isFreeShipping: false, freeThreshold: null,
         chargeConfig: { firstWeight: 1, firstFee: 20, additionalWeight: 0.5, additionalFee: 15 } }
     ],
     status: 'active', productCount: 56,
@@ -41,11 +41,11 @@ export const mockTemplates: FreightTemplate[] = [
     id: 'tpl_003', name: '图书按件计费',
     chargeType: 'BY_QUANTITY',
     defaultRule: {
-      regions: ['全国'], isFreeShipping: false, freeThreshold: null,
+      name: '全国适用', regions: ['全国'], isFreeShipping: false, freeThreshold: null,
       chargeConfig: { firstQty: 1, firstFee: 5, additionalQty: 1, additionalFee: 2 }
     },
     specialRules: [
-      { id: 2, regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
+      { id: 2, name: '偏远地区 2', regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
         chargeConfig: { firstQty: 1, firstFee: 12, additionalQty: 1, additionalFee: 8 } }
     ],
     status: 'active', productCount: 67,
@@ -55,11 +55,11 @@ export const mockTemplates: FreightTemplate[] = [
     id: 'tpl_004', name: '固定运费10元',
     chargeType: 'FIXED',
     defaultRule: {
-      regions: ['全国'], isFreeShipping: false, freeThreshold: null,
+      name: '全国适用', regions: ['全国'], isFreeShipping: false, freeThreshold: null,
       chargeConfig: { fixedFee: 10 }
     },
     specialRules: [
-      { id: 3, regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
+      { id: 3, name: '偏远地区 3', regions: ['新疆维吾尔自治区', '西藏自治区', '青海省'], isFreeShipping: false, freeThreshold: null,
         chargeConfig: { fixedFee: 20 } }
     ],
     status: 'active', productCount: 35,
@@ -69,7 +69,7 @@ export const mockTemplates: FreightTemplate[] = [
     id: 'tpl_005', name: '金额阶梯满199包邮',
     chargeType: 'BY_ORDER_AMOUNT',
     defaultRule: {
-      regions: ['全国'], isFreeShipping: true, freeThreshold: 199,
+      name: '全国适用', regions: ['全国'], isFreeShipping: true, freeThreshold: 199,
       chargeConfig: { amountRanges: [{ min: 0, max: 199, fee: 10 }] }
     },
     specialRules: [],

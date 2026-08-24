@@ -86,12 +86,16 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
             <td class="nm" :title="item.name">{{ item.name }}</td>
             <td><span class="status-tag normal">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span></td>
             <td>
+              <span class="status-tag normal" style="margin-right:6px;">{{ item.defaultRule.name || '全国适用' }}</span>
               <span class="free-tag" :class="item.defaultRule.isFreeShipping ? 'all' : 'none'">{{ getFreeShippingText(item.defaultRule) }}</span>
               <div class="fee-txt">{{ getChargeConfigSummary(item.chargeType, item.defaultRule.chargeConfig) }}</div>
             </td>
             <td>
               <template v-if="item.specialRules.length > 0">
-                <span v-for="cr in item.specialRules" :key="cr.id" class="status-tag draft" style="font-size:10px;margin-right:3px;margin-bottom:2px;">{{ cr.regions.length }}省</span>
+                <div v-for="cr in item.specialRules" :key="cr.id" style="margin-bottom:2px;">
+                  <span class="status-tag draft">{{ cr.name || '偏远地区' }}</span>
+                  <span style="font-size:11px;color:#86909C;margin-left:4px;">{{ cr.regions.length }}省</span>
+                </div>
               </template>
               <span v-else class="sub-text">—</span>
             </td>

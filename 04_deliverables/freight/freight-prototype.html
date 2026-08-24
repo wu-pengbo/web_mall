@@ -246,7 +246,7 @@
                             </button>
                         </div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">全国适用</span>
+                            <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded" id="def-rule-name">全国适用</span>
                             <span class="badge badge-yes">完全包邮</span>
                         </div>
                         <div class="text-xs text-gray-400" id="default-rule-desc">固定运费 0 元</div>
@@ -270,6 +270,7 @@
                         <div class="rule-card" data-pid="4">
                             <div class="flex items-start justify-between">
                                 <div class="flex flex-wrap gap-1">
+                                    <span class="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 rounded" id="sp-rule-name-1">偏远地区 1</span>
                                     <span class="region-chip selected" style="cursor:default;">新疆</span>
                                     <span class="region-chip selected" style="cursor:default;">西藏</span>
                                     <span class="region-chip selected" style="cursor:default;">青海</span>
@@ -334,6 +335,11 @@
                 <button onclick="closeModal('modal-default-rule')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center text-lg">&times;</button>
             </div>
             <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-1">规则名称</label>
+                <input type="text" id="def-rule-name-input" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="全国适用" placeholder="如：全国适用 / 广东省内" />
+                <div class="text-xs text-gray-400 mt-1">用户端展示的规则标签</div>
+            </div>
+            <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-600 mb-1">适用地区</label>
                 <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-blue-600 font-semibold">全国（默认兜底规则）</div>
             </div>
@@ -356,7 +362,7 @@
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
                 <button onclick="closeModal('modal-default-rule')" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
-                <button onclick="closeModal('modal-default-rule');showToast('默认规则已更新','success')" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
+                <button onclick="saveDefaultRule()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
             </div>
         </div>
     </div>
@@ -367,6 +373,11 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 class="modal-special-title text-lg font-bold">添加特殊地区规则</h2>
                 <button onclick="closeModal('modal-special-rule')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center text-lg">&times;</button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-600 mb-1">规则名称</label>
+                <input type="text" id="sp-rule-name-input" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="偏远地区 1" placeholder="如：偏远地区 / 外省偏远" />
+                <div class="text-xs text-gray-400 mt-1">用户端展示的规则标签</div>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-600 mb-1">选择适用地区 <span class="text-gray-300 font-normal">（可多选）</span></label>
@@ -393,7 +404,7 @@
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
                 <button onclick="closeModal('modal-special-rule')" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
-                <button onclick="closeModal('modal-special-rule');showToast('特殊地区规则已保存','success')" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
+                <button onclick="saveSpecialRule()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">确定</button>
             </div>
         </div>
     </div>
@@ -478,6 +489,22 @@
             var modal = document.getElementById(id);
             if (modal) modal.classList.remove('active');
             setTimeout(drawLines, 50);
+        }
+
+        // ==================== 保存规则名称（用户端展示标签） ====================
+        function saveDefaultRule() {
+            var inp = document.getElementById('def-rule-name-input');
+            var label = document.getElementById('def-rule-name');
+            if (inp && label) label.textContent = inp.value.trim() || '全国适用';
+            closeModal('modal-default-rule');
+            showToast('默认规则已更新', 'success');
+        }
+        function saveSpecialRule() {
+            var inp = document.getElementById('sp-rule-name-input');
+            var label = document.getElementById('sp-rule-name-1');
+            if (inp && label) label.textContent = inp.value.trim() || '偏远地区 1';
+            closeModal('modal-special-rule');
+            showToast('特殊地区规则已保存', 'success');
         }
 
         // ==================== Toggle 开关 ====================

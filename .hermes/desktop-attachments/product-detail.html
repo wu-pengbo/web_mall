@@ -205,6 +205,34 @@
         .detail-tabs div.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--primary-red); border-radius: 2px; }
         .detail-content-box { background: var(--selected-bg); height: 80px; border-radius: 8px; margin-bottom: 16px; }
 
+        /* ========== 运费栏（详情页内联摘要，点击开运费弹窗） ========== */
+        .freight-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--gray-bg); border-radius: 8px;
+            height: 40px; padding: 0 12px; margin-bottom: 16px; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .freight-bar:active { background: #EAEAEC; }
+        .freight-left { display: flex; align-items: center; gap: 6px; font-size: var(--fs-body); color: #333; min-width: 0; }
+        .freight-left svg { width: 16px; height: 16px; stroke: #333; fill: none; flex-shrink: 0; }
+        .freight-label { color: #666; flex-shrink: 0; }
+        .freight-summary { font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .freight-arrow { color: #C0C0C0; font-size: 18px; line-height: 1; flex-shrink: 0; }
+
+        /* ========== 运费说明弹窗 ========== */
+        #freightOverlay .modal-wrapper { max-height: 75%; overflow-y: auto; }
+        .freight-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; position: relative; }
+        .freight-title { font-size: 15px; font-weight: 600; color: #333; }
+        .rule-block { border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+        .rule-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .rule-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
+        .rule-tag.all { background: #E8F3FF; color: #1D6098; }
+        .rule-tag.sp { background: #FFF1F0; color: #CF1322; }
+        .rule-tag.free { background: #E8F8EE; color: #0E7B3A; }
+        .rule-tag.none { background: #F2F3F5; color: #86909C; }
+        .rule-body { font-size: var(--fs-body); color: #333; line-height: 1.6; }
+        .freight-foot { margin-top: 14px; padding-top: 10px; border-top: 1px dashed #F0F0F0; font-size: 11px; color: #888780; line-height: 1.6; }
+
 
         /* ==========================================
            左侧：底部冻结操作栏 (绝对定位吸底，20px留白)
@@ -421,6 +449,16 @@
                                     已选 <span style="color:#333; margin:0 4px; font-weight:500;">5kg 礼盒装 × 1</span> 共 3 种规格 <span style="margin-left: auto;">›</span>
                                 </div>
 
+                                <!-- 运费栏：内联摘要，点击打开运费说明弹窗 -->
+                                <div class="freight-bar js-open-modal" data-modal="freightOverlay">
+                                    <div class="freight-left">
+                                        <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+                                        <span class="freight-label">快递</span>
+                                        <span class="freight-summary">满99元包邮，未满收¥8起</span>
+                                    </div>
+                                    <span class="freight-arrow">›</span>
+                                </div>
+
                                 <div class="detail-tabs">
                                     <div class="active">商品</div>
                                     <div>详情</div>
@@ -478,6 +516,29 @@
                                 <button class="btn-half">加入购物车</button>
                                 <button class="btn-half">立即购买</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- 运费说明弹窗（静态展示运费规则） -->
+                    <div id="freightOverlay" class="overlay">
+                        <div class="modal-wrapper">
+                            <div class="drag-handle"></div>
+                            <div class="freight-header">
+                                <span class="freight-title">运费说明</span>
+                                <div class="sku-close js-close-modal">✕</div>
+                            </div>
+
+                            <div class="rule-block">
+                                <div class="rule-head"><span class="rule-tag all" id="rule-default-name">全国适用</span><span class="rule-tag free">满99元包邮</span></div>
+                                <div class="rule-body">按件计费：首 1 件 ¥8，续 1 件 ¥3</div>
+                            </div>
+
+                            <div class="rule-block">
+                                <div class="rule-head"><span class="rule-tag sp" id="rule-special-name">偏远地区</span><span class="rule-tag none">不包邮</span></div>
+                                <div class="rule-body">新疆 / 西藏 / 青海：首 1 件 ¥12，续 1 件 ¥8</div>
+                            </div>
+
+                            <div class="freight-foot">同一订单内同模板商品合并计算运费；满 99 元包邮按订单金额判定，实际运费以订单结算页为准。</div>
                         </div>
                     </div>
 
@@ -576,6 +637,25 @@
                         </div>
                     </div>
 
+                    <div class="gn-section">
+                        <div class="gn-subtitle">运费展示<span class="gn-badge">本期新增</span></div>
+                        <div class="gn-body">
+                            <div class="gn-item">运费栏摘要 = 包邮状态 + 未满时最低运费，由模板默认规则生成，随后台模板联动（示例金额取自演示模板）</div>
+                            <div class="gn-kv"><span class="k">无条件包邮</span><span class="v">包邮</span></div>
+                            <div class="gn-kv"><span class="k">满额包邮 + 按件</span><span class="v">满99元包邮，未满收¥8起</span></div>
+                            <div class="gn-kv"><span class="k">满额包邮 + 按重</span><span class="v">满99元包邮，未满收¥10起</span></div>
+                            <div class="gn-kv"><span class="k">满额包邮 + 固定</span><span class="v">满99元包邮，未满收¥10</span></div>
+                            <div class="gn-kv"><span class="k">满额包邮 + 金额阶梯</span><span class="v">满99元包邮，未满按金额阶梯收费</span></div>
+                            <div class="gn-kv"><span class="k">不包邮</span><span class="v">不包邮（计费明细见弹窗）</span></div>
+                            <div class="gn-item">「起」= 首件 / 首重费即最低运费，续费随数量叠加；固定邮费无「起」</div>
+                            <div class="gn-item">规则标签 = 后台「规则名称」字段（默认 全国适用 / 偏远地区，可在运费模板编辑中自定义，保存后同步展示）</div>
+                            <div class="gn-item">点击运费栏打开弹窗：静态展示默认规则 + 特殊地区规则，不依赖收货地址</div>
+                            <div class="gn-item">偏远地区命中 → 覆盖默认规则加收运费（演示模板：新疆/西藏/青海）</div>
+                            <div class="gn-item">满 99 元包邮按订单金额判定；同模板多商品订单内合并计费</div>
+                            <div class="gn-item">精确运费（收货地 / 数量 / 订单金额）在订单结算页计算</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -623,6 +703,15 @@
                     if (val) el.textContent = val;
                 }
             });
+        });
+
+        // ========== 运费规则标签 = 后台「规则名称」字段（演示数据驱动，接后台 name） ==========
+        const FREIGHT_RULES = { defaultName: '全国适用', specialName: '偏远地区' };
+        document.addEventListener('DOMContentLoaded', function() {
+            var dn = document.getElementById('rule-default-name');
+            var sn = document.getElementById('rule-special-name');
+            if (dn) dn.textContent = FREIGHT_RULES.defaultName;
+            if (sn) sn.textContent = FREIGHT_RULES.specialName;
         });
 </script>
 </body>
