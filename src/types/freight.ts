@@ -41,10 +41,10 @@ export type ChargeConfig = QuantityConfig | WeightConfig | AmountConfig | FixedC
 /** 运费规则（默认规则或特殊地区规则） */
 export interface ShippingRule {
   id?: number
-  name?: string           // 规则自定义标签名（默认规则默认「全国适用」，特殊规则默认「偏远地区 N」）
+  name?: string // 规则自定义标签名（默认规则默认「全国适用」，特殊规则默认「偏远地区 N」）
   regions: string[]
   isFreeShipping: boolean
-  freeThreshold: number | null   // null = 无条件包邮, >0 = 满额包邮
+  freeThreshold: number | null // null = 无条件包邮, >0 = 满额包邮
   chargeConfig: ChargeConfig
 }
 
@@ -69,7 +69,12 @@ export function getDefaultChargeConfig(chargeType: ChargeType): ChargeConfig {
     case 'BY_QUANTITY':
       return { firstQty: 1, firstFee: 8, additionalQty: 1, additionalFee: 3 } as QuantityConfig
     case 'BY_WEIGHT':
-      return { firstWeight: 1, firstFee: 10, additionalWeight: 0.5, additionalFee: 5 } as WeightConfig
+      return {
+        firstWeight: 1,
+        firstFee: 10,
+        additionalWeight: 0.5,
+        additionalFee: 5,
+      } as WeightConfig
     case 'BY_ORDER_AMOUNT':
       return { amountRanges: [{ min: 0, max: null, fee: 10 }] } as AmountConfig
     case 'FIXED':
@@ -77,14 +82,14 @@ export function getDefaultChargeConfig(chargeType: ChargeType): ChargeConfig {
   }
 }
 
-/** 生成一个空的默认规则 */
+/** 生成一个空的默认规则（默认「完全包邮」） */
 export function createDefaultRule(chargeType: ChargeType): ShippingRule {
   return {
     name: '全国适用',
     regions: ['全国'],
-    isFreeShipping: false,
-    freeThreshold: null,
-    chargeConfig: getDefaultChargeConfig(chargeType)
+    isFreeShipping: true,
+    freeThreshold: 0,
+    chargeConfig: getDefaultChargeConfig(chargeType),
   }
 }
 
@@ -94,7 +99,7 @@ export function createSpecialRule(chargeType: ChargeType): ShippingRule {
     regions: [],
     isFreeShipping: false,
     freeThreshold: null,
-    chargeConfig: getDefaultChargeConfig(chargeType)
+    chargeConfig: getDefaultChargeConfig(chargeType),
   }
 }
 
@@ -104,7 +109,7 @@ export const CHARGE_TYPE_LABEL: Record<ChargeType, string> = {
   FIXED: '固定邮费',
   BY_QUANTITY: '按件计费',
   BY_WEIGHT: '按重量计费',
-  BY_ORDER_AMOUNT: '按金额阶梯'
+  BY_ORDER_AMOUNT: '按金额阶梯',
 }
 
 /** 获取计费配置的文字描述 */
@@ -120,10 +125,12 @@ export function getChargeConfigSummary(chargeType: ChargeType, config: ChargeCon
     }
     case 'BY_ORDER_AMOUNT': {
       const c = config as AmountConfig
-      return c.amountRanges.map(r => {
-        const maxStr = r.max === null ? '以上' : `～${r.max}元`
-        return `${r.min}${maxStr}: ${r.fee}元`
-      }).join('；')
+      return c.amountRanges
+        .map((r) => {
+          const maxStr = r.max === null ? '以上' : `～${r.max}元`
+          return `${r.min}${maxStr}: ${r.fee}元`
+        })
+        .join('；')
     }
     case 'FIXED': {
       const c = config as FixedConfig

@@ -71,6 +71,8 @@ const pointsConfig = reactive({
   validityType: 'forever' as 'yearly' | 'dynamic' | 'forever',
   dynamicDays: 365,
   yearlyClearDate: '12-31',
+  wxAppId: '', // 微信 AppID（收款配置）
+  merchantId: '', // 微信支付商户 ID（收款配置）
 })
 
 const configSaved = ref(false)
@@ -123,7 +125,6 @@ const validityTypeText = computed(() => {
       return ''
   }
 })
-
 
 // ==================== 积分配置-修改记录 ====================
 interface ConfigSnapshot {
@@ -866,7 +867,12 @@ const getRechargeTypeText = (type: string) => {
 }
 
 const getPayMethodText = (method: string) => {
-  const map: Record<string, string> = { cash: '现金', transfer: '转账', online: '线上付款', qrcode: '扫码支付' }
+  const map: Record<string, string> = {
+    cash: '现金',
+    transfer: '转账',
+    online: '线上付款',
+    qrcode: '扫码支付',
+  }
   return map[method] || '-'
 }
 
@@ -910,7 +916,6 @@ const closeQuotaModal = () => {
   showQuotaQrView.value = false
 }
 
-
 const showQuotaQrView = ref(false)
 const quotaCreatedItem = ref<QuotaItem | null>(null)
 const showPayQrModal = ref(false)
@@ -953,16 +958,22 @@ const submitQuota = () => {
 
 const confirmQrPayment = () => {
   if (quotaCreatedItem.value) {
-    const found = quotaList.value.find(q => q.id === quotaCreatedItem.value!.id)
-    if (found) { found.payStatus = 'paid'; found.changeStatus = 'completed' }
+    const found = quotaList.value.find((q) => q.id === quotaCreatedItem.value!.id)
+    if (found) {
+      found.payStatus = 'paid'
+      found.changeStatus = 'completed'
+    }
     showQuotaQrView.value = false
     showQuotaModal.value = false
     quotaCreatedItem.value = null
     return
   }
   if (payQrTarget.value) {
-    const found = quotaList.value.find(q => q.id === payQrTarget.value!.id)
-    if (found) { found.payStatus = 'paid'; found.changeStatus = 'completed' }
+    const found = quotaList.value.find((q) => q.id === payQrTarget.value!.id)
+    if (found) {
+      found.payStatus = 'paid'
+      found.changeStatus = 'completed'
+    }
     closePayQr()
   }
 }
@@ -976,7 +987,6 @@ const closePayQr = () => {
   showPayQrModal.value = false
   payQrTarget.value = null
 }
-
 
 // 财务确认弹窗
 const showFinanceModal = ref(false)
@@ -1407,11 +1417,6 @@ const distributeForm = reactive({
   reasonDetail: '',
 })
 
-const changeTypeOptions = [
-  { value: 'issue', label: '发放' },
-  { value: 'deduct', label: '扣除' },
-]
-
 // 可用的启用批次（模拟）
 const availableBatches = computed(() => {
   return batchList.value.filter((b) => b.status === 'active')
@@ -1553,7 +1558,9 @@ const submitDistribute = () => {
     merchant: isDeduct ? '' : batch.merchantName,
     operator: '当前用户',
     orderNo: '',
-    expireTime: isDeduct ? '' : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    expireTime: isDeduct
+      ? ''
+      : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     time: new Date().toLocaleString(),
   })
   const actionText = isDeduct ? '扣除' : '发放'
@@ -1707,7 +1714,6 @@ const distributeRecordList = ref<FlowRecord[]>([
     time: '2026-06-12 11:00:00',
   },
 ])
-
 
 const filteredDistributeList = computed(() => {
   return distributeRecordList.value.filter((r) => {
@@ -1930,15 +1936,24 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <label class="form-label">积分开关</label>
               <div class="form-control-row">
                 <label class="toggle-switch">
-                  <input type="checkbox"
+                  <input
+                    type="checkbox"
                     :checked="editingConfig ? editEnabled : pointsConfig.enabled"
                     @change="editEnabled = $event.target.checked"
                     :disabled="!editingConfig"
                   />
                   <span class="toggle-slider"></span>
                 </label>
-                <span style="margin-left: 8px; font-size: 13px; color: #666;">
-                  {{ editingConfig ? (editEnabled ? '已开启' : '已关闭') : (pointsConfig.enabled ? '已开启' : '已关闭') }}
+                <span style="margin-left: 8px; font-size: 13px; color: #666">
+                  {{
+                    editingConfig
+                      ? editEnabled
+                        ? '已开启'
+                        : '已关闭'
+                      : pointsConfig.enabled
+                        ? '已开启'
+                        : '已关闭'
+                  }}
                 </span>
               </div>
             </div>
@@ -1946,8 +1961,11 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             <!-- View 1: 关闭状态 -->
             <template v-if="!pointsConfig.enabled">
               <div class="form-item">
-                <div class="form-control-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-                  <span style="color: #999; font-size: 13px;">积分系统已停用，点击下方按钮开启</span>
+                <div
+                  class="form-control-row"
+                  style="flex-direction: column; align-items: flex-start; gap: 12px"
+                >
+                  <span style="color: #999; font-size: 13px">积分系统已停用，点击下方按钮开启</span>
                   <button class="btn btn-primary" @click="enablePoints">开启积分系统</button>
                 </div>
               </div>
@@ -1956,103 +1974,132 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             <!-- View 2 & 4: 编辑模式（首次开启 或 修改中） -->
             <template v-if="pointsConfig.enabled && (!configSaved || editingConfig)">
               <template v-if="editEnabled">
-              <div class="form-item">
-                <label class="form-label required">积分名称</label>
-                <div class="form-control-row">
-                  <input
-                    type="text"
-                    class="form-input"
-                    style="width: 280px"
-                    v-model="pointsConfig.name"
-                    placeholder="请输入积分名称"
-                  />
+                <div class="form-item">
+                  <label class="form-label required">积分名称</label>
+                  <div class="form-control-row">
+                    <input
+                      type="text"
+                      class="form-input"
+                      style="width: 280px"
+                      v-model="pointsConfig.name"
+                      placeholder="请输入积分名称"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-item">
-                <label class="form-label">编码</label>
-                <div class="form-control-row">
-                  <input
-                    type="text"
-                    class="form-input"
-                    style="width: 280px"
-                    :value="pointsConfig.code"
-                    disabled
-                  />
-                  <span class="form-tip">（系统自动生成）</span>
+                <div class="form-item">
+                  <label class="form-label">编码</label>
+                  <div class="form-control-row">
+                    <input
+                      type="text"
+                      class="form-input"
+                      style="width: 280px"
+                      :value="pointsConfig.code"
+                      disabled
+                    />
+                    <span class="form-tip">（系统自动生成）</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-divider"></div>
+                <div class="form-divider"></div>
 
-              <div class="form-item">
-                <label class="form-label required">积分汇率</label>
-                <div class="form-control-row">
-                  <input
-                    type="number"
-                    class="form-input"
-                    style="width: 120px"
-                    v-model.number="pointsConfig.exchangeRate"
-                    min="1"
-                  />
-                  <span>积分 = 1 元</span>
-                  <span class="form-tip">（用于商品价格自动换算展示）</span>
+                <div class="form-item">
+                  <label class="form-label required">积分汇率</label>
+                  <div class="form-control-row">
+                    <input
+                      type="number"
+                      class="form-input"
+                      style="width: 120px"
+                      v-model.number="pointsConfig.exchangeRate"
+                      min="1"
+                    />
+                    <span>积分 = 1 元</span>
+                    <span class="form-tip">（用于商品价格自动换算展示）</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-divider"></div>
+                <div class="form-divider"></div>
 
-              <div class="form-item">
-                <label class="form-label required">有效期策略</label>
-                <div class="form-control-row" style="flex-wrap: wrap; gap: 12px;">
-                  <label class="radio-label">
-                    <input type="radio" v-model="pointsConfig.validityType" value="forever" />
-                    永久有效
-                  </label>
-                  <label class="radio-label">
-                    <input type="radio" v-model="pointsConfig.validityType" value="dynamic" />
-                    动态有效期
-                  </label>
-                  <label class="radio-label">
-                    <input type="radio" v-model="pointsConfig.validityType" value="yearly" />
-                    自然年清零
-                  </label>
+                <div class="form-item">
+                  <label class="form-label required">有效期策略</label>
+                  <div class="form-control-row" style="flex-wrap: wrap; gap: 12px">
+                    <label class="radio-label">
+                      <input type="radio" v-model="pointsConfig.validityType" value="forever" />
+                      永久有效
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" v-model="pointsConfig.validityType" value="dynamic" />
+                      动态有效期
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" v-model="pointsConfig.validityType" value="yearly" />
+                      自然年清零
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-item" v-if="pointsConfig.validityType === 'dynamic'">
-                <label class="form-label required">有效期天数</label>
-                <div class="form-control-row">
-                  <input
-                    type="number"
-                    class="form-input"
-                    style="width: 100px"
-                    v-model.number="pointsConfig.dynamicDays"
-                    min="1"
-                  />
-                  <span>天（自用户获得积分之日起计算）</span>
+                <div class="form-item" v-if="pointsConfig.validityType === 'dynamic'">
+                  <label class="form-label required">有效期天数</label>
+                  <div class="form-control-row">
+                    <input
+                      type="number"
+                      class="form-input"
+                      style="width: 100px"
+                      v-model.number="pointsConfig.dynamicDays"
+                      min="1"
+                    />
+                    <span>天（自用户获得积分之日起计算）</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-item" v-if="pointsConfig.validityType === 'yearly'">
-                <label class="form-label required">清零日期</label>
-                <div class="form-control-row">
-                  <span>每年</span>
-                  <input
-                    type="text"
-                    class="form-input"
-                    style="width: 80px"
-                    v-model="pointsConfig.yearlyClearDate"
-                    placeholder="12-31"
-                  />
-                  <span>统一清零上一年度积分</span>
+                <div class="form-item" v-if="pointsConfig.validityType === 'yearly'">
+                  <label class="form-label required">清零日期</label>
+                  <div class="form-control-row">
+                    <span>每年</span>
+                    <input
+                      type="text"
+                      class="form-input"
+                      style="width: 80px"
+                      v-model="pointsConfig.yearlyClearDate"
+                      placeholder="12-31"
+                    />
+                    <span>统一清零上一年度积分</span>
+                  </div>
                 </div>
-              </div>
 
+                <!-- 收款配置 -->
+                <div class="form-divider"></div>
+                <div class="form-subtitle">收款配置</div>
+                <div class="form-item">
+                  <label class="form-label">微信 AppID</label>
+                  <div class="form-control-row">
+                    <input
+                      type="text"
+                      class="form-input"
+                      style="width: 280px"
+                      v-model="pointsConfig.wxAppId"
+                      placeholder="请输入微信 AppID"
+                    />
+                  </div>
+                </div>
+                <div class="form-item">
+                  <label class="form-label">商户 ID</label>
+                  <div class="form-control-row">
+                    <input
+                      type="text"
+                      class="form-input"
+                      style="width: 280px"
+                      v-model="pointsConfig.merchantId"
+                      placeholder="请输入银迅商户号ID"
+                    />
+                  </div>
+                </div>
               </template>
               <div class="form-actions">
                 <button class="btn btn-primary" @click="savePointsConfig">保存</button>
-                <button class="btn btn-default" style="margin-left: 8px" @click="cancelEditConfig">取消</button>
+                <button class="btn btn-default" style="margin-left: 8px" @click="cancelEditConfig">
+                  取消
+                </button>
               </div>
             </template>
 
@@ -2090,11 +2137,26 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 </div>
               </div>
 
+              <!-- 收款配置 -->
+              <div class="form-divider"></div>
+              <div class="form-subtitle">收款配置</div>
+              <div class="form-item">
+                <label class="form-label">微信 AppID</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ pointsConfig.wxAppId || '—' }}</span>
+                </div>
+              </div>
+              <div class="form-item">
+                <label class="form-label">商户 ID</label>
+                <div class="form-control-row">
+                  <span class="display-value">{{ pointsConfig.merchantId || '—' }}</span>
+                </div>
+              </div>
+
               <div class="form-actions">
                 <button class="btn btn-primary" @click="startEditConfig">修改</button>
               </div>
             </template>
-
           </div>
 
           <!-- 修改记录 -->
@@ -2144,7 +2206,9 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                             </div>
                             <div class="snapshot-field">
                               <span class="snapshot-label">价值比例</span>
-                              <span class="snapshot-value">{{ record.snapshot.exchangeRate }}:1</span>
+                              <span class="snapshot-value"
+                                >{{ record.snapshot.exchangeRate }}:1</span
+                              >
                             </div>
                             <div class="snapshot-field">
                               <span class="snapshot-label">有效期策略</span>
@@ -2482,9 +2546,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <tr v-for="item in filteredSignList" :key="item.id">
                 <td>{{ item.merchantName }}</td>
                 <td>
-                    {{
-                      item.status === 'signed' ? '已签约' : '已解约'
-                    }}
+                  {{ item.status === 'signed' ? '已签约' : '已解约' }}
                 </td>
                 <td>{{ item.currentQuota.toLocaleString() }}</td>
                 <td>{{ item.signTime || '-' }}</td>
@@ -2566,17 +2628,45 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             <div class="modal-header">
               <h3>商户流水明细</h3>
               <button class="close-btn" @click="showMerchantLedgerModal = false">
-                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                <svg
+                  class="modal-close-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
               </button>
             </div>
             <div class="modal-body">
               <!-- 商户概要 -->
               <div class="merchant-summary">
                 <div class="summary-row">
-                  <span class="summary-item"><span class="summary-label">商户名称：</span>{{ currentMerchantLedger?.merchantName }}</span>
-                  <span class="summary-item"><span class="summary-label">已发放：</span><span class="summary-value">{{ merchantTotalIssued.toLocaleString() }}</span></span>
-                  <span class="summary-item"><span class="summary-label">已消耗：</span><span class="summary-value">{{ merchantTotalConsumed.toLocaleString() }}</span></span>
-                  <span class="summary-item"><span class="summary-label">剩余额度：</span><span class="summary-value">{{ merchantRemainingQuota.toLocaleString() }}</span></span>
+                  <span class="summary-item"
+                    ><span class="summary-label">商户名称：</span
+                    >{{ currentMerchantLedger?.merchantName }}</span
+                  >
+                  <span class="summary-item"
+                    ><span class="summary-label">已发放：</span
+                    ><span class="summary-value">{{
+                      merchantTotalIssued.toLocaleString()
+                    }}</span></span
+                  >
+                  <span class="summary-item"
+                    ><span class="summary-label">已消耗：</span
+                    ><span class="summary-value">{{
+                      merchantTotalConsumed.toLocaleString()
+                    }}</span></span
+                  >
+                  <span class="summary-item"
+                    ><span class="summary-label">剩余额度：</span
+                    ><span class="summary-value">{{
+                      merchantRemainingQuota.toLocaleString()
+                    }}</span></span
+                  >
                 </div>
                 <button class="btn btn-primary btn-sm summary-export-btn">导出账单</button>
               </div>
@@ -2785,137 +2875,150 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
           <div class="modal-content" @click.stop>
             <template v-if="!showQuotaQrView">
               <div class="modal-header">
-              <h3>平台新增额度</h3>
-              <button class="close-btn" @click="closeQuotaModal">✕</button>
-            </div>
-            <div class="modal-body">
-              <div class="form-item">
-                <label class="form-label required">商户</label>
-                <select class="form-select" v-model="quotaForm.merchantName" style="width: 100%">
-                  <option value="">请选择已签约商户</option>
-                  <option v-for="m in merchantOptions" :key="m" :value="m">{{ m }}</option>
-                </select>
+                <h3>平台新增额度</h3>
+                <button class="close-btn" @click="closeQuotaModal">✕</button>
               </div>
-              <div class="form-item">
-                <label class="form-label required">操作</label>
-                <select class="form-select" v-model="quotaForm.action" style="width: 100%">
-                  <option value="recharge">充值</option>
-                  <option value="recycle">回收</option>
-                </select>
-              </div>
-
-              <template v-if="quotaForm.action === 'recharge'">
+              <div class="modal-body">
                 <div class="form-item">
-                  <label class="form-label required">充值类型</label>
-                  <div class="radio-group">
-                    <label class="radio-label">
-                      <input type="radio" v-model="quotaForm.rechargeType" value="buy" /> 购买
-                    </label>
-                    <label class="radio-label">
-                      <input type="radio" v-model="quotaForm.rechargeType" value="gift" /> 赠送
-                    </label>
-                  </div>
-                </div>
-              </template>
-
-              <div class="form-item">
-                <label class="form-label required">变动数值（积分）</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  v-model.number="quotaForm.amount"
-                  min="1"
-                  placeholder="请输入积分数量"
-                  style="width: 100%"
-                />
-              </div>
-
-              <template v-if="quotaForm.action === 'recharge' && quotaForm.rechargeType === 'buy'">
-                <div class="form-divider"></div>
-                <div class="form-item">
-                  <label class="form-label required">付款方式</label>
-                  <div class="radio-group">
-                    <label class="radio-label">
-                      <input type="radio" v-model="quotaForm.payMethod" value="cash" /> 现金
-                    </label>
-                    <label class="radio-label">
-                      <input type="radio" v-model="quotaForm.payMethod" value="transfer" /> 转账
-
-                    </label>
-                    <label class="radio-label">
-                      <input type="radio" v-model="quotaForm.payMethod" value="qrcode" /> 扫码支付
-                    </label>
-                  </div>
+                  <label class="form-label required">商户</label>
+                  <select class="form-select" v-model="quotaForm.merchantName" style="width: 100%">
+                    <option value="">请选择已签约商户</option>
+                    <option v-for="m in merchantOptions" :key="m" :value="m">{{ m }}</option>
+                  </select>
                 </div>
                 <div class="form-item">
-                  <label class="form-label">金额（元）</label>
-                  <div
+                  <label class="form-label required">操作</label>
+                  <select class="form-select" v-model="quotaForm.action" style="width: 100%">
+                    <option value="recharge">充值</option>
+                    <option value="recycle">回收</option>
+                  </select>
+                </div>
+
+                <template v-if="quotaForm.action === 'recharge'">
+                  <div class="form-item">
+                    <label class="form-label required">充值类型</label>
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" v-model="quotaForm.rechargeType" value="buy" /> 购买
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" v-model="quotaForm.rechargeType" value="gift" /> 赠送
+                      </label>
+                    </div>
+                  </div>
+                </template>
+
+                <div class="form-item">
+                  <label class="form-label required">变动数值（积分）</label>
+                  <input
+                    type="number"
                     class="form-input"
-                    style="
-                      background: #f5f5f5;
-                      width: 100%;
-                      padding: 8px 12px;
-                      border-radius: 4px;
-                      color: #ff4d4f;
-                      font-weight: 600;
-                    "
-                  >
-                    ¥{{ autoPayAmount !== null ? autoPayAmount.toLocaleString() : '0' }}
-                  </div>
-                  <div style="font-size: 12px; color: #999; margin-top: 4px">
-                    按汇率 {{ exchangeRate }}:1 自动换算
-                  </div>
+                    v-model.number="quotaForm.amount"
+                    min="1"
+                    placeholder="请输入积分数量"
+                    style="width: 100%"
+                  />
                 </div>
-              </template>
 
-              <div class="form-item">
-                <label class="form-label required">备注</label>
-                <textarea
-                  class="form-textarea"
-                  v-model="quotaForm.remark"
-                  rows="2"
-                  placeholder="请说明操作原因"
-                  style="width: 100%"
-                ></textarea>
+                <template
+                  v-if="quotaForm.action === 'recharge' && quotaForm.rechargeType === 'buy'"
+                >
+                  <div class="form-divider"></div>
+                  <div class="form-item">
+                    <label class="form-label required">付款方式</label>
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" v-model="quotaForm.payMethod" value="cash" /> 现金
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" v-model="quotaForm.payMethod" value="transfer" /> 转账
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" v-model="quotaForm.payMethod" value="qrcode" /> 扫码支付
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-item">
+                    <label class="form-label">金额（元）</label>
+                    <div
+                      class="form-input"
+                      style="
+                        background: #f5f5f5;
+                        width: 100%;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        color: #ff4d4f;
+                        font-weight: 600;
+                      "
+                    >
+                      ¥{{ autoPayAmount !== null ? autoPayAmount.toLocaleString() : '0' }}
+                    </div>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px">
+                      按汇率 {{ exchangeRate }}:1 自动换算
+                    </div>
+                  </div>
+                </template>
+
+                <div class="form-item">
+                  <label class="form-label required">备注</label>
+                  <textarea
+                    class="form-textarea"
+                    v-model="quotaForm.remark"
+                    rows="2"
+                    placeholder="请说明操作原因"
+                    style="width: 100%"
+                  ></textarea>
+                </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-default" @click="closeQuotaModal">取消</button>
-              <button class="btn btn-primary" @click="submitQuota">生成流水</button>
-            </div>
-
+              <div class="modal-footer">
+                <button class="btn btn-default" @click="closeQuotaModal">取消</button>
+                <button class="btn btn-primary" @click="submitQuota">生成流水</button>
+              </div>
             </template>
 
-          <template v-else>
-          <!-- 扫码支付视图 -->
-          <div class="qr-panel" @click.stop>
-            <div class="qr-header">📱 扫码支付</div>
-            <div class="qr-code-area">
-              <svg viewBox="0 0 200 200" width="160" height="160">
-                <rect x="0" y="0" width="200" height="200" fill="#fff" rx="8" />
-                <rect x="15" y="15" width="40" height="40" fill="#000" rx="4" />
-                <rect x="145" y="15" width="40" height="40" fill="#000" rx="4" />
-                <rect x="80" y="50" width="40" height="40" fill="#000" rx="2" />
-                <rect x="30" y="80" width="20" height="20" fill="#000" rx="1" />
-                <rect x="60" y="100" width="30" height="30" fill="#000" rx="2" />
-                <rect x="120" y="70" width="50" height="20" fill="#000" rx="1" />
-                <rect x="100" y="110" width="30" height="40" fill="#000" rx="2" />
-                <rect x="30" y="130" width="50" height="20" fill="#000" rx="1" />
-                <rect x="130" y="130" width="30" height="30" fill="#000" rx="2" />
-                <rect x="15" y="145" width="40" height="40" fill="#000" rx="4" />
-                <rect x="145" y="145" width="40" height="40" fill="#000" rx="4" />
-              </svg>
-            </div>
-            <div class="qr-info">
-              <div class="qr-info-row"><span class="qr-label">支付单号</span><span class="qr-value">QR-{{ quotaCreatedItem.recordNo }}</span></div>
-              <div class="qr-info-row"><span class="qr-label">支付金额</span><span class="qr-value" style="color:#ff4d4f;font-weight:600">¥{{ quotaCreatedItem.payAmount.toLocaleString() }}</span></div>
-              <div class="qr-info-row"><span class="qr-label">状态</span><span class="qr-value" style="color:#faad14">⏳ 待付款</span></div>
-            </div>
-            <div class="qr-actions">
-              <button class="btn btn-primary" @click="confirmQrPayment">我已付款，确认完成</button>
-              <button class="btn btn-default" @click="closeQuotaModal">关闭</button>
-            </div>
-          </div>
+            <template v-else>
+              <!-- 扫码支付视图 -->
+              <div class="qr-panel" @click.stop>
+                <div class="qr-header">📱 扫码支付</div>
+                <div class="qr-code-area">
+                  <svg viewBox="0 0 200 200" width="160" height="160">
+                    <rect x="0" y="0" width="200" height="200" fill="#fff" rx="8" />
+                    <rect x="15" y="15" width="40" height="40" fill="#000" rx="4" />
+                    <rect x="145" y="15" width="40" height="40" fill="#000" rx="4" />
+                    <rect x="80" y="50" width="40" height="40" fill="#000" rx="2" />
+                    <rect x="30" y="80" width="20" height="20" fill="#000" rx="1" />
+                    <rect x="60" y="100" width="30" height="30" fill="#000" rx="2" />
+                    <rect x="120" y="70" width="50" height="20" fill="#000" rx="1" />
+                    <rect x="100" y="110" width="30" height="40" fill="#000" rx="2" />
+                    <rect x="30" y="130" width="50" height="20" fill="#000" rx="1" />
+                    <rect x="130" y="130" width="30" height="30" fill="#000" rx="2" />
+                    <rect x="15" y="145" width="40" height="40" fill="#000" rx="4" />
+                    <rect x="145" y="145" width="40" height="40" fill="#000" rx="4" />
+                  </svg>
+                </div>
+                <div class="qr-info">
+                  <div class="qr-info-row">
+                    <span class="qr-label">支付单号</span
+                    ><span class="qr-value">QR-{{ quotaCreatedItem.recordNo }}</span>
+                  </div>
+                  <div class="qr-info-row">
+                    <span class="qr-label">支付金额</span
+                    ><span class="qr-value" style="color: #ff4d4f; font-weight: 600"
+                      >¥{{ quotaCreatedItem.payAmount.toLocaleString() }}</span
+                    >
+                  </div>
+                  <div class="qr-info-row">
+                    <span class="qr-label">状态</span
+                    ><span class="qr-value" style="color: #faad14">⏳ 待付款</span>
+                  </div>
+                </div>
+                <div class="qr-actions">
+                  <button class="btn btn-primary" @click="confirmQrPayment">
+                    我已付款，确认完成
+                  </button>
+                  <button class="btn btn-default" @click="closeQuotaModal">关闭</button>
+                </div>
+              </div>
             </template>
           </div>
         </div>
@@ -2929,7 +3032,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             <h3>扫码支付</h3>
             <button class="close-btn" @click="closePayQr">✕</button>
           </div>
-          <div class="modal-body" style="text-align:center">
+          <div class="modal-body" style="text-align: center">
             <div class="qr-code-area" style="margin: 16px auto">
               <svg viewBox="0 0 200 200" width="160" height="160">
                 <rect x="0" y="0" width="200" height="200" fill="#fff" rx="8" />
@@ -2946,24 +3049,26 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 <rect x="145" y="145" width="40" height="40" fill="#000" rx="4" />
               </svg>
             </div>
-            <div style="margin-bottom:12px">
-              <div style="font-size:13px;color:#999;margin-bottom:4px">支付单号</div>
-              <div style="font-size:14px;font-weight:500">QR-{{ payQrTarget.recordNo }}</div>
+            <div style="margin-bottom: 12px">
+              <div style="font-size: 13px; color: #999; margin-bottom: 4px">支付单号</div>
+              <div style="font-size: 14px; font-weight: 500">QR-{{ payQrTarget.recordNo }}</div>
             </div>
-            <div style="margin-bottom:16px">
-              <div style="font-size:13px;color:#999;margin-bottom:4px">支付金额</div>
-              <div style="font-size:22px;color:#ff4d4f;font-weight:600">¥{{ payQrTarget.payAmount.toLocaleString() }}</div>
+            <div style="margin-bottom: 16px">
+              <div style="font-size: 13px; color: #999; margin-bottom: 4px">支付金额</div>
+              <div style="font-size: 22px; color: #ff4d4f; font-weight: 600">
+                ¥{{ payQrTarget.payAmount.toLocaleString() }}
+              </div>
             </div>
-            <div style="font-size:14px;color:#faad14">⏳ 待付款</div>
+            <div style="font-size: 14px; color: #faad14">⏳ 待付款</div>
           </div>
-          <div class="modal-footer" style="justify-content:center">
+          <div class="modal-footer" style="justify-content: center">
             <button class="btn btn-primary" @click="confirmQrPayment">我已付款，确认完成</button>
             <button class="btn btn-default" @click="closePayQr">关闭</button>
           </div>
         </div>
       </div>
 
-            <div class="modal-overlay" v-if="showFinanceModal" @click="closeFinanceModal">
+      <div class="modal-overlay" v-if="showFinanceModal" @click="closeFinanceModal">
         <div class="modal-content" style="width: 460px" @click.stop>
           <div class="modal-header">
             <h3>财务确认</h3>
@@ -3092,7 +3197,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                   <a class="action-link primary" @click="openUserLedger(user)">明细</a>
                   <a
                     class="action-link"
-                    style="margin-left: 8px; color: #0E7B3A"
+                    style="margin-left: 8px; color: #0e7b3a"
                     @click="openDistributeModal(user)"
                     >变更</a
                   >
@@ -3128,7 +3233,11 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             </div>
             <div class="filter-item">
               <label>变更类型</label>
-              <select class="form-select" v-model="distributeFilter.changeType" style="width: 100px">
+              <select
+                class="form-select"
+                v-model="distributeFilter.changeType"
+                style="width: 100px"
+              >
                 <option value="">全部</option>
                 <option value="issue">发放</option>
                 <option value="deduct">扣除</option>
@@ -3162,48 +3271,48 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
             </div>
           </div>
           <table class="data-table table-nowrap">
-              <thead>
-                <tr>
-                  <th>流水编号</th>
-                  <th>用户id</th>
-                  <th>手机号</th>
-                  <th>类型</th>
-                  <th>原因</th>
-                  <th class="cell-wrap">原因备注</th>
-                  <th>变动数值</th>
-                  <th>变动后余额</th>
-                  <th>来源商户</th>
-                  <th class="cell-wrap">关联批次</th>
-                  <th>关联订单号</th>
-                  <th>发生时间</th>
-                  <th>过期时间</th>
-                  <th>操作人</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in filteredDistributeList" :key="item.id">
-                  <td>{{ item.id }}</td>
-                  <td>{{ item.userUid }}</td>
-                  <td>{{ item.userPhone }}</td>
-                  <td>{{ getLedgerTypeText(item.type) }}</td>
-                  <td>{{ getReasonTypeText(item.reason) }}</td>
-                  <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
-                  <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
-                    {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
-                  </td>
-                  <td>{{ item.balance.toLocaleString() }}</td>
-                  <td>{{ item.merchant || '-' }}</td>
-                  <td class="cell-wrap">{{ item.batch || '-' }}</td>
-                  <td>{{ item.orderNo || '-' }}</td>
-                  <td class="time-text">{{ item.time }}</td>
-                  <td>{{ item.expireTime || '-' }}</td>
-                  <td>{{ item.operator }}</td>
-                </tr>
-                <tr v-if="filteredDistributeList.length === 0">
-                  <td colspan="14" class="empty-text">暂无变更记录</td>
-                </tr>
-              </tbody>
-            </table>
+            <thead>
+              <tr>
+                <th>流水编号</th>
+                <th>用户id</th>
+                <th>手机号</th>
+                <th>类型</th>
+                <th>原因</th>
+                <th class="cell-wrap">原因备注</th>
+                <th>变动数值</th>
+                <th>变动后余额</th>
+                <th>来源商户</th>
+                <th class="cell-wrap">关联批次</th>
+                <th>关联订单号</th>
+                <th>发生时间</th>
+                <th>过期时间</th>
+                <th>操作人</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in filteredDistributeList" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.userUid }}</td>
+                <td>{{ item.userPhone }}</td>
+                <td>{{ getLedgerTypeText(item.type) }}</td>
+                <td>{{ getReasonTypeText(item.reason) }}</td>
+                <td class="cell-wrap">{{ item.reasonDetail || '-' }}</td>
+                <td :class="item.amount > 0 ? 'amount-positive' : 'amount-negative'">
+                  {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
+                </td>
+                <td>{{ item.balance.toLocaleString() }}</td>
+                <td>{{ item.merchant || '-' }}</td>
+                <td class="cell-wrap">{{ item.batch || '-' }}</td>
+                <td>{{ item.orderNo || '-' }}</td>
+                <td class="time-text">{{ item.time }}</td>
+                <td>{{ item.expireTime || '-' }}</td>
+                <td>{{ item.operator }}</td>
+              </tr>
+              <tr v-if="filteredDistributeList.length === 0">
+                <td colspan="14" class="empty-text">暂无变更记录</td>
+              </tr>
+            </tbody>
+          </table>
           <div class="pagination-bar">
             <span class="page-info">共 {{ filteredDistributeList.length }} 条记录</span>
           </div>
@@ -3400,7 +3509,17 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
         <div class="modal-header">
           <h3>变更</h3>
           <button class="close-btn" @click="closeDistributeModal">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </button>
         </div>
         <div class="modal-body">
@@ -3437,7 +3556,10 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
               <option value="deduct">扣除</option>
             </select>
           </div>
-          <div class="form-item" v-if="distributeForm.selectedUser && distributeForm.changeType === 'issue'">
+          <div
+            class="form-item"
+            v-if="distributeForm.selectedUser && distributeForm.changeType === 'issue'"
+          >
             <label class="form-label required">所属批次</label>
             <select class="form-select" v-model="distributeForm.batchId" style="flex: 1">
               <option value="">请选择积分批次</option>
@@ -3470,11 +3592,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
                 v-model="distributeForm.reasonType"
                 style="width: 100%; margin-bottom: 8px"
               >
-                <option
-                  v-for="opt in changeReasonOptions"
-                  :key="opt.value"
-                  :value="opt.value"
-                >
+                <option v-for="opt in changeReasonOptions" :key="opt.value" :value="opt.value">
                   {{ opt.label }}
                 </option>
               </select>
@@ -3570,16 +3688,35 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
         <div class="modal-header">
           <h3>积分流水明细</h3>
           <button class="close-btn" @click="closeUserLedgerModal">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </button>
         </div>
         <div class="modal-body">
           <!-- 用户概要 -->
           <div class="merchant-summary">
             <div class="summary-row">
-              <span class="summary-item"><span class="summary-label">用户ID：</span>{{ currentLedgerUser?.uid }}</span>
-              <span class="summary-item"><span class="summary-label">手机号：</span>{{ currentLedgerUser?.phone }}</span>
-              <span class="summary-item"><span class="summary-label">当前余额：</span><span class="summary-value">{{ currentLedgerUser?.currentPoints.toLocaleString() }}</span></span>
+              <span class="summary-item"
+                ><span class="summary-label">用户ID：</span>{{ currentLedgerUser?.uid }}</span
+              >
+              <span class="summary-item"
+                ><span class="summary-label">手机号：</span>{{ currentLedgerUser?.phone }}</span
+              >
+              <span class="summary-item"
+                ><span class="summary-label">当前余额：</span
+                ><span class="summary-value">{{
+                  currentLedgerUser?.currentPoints.toLocaleString()
+                }}</span></span
+              >
             </div>
             <button class="btn btn-primary btn-sm summary-export-btn">导出全部</button>
           </div>
@@ -3796,13 +3933,13 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #E5E6EB;
+  background-color: #e5e6eb;
   transition: 0.25s ease;
   border-radius: 22px;
 }
 .toggle-slider::before {
   position: absolute;
-  content: "";
+  content: '';
   height: 18px;
   width: 18px;
   left: 2px;
@@ -3812,7 +3949,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   border-radius: 50%;
 }
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
 }
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(22px);
@@ -3823,9 +3960,15 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .display-value {
   font-size: 14px;
-  color: #1D2129;
+  color: #1d2129;
   font-weight: 500;
   padding: 4px 0;
+}
+.form-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 16px;
 }
 .form-divider {
   height: 1px;
@@ -4107,7 +4250,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 .modal-content {
   background: #fff;
   border-radius: 10px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
   width: 520px;
   max-height: 80vh;
@@ -4115,7 +4258,7 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .modal-header {
   padding: 16px 28px;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -4137,12 +4280,12 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   transition: background-color 0.15s ease;
 }
 .close-btn:hover {
-  background-color: #F2F3F5;
+  background-color: #f2f3f5;
 }
 .modal-close-icon {
   width: 16px;
   height: 16px;
-  color: #86909C;
+  color: #86909c;
 }
 .modal-lg {
   width: 720px;
@@ -4168,14 +4311,14 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
 }
 .summary-item {
   font-size: 14px;
-  color: #4E5969;
+  color: #4e5969;
   white-space: nowrap;
 }
 .summary-label {
-  color: #86909C;
+  color: #86909c;
 }
 .summary-value {
-  color: #1D2129;
+  color: #1d2129;
   font-weight: 600;
 }
 .summary-export-btn {
@@ -4199,15 +4342,15 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   max-width: 180px;
 }
 .amount-positive {
-  color: #CF1322;
+  color: #cf1322;
   font-weight: 500;
 }
 .amount-negative {
-  color: #0E7B3A;
+  color: #0e7b3a;
   font-weight: 500;
 }
 .time-text {
-  color: #86909C;
+  color: #86909c;
   white-space: nowrap;
 }
 .modal-footer {
@@ -4503,13 +4646,3 @@ const merchantOptions = ['总部直营店', '总部加盟店', '社区便利店A
   justify-content: center;
 }
 </style>
-
-
-
-
-
-
-
-
-
-

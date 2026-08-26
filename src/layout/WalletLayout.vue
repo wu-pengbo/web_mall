@@ -42,15 +42,16 @@ const menuList = [
 .wallet-management {
   display: flex;
   min-height: 100vh;
-  background-color: #F0F2F5;
-  color: #1D2129;
-  font-family: 'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: #f0f2f5;
+  color: #1d2129;
+  font-family:
+    'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.6;
 }
 .sidebar {
   width: 210px;
-  background-color: #FFFFFF;
-  border-right: 1px solid #E5E6EB;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e6eb;
   padding: 0;
   flex-shrink: 0;
 }
@@ -60,9 +61,9 @@ const menuList = [
   padding: 0 20px;
   font-size: 15px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   letter-spacing: -0.01em;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
 }
 .menu-list {
   padding: 8px 0;
@@ -72,17 +73,17 @@ const menuList = [
   height: 40px;
   line-height: 40px;
   font-size: 14px;
-  color: #86909C;
+  color: #86909c;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .menu-item:hover {
-  color: #1D2129;
-  background-color: #FAFAFA;
+  color: #1d2129;
+  background-color: #fafafa;
 }
 .menu-item.active {
-  color: #4F6EF7;
-  background-color: #E8F3FF;
+  color: #4f6ef7;
+  background-color: #e8f3ff;
   font-weight: 600;
   position: relative;
 }
@@ -93,7 +94,7 @@ const menuList = [
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
   border-radius: 0 3px 3px 0;
 }
 .main-content {
@@ -101,7 +102,6 @@ const menuList = [
   padding: 24px;
   min-width: 0;
 }
-
 </style>
 <style>
 @import '../assets/wallet-common.css';

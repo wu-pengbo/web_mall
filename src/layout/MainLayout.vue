@@ -81,13 +81,14 @@ const goMenu = (path: string) => {
 .layout {
   display: flex;
   min-height: 100vh;
-  background-color: #F0F2F5;
-  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: #f0f2f5;
+  font-family:
+    -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 .sidebar {
   width: 200px;
   background-color: #001529;
-  color: #FFFFFF;
+  color: #ffffff;
   position: fixed;
   top: 0;
   left: 0;
@@ -101,19 +102,19 @@ const goMenu = (path: string) => {
   justify-content: center;
   align-items: center;
   background-color: #002140;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .logo h2 {
   margin: 0;
   font-size: 18px;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.02em;
   font-weight: 700;
 }
 .logo p {
   margin: 4px 0 0;
   font-size: 11px;
-  color: #8C939D;
+  color: #8c939d;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -128,7 +129,7 @@ const goMenu = (path: string) => {
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  color: #8C939D;
+  color: #8c939d;
   font-size: 14px;
 }
 .menu-icon {
@@ -136,12 +137,12 @@ const goMenu = (path: string) => {
   font-size: 14px;
 }
 .menu-item:hover {
-  color: #FFFFFF;
-  background-color: rgba(255,255,255,0.06);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
 }
 .menu-item.active {
-  background-color: #4F6EF7;
-  color: #FFFFFF;
+  background-color: #4f6ef7;
+  color: #ffffff;
   font-weight: 500;
 }
 .main-content {

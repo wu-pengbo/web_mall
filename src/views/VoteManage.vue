@@ -90,7 +90,7 @@ const goResult = (id: number) => {
   router.push(`/vote/result/${id}`)
 }
 
-const toggleStatus = (item: any) => {
+const toggleStatus = (item: (typeof votes.value)[number]) => {
   if (item.status === 'active') {
     if (confirm(`确定要提前结束投票 "${item.title}" 吗？`)) {
       item.status = 'closed'

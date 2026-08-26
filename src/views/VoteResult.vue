@@ -19,8 +19,8 @@ const voteData = ref({
     { id: 1, text: '技术部 - 张三', votes: 45, percentage: 35.1 },
     { id: 2, text: '市场部 - 李四', votes: 32, percentage: 25.0 },
     { id: 3, text: '产品部 - 王五', votes: 28, percentage: 21.9 },
-    { id: 4, text: '设计部 - 赵六', votes: 23, percentage: 18.0 }
-  ]
+    { id: 4, text: '设计部 - 赵六', votes: 23, percentage: 18.0 },
+  ],
 })
 
 const goBack = () => {
@@ -34,13 +34,13 @@ const goBack = () => {
     <div class="fixed-top-area">
       <div class="header">
         <div class="bread-crumb">
-          <span style="cursor: pointer; color: #666;" @click="goBack">投票管理</span>
-          <span style="margin: 0 8px;">→</span>
+          <span style="cursor: pointer; color: #666" @click="goBack">投票管理</span>
+          <span style="margin: 0 8px">→</span>
           <span>投票结果</span>
         </div>
         <div>
           <button class="btn btn-default" @click="goBack">返回列表</button>
-          <button class="btn btn-primary" style="margin-left: 12px;">导出明细 (Excel)</button>
+          <button class="btn btn-primary" style="margin-left: 12px">导出明细 (Excel)</button>
         </div>
       </div>
     </div>
@@ -52,7 +52,7 @@ const goBack = () => {
         <div class="stat-cards">
           <div class="card">
             <div class="label">当前状态</div>
-            <div class="value" style="color: #1677FF;">进行中</div>
+            <div class="value" style="color: #1677ff">进行中</div>
           </div>
           <div class="card">
             <div class="label">参与总人数</div>
@@ -81,7 +81,9 @@ const goBack = () => {
                 </div>
               </div>
               <div class="data-area">
-                <div class="votes"><strong>{{ opt.votes }}</strong> 票</div>
+                <div class="votes">
+                  <strong>{{ opt.votes }}</strong> 票
+                </div>
                 <div class="percent">{{ opt.percentage }}%</div>
               </div>
             </div>
@@ -94,10 +96,10 @@ const goBack = () => {
 
 <style scoped>
 .vote-result {
-  background-color: #F5F7FA;
+  background-color: #f5f7fa;
   min-height: 100vh;
   color: #333333;
-  font-family: "Microsoft YaHei", sans-serif;
+  font-family: 'Microsoft YaHei', sans-serif;
 }
 .fixed-top-area {
   position: sticky;
@@ -123,9 +125,9 @@ const goBack = () => {
   padding: 20px;
 }
 .module {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   padding: 20px;
   margin-bottom: 16px;
 }
@@ -155,11 +157,11 @@ const goBack = () => {
   font-weight: bold;
 }
 .btn-primary {
-  background-color: #1677FF;
-  color: #FFFFFF;
+  background-color: #1677ff;
+  color: #ffffff;
 }
 .btn-default {
-  background-color: #EEEEEE;
+  background-color: #eeeeee;
   color: #333333;
 }
 
@@ -220,9 +222,18 @@ const goBack = () => {
   margin-right: 20px;
   flex-shrink: 0;
 }
-.rank-1 { background: #ffe58f; color: #fa8c16; }
-.rank-2 { background: #e6f7ff; color: #1890ff; }
-.rank-3 { background: #f6ffed; color: #52c41a; }
+.rank-1 {
+  background: #ffe58f;
+  color: #fa8c16;
+}
+.rank-2 {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+.rank-3 {
+  background: #f6ffed;
+  color: #52c41a;
+}
 
 .info-area {
   flex: 1;
@@ -241,7 +252,7 @@ const goBack = () => {
 }
 .progress-bar-fill {
   height: 100%;
-  background: #1677FF;
+  background: #1677ff;
   border-radius: 6px;
   transition: width 0.5s ease-out;
 }

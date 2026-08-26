@@ -5,11 +5,18 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-const voteId = ref(route.params.id)
 const category = ref(route.query.category || 'normal')
 
 // 选项列表
-const options = ref<any[]>([])
+interface OptionItem {
+  id: number
+  title: string
+  image?: string
+  video?: string
+  detailImages?: unknown[]
+  description?: string
+}
+const options = ref<OptionItem[]>([])
 
 onMounted(() => {
   // 模拟根据投票ID获取选项

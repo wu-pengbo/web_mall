@@ -3,7 +3,7 @@
     <div class="header">
       <div class="bread-crumb">平台首页 / Dashboard</div>
     </div>
-    
+
     <div class="container">
       <div class="welcome-box">
         <h2>👋 欢迎回来，超级管理员！</h2>
@@ -70,17 +70,17 @@
 
 <style scoped>
 .dashboard {
-  background-color: #F5F7FA;
+  background-color: #f5f7fa;
   min-height: 100vh;
   color: #333333;
-  font-family: "Microsoft YaHei", sans-serif;
+  font-family: 'Microsoft YaHei', sans-serif;
 }
 .header {
   position: sticky;
   top: 0;
   height: 60px;
-  background-color: #FFFFFF;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -98,7 +98,7 @@
   background: #fff;
   padding: 24px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   margin-bottom: 20px;
 }
 .welcome-box h2 {
@@ -124,7 +124,7 @@
   display: flex;
   align-items: center;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
 }
 .card:hover {
@@ -133,7 +133,7 @@
 .card-icon {
   font-size: 36px;
   margin-right: 16px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -150,10 +150,18 @@
   font-size: 28px;
   font-weight: bold;
 }
-.bg-blue { background: linear-gradient(135deg, #1890ff, #36cfc9); }
-.bg-green { background: linear-gradient(135deg, #52c41a, #a0d911); }
-.bg-orange { background: linear-gradient(135deg, #fa8c16, #fadb14); }
-.bg-red { background: linear-gradient(135deg, #f5222d, #ff4d4f); }
+.bg-blue {
+  background: linear-gradient(135deg, #1890ff, #36cfc9);
+}
+.bg-green {
+  background: linear-gradient(135deg, #52c41a, #a0d911);
+}
+.bg-orange {
+  background: linear-gradient(135deg, #fa8c16, #fadb14);
+}
+.bg-red {
+  background: linear-gradient(135deg, #f5222d, #ff4d4f);
+}
 
 /* 图表区域 */
 .charts-area {
@@ -165,7 +173,7 @@
   background: #fff;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .chart-box h3 {
   margin: 0 0 20px;

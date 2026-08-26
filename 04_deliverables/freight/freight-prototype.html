@@ -7,9 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ==================== 布局 ==================== */
-        .left-panel { width: 78%; overflow-y: auto; }
-        .right-panel { width: 22%; background: #FFFBF0; border-left: 1px solid #E5E7EB; overflow-y: auto; }
-        @media (max-width: 900px) { .left-panel { width: 100%; } .right-panel { display: none; } }
+        .left-panel { flex: 1; min-width: 0; overflow-y: auto; }
+        .right-panel { width: 22%; min-width: 220px; background: #FFFBF0; border-left: 1px solid #E5E7EB; overflow-y: auto; }
+        @media (max-width: 900px) { .left-panel { width: 100%; } .right-panel { display: none; } .sidebar { display: none; } }
+
+        /* 左侧菜单栏 */
+        .sidebar { width: 200px; flex-shrink: 0; background: #1f2937; color: #cbd5e1; display: flex; flex-direction: column; }
+        .sidebar .logo { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sidebar .logo h2 { color: #fff; font-size: 18px; margin: 0; }
+        .sidebar .logo p { font-size: 11px; color: #94a3b8; margin: 2px 0 0; }
+        .sidebar .menu-list { flex: 1; padding: 8px 0; overflow-y: auto; }
+        .sidebar .menu-item { padding: 11px 18px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .sidebar .menu-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .sidebar .menu-item.active { background: #2b8cf0; color: #fff; }
+        .sidebar .menu-group-title { padding: 14px 18px 4px; font-size: 13px; color: #a8b0bd; font-weight: 500; }
+        .sidebar .menu-group-title.active { background: rgba(43,140,240,0.18); color: #fff; border-left: 3px solid #2b8cf0; }
+        .sidebar .menu-item-sub { padding-left: 32px; font-size: 12px; }
+        .sidebar .menu-item-sub.active { background: #2b8cf0; color: #fff; border-radius: 6px; margin: 0 10px; }
 
         /* ==================== 视图切换 ==================== */
         .page-view { display: none; }
@@ -21,6 +35,11 @@
         .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; }
         
         /* ==================== 弹窗 ==================== */
+        /* 默认规则包邮方式三态 */
+        .free-mode-btn { background: #fff; color: #646a73; border-color: #dde0e5; cursor: pointer; transition: all 0.2s; }
+        .free-mode-btn:hover { border-color: #2b8cf0; color: #2b8cf0; }
+        .free-mode-btn.free-mode-on { background: #e8f4fd !important; color: #2b8cf0 !important; border-color: #2b8cf0 !important; font-weight: 500; }
+
         .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 680px; max-height: 85vh; overflow-y: auto; margin: 1rem; width: 100%; }
@@ -77,6 +96,28 @@
     <svg id="svg-lines" class="fixed inset-0 w-full h-full pointer-events-none z-50"></svg>
 
     <div class="flex h-screen">
+        <!-- ==================== 左侧菜单栏 ==================== -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>Web Mall</h2>
+                <p>商家管理后台</p>
+            </div>
+            <div class="menu-list">
+                <div class="menu-item">平台首页</div>
+                <div class="menu-item">商品管理</div>
+                <div class="menu-group-title active">产品设置</div>
+                <div class="menu-item menu-item-sub active">运费管理</div>
+                <div class="menu-item">预约项目</div>
+                <div class="menu-item">工作台日历</div>
+                <div class="menu-item">投票管理</div>
+                <div class="menu-item">订单管理</div>
+                <div class="menu-item">积分管理</div>
+                <div class="menu-item">钱包管理</div>
+                <div class="menu-item">用户管理</div>
+                <div class="menu-item">系统设置</div>
+            </div>
+        </div>
+
         <!-- ==================== 左侧面板 ==================== -->
         <div id="left-panel" class="left-panel p-6 overflow-y-auto">
 
@@ -340,23 +381,24 @@
                 <div class="text-xs text-gray-400 mt-1">用户端展示的规则标签</div>
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-600 mb-1">适用地区</label>
-                <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-blue-600 font-semibold">全国（默认兜底规则）</div>
+                <div class="flex items-center justify-between">
+                    <span class="block text-sm font-medium text-gray-600">适用地区</span>
+                    <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">全国</span>
+                </div>
             </div>
             <div class="mb-4 pb-4 border-b border-gray-100">
-                <label class="block text-sm font-medium text-gray-600 mb-2">包邮设置</label>
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="toggle-switch toggle-on" data-target="def-free-threshold" onclick="toggleFreeShipping(this)">
-                        <div class="toggle-knob"></div>
-                    </div>
-                    <span class="toggle-label text-sm font-medium" style="color:#00B42A;">开启包邮</span>
+                <label class="block text-sm font-medium text-gray-600 mb-2">包邮方式</label>
+                <div class="flex gap-2 mb-3" id="def-free-mode-group">
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border free-mode-on" data-mode="full" onclick="setDefFreeMode('full')">完全包邮</button>
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border" data-mode="threshold" onclick="setDefFreeMode('threshold')">门槛包邮</button>
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border" data-mode="none" onclick="setDefFreeMode('none')">不包邮</button>
                 </div>
-                <div id="def-free-threshold">
-                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）<span class="text-gray-300 font-normal">填0表示无条件包邮，无需计费参数</span></label>
-                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="0" oninput="toggleChargeForm(this.value, 'def-modal-charge-form')" />
+                <div id="def-free-threshold" style="display:none;">
+                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）</label>
+                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="99" oninput="toggleChargeForm(this.value, 'def-modal-charge-form')" />
                 </div>
             </div>
-            <div class="mb-4">
+            <div class="mb-4" id="def-fee-section">
                 <label class="block text-sm font-medium text-gray-600 mb-2">计费参数 <span class="text-gray-300 font-normal">（未达包邮门槛时生效）</span></label>
                 <div id="def-modal-charge-form"></div>
             </div>
@@ -386,19 +428,18 @@
                 <div class="text-xs text-gray-400 mt-1">灰色划线地区已被其他特殊规则占用，不可选择</div>
             </div>
             <div class="mb-4 pb-4 border-b border-gray-100">
-                <label class="block text-sm font-medium text-gray-600 mb-2">包邮设置</label>
-                <div class="flex items-center gap-3">
-                    <div class="toggle-switch" data-target="sp-free-threshold" onclick="toggleFreeShipping(this)">
-                        <div class="toggle-knob"></div>
-                    </div>
-                    <span class="toggle-label text-sm font-medium text-gray-500">不包邮</span>
+                <label class="block text-sm font-medium text-gray-600 mb-2">包邮方式</label>
+                <div class="flex gap-2 mb-3" id="sp-free-mode-group">
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border" data-mode="full" onclick="setSpFreeMode('full')">完全包邮</button>
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border" data-mode="threshold" onclick="setSpFreeMode('threshold')">门槛包邮</button>
+                    <button type="button" class="free-mode-btn text-xs px-3 py-1.5 rounded-lg border free-mode-on" data-mode="none" onclick="setSpFreeMode('none')">不包邮</button>
                 </div>
-                <div id="sp-free-threshold" style="display:none;margin-top:10px;">
-                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）<span class="text-gray-300 font-normal">填0表示无条件包邮</span></label>
-                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm" value="99" oninput="toggleChargeForm(this.value, 'sp-modal-charge-form')" />
+                <div id="sp-free-threshold" style="display:none;">
+                    <label class="block text-xs text-gray-500 mb-1">包邮门槛（元）</label>
+                    <input type="number" class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400" value="99" oninput="toggleChargeForm(this.value, 'sp-modal-charge-form')" />
                 </div>
             </div>
-            <div class="mb-4">
+            <div class="mb-4" id="sp-fee-section">
                 <label class="block text-sm font-medium text-gray-600 mb-2">计费参数 <span class="text-gray-300 font-normal">（未达包邮门槛时生效）</span></label>
                 <div id="sp-modal-charge-form"></div>
             </div>
@@ -482,6 +523,8 @@
             if (!modal) return;
             // 打开弹窗前更新内容
             updateModalContent();
+            if (id === 'modal-default-rule') setDefFreeMode('full');
+            else if (id === 'modal-special-rule') setSpFreeMode('none');
             modal.classList.add('active');
             setTimeout(drawLines, 50);
         }
@@ -505,6 +548,34 @@
             if (inp && label) label.textContent = inp.value.trim() || '偏远地区 1';
             closeModal('modal-special-rule');
             showToast('特殊地区规则已保存', 'success');
+        }
+
+        // ==================== 默认规则：包邮方式三态 ====================
+        function setDefFreeMode(mode) {
+            if (!document.getElementById('def-free-mode-group')) return;
+            document.querySelectorAll('#def-free-mode-group .free-mode-btn').forEach(function(b) {
+                var on = b.getAttribute('data-mode') === mode;
+                if (on) b.classList.add('free-mode-on'); else b.classList.remove('free-mode-on');
+            });
+            var thr = document.getElementById('def-free-threshold');
+            var fee = document.getElementById('def-fee-section');
+            if (mode === 'full') { if (thr) thr.style.display = 'none'; if (fee) fee.style.display = 'none'; }
+            else if (mode === 'threshold') { if (thr) thr.style.display = 'block'; if (fee) fee.style.display = 'block'; }
+            else { if (thr) thr.style.display = 'none'; if (fee) fee.style.display = 'block'; }
+        }
+
+        // ==================== 特殊规则：包邮方式三态（与默认规则一致） ====================
+        function setSpFreeMode(mode) {
+            if (!document.getElementById('sp-free-mode-group')) return;
+            document.querySelectorAll('#sp-free-mode-group .free-mode-btn').forEach(function(b) {
+                var on = b.getAttribute('data-mode') === mode;
+                if (on) b.classList.add('free-mode-on'); else b.classList.remove('free-mode-on');
+            });
+            var thr = document.getElementById('sp-free-threshold');
+            var fee = document.getElementById('sp-fee-section');
+            if (mode === 'full') { if (thr) thr.style.display = 'none'; if (fee) fee.style.display = 'none'; }
+            else if (mode === 'threshold') { if (thr) thr.style.display = 'block'; if (fee) fee.style.display = 'block'; }
+            else { if (thr) thr.style.display = 'none'; if (fee) fee.style.display = 'block'; }
         }
 
         // ==================== Toggle 开关 ====================

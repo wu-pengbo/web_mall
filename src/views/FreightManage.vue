@@ -11,15 +11,22 @@ const keyword = ref('')
 const currentPage = ref(1)
 const pageSize = 10
 
-const filteredList = computed(() => mockTemplates.filter(t => !keyword.value || t.name.includes(keyword.value)))
+const filteredList = computed(() =>
+  mockTemplates.filter((t) => !keyword.value || t.name.includes(keyword.value)),
+)
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredList.value.length / pageSize)))
 const pagedList = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return filteredList.value.slice(start, start + pageSize)
 })
 
-const handleSearch = () => { currentPage.value = 1 }
-const resetSearch = () => { keyword.value = ''; currentPage.value = 1 }
+const handleSearch = () => {
+  currentPage.value = 1
+}
+const resetSearch = () => {
+  keyword.value = ''
+  currentPage.value = 1
+}
 
 const goPage = (page: number) => {
   if (page < 1 || page > totalPages.value) return
@@ -29,8 +36,9 @@ const pageNumbers = computed(() => {
   const pages: number[] = []
   const total = totalPages.value
   const cur = currentPage.value
-  if (total <= 7) { for (let i = 1; i <= total; i++) pages.push(i) }
-  else {
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
     pages.push(1)
     if (cur > 3) pages.push(0)
     for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
@@ -40,7 +48,8 @@ const pageNumbers = computed(() => {
   return pages
 })
 
-const goPublish = (id?: string) => router.push(id ? `/freight/publish?id=${id}` : '/freight/publish')
+const goPublish = (id?: string) =>
+  router.push(id ? `/freight/publish?id=${id}` : '/freight/publish')
 
 const confirmDelete = (item: FreightTemplate) => {
   if (item.productCount > 0) {
@@ -64,10 +73,25 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
     <div class="pg-hd"><div class="tt">运费模板管理</div></div>
     <div class="panel">
       <div class="filter-bar">
-        <div class="filter-item"><label>模板名称</label><input type="text" class="form-input" v-model="keyword" placeholder="搜索…" @keyup.enter="handleSearch" /></div>
-        <div class="filter-item"><button class="btn btn-primary" @click="handleSearch">查询</button><button class="btn btn-default" @click="resetSearch">重置</button></div>
+        <div class="filter-item">
+          <label>模板名称</label
+          ><input
+            type="text"
+            class="form-input"
+            v-model="keyword"
+            placeholder="搜索…"
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-primary" @click="handleSearch">查询</button
+          ><button class="btn btn-default" @click="resetSearch">重置</button>
+        </div>
       </div>
-      <div class="tb-hd"><span class="tb-tt">运费模板列表</span><button class="btn btn-primary" @click="goPublish()">+ 新建模板</button></div>
+      <div class="tb-hd">
+        <span class="tb-tt">运费模板列表</span
+        ><button class="btn btn-primary" @click="goPublish()">+ 新建模板</button>
+      </div>
 
       <table class="data-table freight-table" v-if="pagedList.length > 0">
         <thead>
@@ -84,32 +108,70 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
           <tr v-for="item in pagedList" :key="item.id">
             <td class="id-col">{{ item.id }}</td>
             <td class="nm" :title="item.name">{{ item.name }}</td>
-            <td><span class="status-tag normal">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span></td>
             <td>
-              <span class="status-tag normal" style="margin-right:6px;">{{ item.defaultRule.name || '全国适用' }}</span>
-              <span class="free-tag" :class="item.defaultRule.isFreeShipping ? 'all' : 'none'">{{ getFreeShippingText(item.defaultRule) }}</span>
-              <div class="fee-txt">{{ getChargeConfigSummary(item.chargeType, item.defaultRule.chargeConfig) }}</div>
+              <span class="status-tag normal">{{ CHARGE_TYPE_LABEL[item.chargeType] }}</span>
+            </td>
+            <td>
+              <span class="status-tag normal" style="margin-right: 6px">{{
+                item.defaultRule.name || '全国适用'
+              }}</span>
+              <span class="free-tag" :class="item.defaultRule.isFreeShipping ? 'all' : 'none'">{{
+                getFreeShippingText(item.defaultRule)
+              }}</span>
+              <div class="fee-txt">
+                {{ getChargeConfigSummary(item.chargeType, item.defaultRule.chargeConfig) }}
+              </div>
             </td>
             <td>
               <template v-if="item.specialRules.length > 0">
-                <div v-for="cr in item.specialRules" :key="cr.id" style="margin-bottom:2px;">
+                <div v-for="cr in item.specialRules" :key="cr.id" style="margin-bottom: 2px">
                   <span class="status-tag draft">{{ cr.name || '偏远地区' }}</span>
-                  <span style="font-size:11px;color:#86909C;margin-left:4px;">{{ cr.regions.length }}省</span>
+                  <span style="font-size: 11px; color: #86909c; margin-left: 4px"
+                    >{{ cr.regions.length }}省</span
+                  >
                 </div>
               </template>
               <span v-else class="sub-text">—</span>
             </td>
-            <td><div class="act"><span class="action-link" @click="goPublish(item.id)">编辑</span><span class="action-link danger" @click="confirmDelete(item)">删除</span></div></td>
+            <td>
+              <div class="act">
+                <span class="action-link" @click="goPublish(item.id)">编辑</span
+                ><span class="action-link danger" @click="confirmDelete(item)">删除</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
-      <div v-if="pagedList.length === 0" class="empty-text"><div style="font-size:28px;color:#C9CDD4;">[ ]</div><div>暂无匹配的运费模板</div></div>
+      <div v-if="pagedList.length === 0" class="empty-text">
+        <div style="font-size: 28px; color: #c9cdd4">[ ]</div>
+        <div>暂无匹配的运费模板</div>
+      </div>
       <div class="pagination" v-if="totalPages > 1">
         <span>共 {{ filteredList.length }} 条，第 {{ currentPage }} / {{ totalPages }} 页</span>
         <div class="page-btns">
-          <button class="page-btn" :class="{ disabled: currentPage <= 1 }" @click="goPage(currentPage - 1)">上一页</button>
-          <button v-for="p in pageNumbers" :key="p" class="page-btn" :class="{ active: p === currentPage, disabled: p === 0 }" @click="goPage(p)">{{ p === 0 ? '…' : p }}</button>
-          <button class="page-btn" :class="{ disabled: currentPage >= totalPages }" @click="goPage(currentPage + 1)">下一页</button>
+          <button
+            class="page-btn"
+            :class="{ disabled: currentPage <= 1 }"
+            @click="goPage(currentPage - 1)"
+          >
+            上一页
+          </button>
+          <button
+            v-for="p in pageNumbers"
+            :key="p"
+            class="page-btn"
+            :class="{ active: p === currentPage, disabled: p === 0 }"
+            @click="goPage(p)"
+          >
+            {{ p === 0 ? '…' : p }}
+          </button>
+          <button
+            class="page-btn"
+            :class="{ disabled: currentPage >= totalPages }"
+            @click="goPage(currentPage + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </div>
@@ -121,19 +183,82 @@ const getFreeShippingText = (rule: { isFreeShipping: boolean; freeThreshold: num
 </style>
 
 <style scoped>
-.fm { background-color: #F5F7FA; min-height: calc(100vh - 60px); color: #1D2129; padding: 20px; font-family: -apple-system,'SF Pro Display','PingFang SC','Microsoft YaHei',sans-serif; }
-.pg-hd { margin-bottom: 20px; }
-.tt { font-size: 18px; font-weight: 700; color: #1D2129; }
-.tb-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-.tb-tt { font-size: 15px; font-weight: 600; color: #1D2129; }
-.nm { font-weight: 500; color: #1D2129; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-.id-col { font-size: 12px; color: #86909C; font-family: 'Geist Mono', 'SF Mono', monospace; white-space: nowrap; }
-.fee-txt { font-size: 12px; color: #86909C; margin-top: 4px; line-height: 1.4; }
-.free-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.free-tag.all { background-color: #E8F8EE; color: #0E7B3A; }
-.free-tag.none { background-color: #F2F3F5; color: #86909C; }
-.act { display: flex; gap: 12px; align-items: center; }
-.freight-table { table-layout: auto; width: 100%; }
-.freight-table th, .freight-table td { padding: 16px 14px !important; }
-.freight-table th { white-space: nowrap; }
+.fm {
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 60px);
+  color: #1d2129;
+  padding: 20px;
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.pg-hd {
+  margin-bottom: 20px;
+}
+.tt {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d2129;
+}
+.tb-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.tb-tt {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d2129;
+}
+.nm {
+  font-weight: 500;
+  color: #1d2129;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.id-col {
+  font-size: 12px;
+  color: #86909c;
+  font-family: 'Geist Mono', 'SF Mono', monospace;
+  white-space: nowrap;
+}
+.fee-txt {
+  font-size: 12px;
+  color: #86909c;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.free-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.free-tag.all {
+  background-color: #e8f8ee;
+  color: #0e7b3a;
+}
+.free-tag.none {
+  background-color: #f2f3f5;
+  color: #86909c;
+}
+.act {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.freight-table {
+  table-layout: auto;
+  width: 100%;
+}
+.freight-table th,
+.freight-table td {
+  padding: 16px 14px !important;
+}
+.freight-table th {
+  white-space: nowrap;
+}
 </style>
