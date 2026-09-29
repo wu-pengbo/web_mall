@@ -115,3 +115,11 @@
 | 2026-07-17 08:35 | commit | feature/freight-optimization | fix: 首续计费说明完善+列表精简+弹窗分隔线+重量去单位+金额阶梯修复 | b8a0057 |
 
 | 2026-07-17 08:36 | commit | feature/freight-optimization | style: 重量计费说明换行 | b31ee9e |
+
+| 2026-09-29 10:14 | commit | feature/activity-page | feat: 新增活动管理原型页面 | ecd8188 |
+
+| 2026-09-29 10:14 | merge | feature/activity-page → main | --no-ff 合并到主分支（5 个提交，31 文件 +13528/-2406） | afd57e3 |
+
+| 2026-09-29 10:14 | push | main | git push origin main（Gitee）+ git push github main（GitHub），双远程同步 | afd57e3 |
+
+| 2026-09-29 10:14 | delete branch | feature/activity-page, dev | 合并后清理所有开发分支：本地 -d + 远程 --delete（Gitee/GitHub） | — |
