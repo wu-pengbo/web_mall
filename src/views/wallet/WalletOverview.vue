@@ -25,9 +25,9 @@ import { computed } from 'vue'
 
 const maxTrend = computed(() => {
   let max = 0
-  trendData.forEach(d => {
-    ;['recharge', 'consume', 'refund'].forEach(k => {
-      if ((d as any)[k] > max) max = (d as any)[k]
+  trendData.forEach((d) => {
+    ;['recharge', 'consume', 'refund'].forEach((k) => {
+      if ((d as Record<string, number>)[k] > max) max = (d as Record<string, number>)[k]
     })
   })
   return max
@@ -35,24 +35,141 @@ const maxTrend = computed(() => {
 
 // ==================== 最近交易 ====================
 const txTypeLabel: Record<string, string> = {
-  recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结',
+  recharge: '充值',
+  refund: '退款',
+  consume: '消费',
+  withdraw: '提现',
+  freeze: '冻结',
 }
 
 interface WalletTransaction {
-  id: string; transactionNo: string; uid: string; phone: string
-  type: string; amount: number; balance: number; relatedNo: string
-  merchant: string; operator: string; time: string; remark: string
+  id: string
+  transactionNo: string
+  uid: string
+  phone: string
+  type: string
+  amount: number
+  balance: number
+  relatedNo: string
+  merchant: string
+  operator: string
+  time: string
+  remark: string
 }
 
 const mockTransactions: WalletTransaction[] = [
-  { id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234', type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001', merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值' },
-  { id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234', type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费' },
-  { id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678', type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003', merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值' },
-  { id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005', merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款' },
-  { id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', type: 'withdraw', amount: -800, balance: 4400, relatedNo: 'WDR-20260609-001', merchant: '系统', operator: '张三', time: '2026-06-09 10:00:00', remark: '用户提现' },
-  { id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123', type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002', merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值' },
-  { id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678', type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002', merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费' },
-  { id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012', type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001', merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费' },
+  {
+    id: '1',
+    transactionNo: 'TXN-20260611-001',
+    uid: 'u10001',
+    phone: '138****1234',
+    type: 'recharge',
+    amount: 1000,
+    balance: 2280.5,
+    relatedNo: 'RCH-20260611-001',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-11 10:30:18',
+    remark: '线上充值',
+  },
+  {
+    id: '2',
+    transactionNo: 'TXN-20260611-002',
+    uid: 'u10001',
+    phone: '138****1234',
+    type: 'consume',
+    amount: -188,
+    balance: 2092.5,
+    relatedNo: 'ORD-20260611-001',
+    merchant: 'XX服饰专营店',
+    operator: '系统',
+    time: '2026-06-11 14:20:00',
+    remark: '订单消费',
+  },
+  {
+    id: '3',
+    transactionNo: 'TXN-20260610-001',
+    uid: 'u10002',
+    phone: '139****5678',
+    type: 'recharge',
+    amount: 500,
+    balance: 4060,
+    relatedNo: 'RCH-20260610-003',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-10 16:00:00',
+    remark: '线上充值',
+  },
+  {
+    id: '4',
+    transactionNo: 'TXN-20260610-002',
+    uid: 'u10005',
+    phone: '135****7890',
+    type: 'refund',
+    amount: 200,
+    balance: 1000,
+    relatedNo: 'ORD-20260609-005',
+    merchant: 'XX服饰专营店',
+    operator: '系统',
+    time: '2026-06-10 14:30:00',
+    remark: '订单退款',
+  },
+  {
+    id: '5',
+    transactionNo: 'TXN-20260609-001',
+    uid: 'u10004',
+    phone: '136****3456',
+    type: 'withdraw',
+    amount: -800,
+    balance: 4400,
+    relatedNo: 'WDR-20260609-001',
+    merchant: '系统',
+    operator: '张三',
+    time: '2026-06-09 10:00:00',
+    remark: '用户提现',
+  },
+  {
+    id: '6',
+    transactionNo: 'TXN-20260609-002',
+    uid: 'u10008',
+    phone: '132****0123',
+    type: 'recharge',
+    amount: 1500,
+    balance: 8300,
+    relatedNo: 'RCH-20260609-002',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-09 16:45:03',
+    remark: '线上充值',
+  },
+  {
+    id: '7',
+    transactionNo: 'TXN-20260608-001',
+    uid: 'u10002',
+    phone: '139****5678',
+    type: 'consume',
+    amount: -129,
+    balance: 3560,
+    relatedNo: 'ORD-20260608-002',
+    merchant: 'XX数码旗舰店',
+    operator: '系统',
+    time: '2026-06-08 11:30:00',
+    remark: '订单消费',
+  },
+  {
+    id: '8',
+    transactionNo: 'TXN-20260607-001',
+    uid: 'u10003',
+    phone: '137****9012',
+    type: 'consume',
+    amount: -59,
+    balance: 148.5,
+    relatedNo: 'ORD-20260607-001',
+    merchant: 'XX食品店',
+    operator: '系统',
+    time: '2026-06-07 09:15:00',
+    remark: '订单消费',
+  },
 ]
 </script>
 
@@ -78,16 +195,25 @@ const mockTransactions: WalletTransaction[] = [
         <h3>近6个月趋势</h3>
         <div class="trend-chart">
           <div class="trend-legend">
-            <span class="legend-item"><i style="background: #4F6EF7"></i>充值</span>
-            <span class="legend-item"><i style="background: #D46B08"></i>消费</span>
-            <span class="legend-item"><i style="background: #0E7B3A"></i>退款</span>
+            <span class="legend-item"><i style="background: #4f6ef7"></i>充值</span>
+            <span class="legend-item"><i style="background: #d46b08"></i>消费</span>
+            <span class="legend-item"><i style="background: #0e7b3a"></i>退款</span>
           </div>
           <div class="trend-bars">
             <div v-for="d in trendData" :key="d.month" class="trend-group">
               <div class="bar-cluster">
-                <div class="bar bar-recharge" :style="{ height: (d.recharge / maxTrend * 180) + 'px' }"></div>
-                <div class="bar bar-consume" :style="{ height: (d.consume / maxTrend * 180) + 'px' }"></div>
-                <div class="bar bar-refund" :style="{ height: (d.refund / maxTrend * 180) + 'px' }"></div>
+                <div
+                  class="bar bar-recharge"
+                  :style="{ height: (d.recharge / maxTrend) * 180 + 'px' }"
+                ></div>
+                <div
+                  class="bar bar-consume"
+                  :style="{ height: (d.consume / maxTrend) * 180 + 'px' }"
+                ></div>
+                <div
+                  class="bar bar-refund"
+                  :style="{ height: (d.refund / maxTrend) * 180 + 'px' }"
+                ></div>
               </div>
               <div class="trend-label">{{ d.month }}</div>
             </div>
@@ -112,8 +238,12 @@ const mockTransactions: WalletTransaction[] = [
             <tr v-for="tx in mockTransactions.slice(0, 8)" :key="tx.id">
               <td>{{ tx.transactionNo }}</td>
               <td>{{ tx.phone }}</td>
-              <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
-              <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+              <td>
+                <span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span>
+              </td>
+              <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">
+                {{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}
+              </td>
               <td class="time-text">{{ tx.time }}</td>
             </tr>
           </tbody>
@@ -132,10 +262,10 @@ const mockTransactions: WalletTransaction[] = [
   margin-bottom: 28px;
 }
 .overview-card {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 24px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   transition: box-shadow 0.2s ease;
 }
 .overview-card:hover {
@@ -143,7 +273,7 @@ const mockTransactions: WalletTransaction[] = [
 }
 .stat-label {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   margin-bottom: 10px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -151,7 +281,7 @@ const mockTransactions: WalletTransaction[] = [
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin-bottom: 4px;
   letter-spacing: -0.02em;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
@@ -161,10 +291,10 @@ const mockTransactions: WalletTransaction[] = [
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .stat-change.up {
-  color: #CF1322;
+  color: #cf1322;
 }
 .stat-change.down {
-  color: #0E7B3A;
+  color: #0e7b3a;
 }
 
 /* ==================== 趋势图 ==================== */
@@ -174,23 +304,23 @@ const mockTransactions: WalletTransaction[] = [
 .trend-section h3 {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin: 0 0 16px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .trend-chart {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 24px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
 }
 .trend-legend {
   display: flex;
   gap: 24px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
 }
 .legend-item {
   display: flex;
@@ -228,18 +358,18 @@ const mockTransactions: WalletTransaction[] = [
   transition: height 0.3s ease;
 }
 .bar-recharge {
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
 }
 .bar-consume {
-  background-color: #D46B08;
+  background-color: #d46b08;
 }
 .bar-refund {
-  background-color: #0E7B3A;
+  background-color: #0e7b3a;
 }
 .trend-label {
   margin-top: 8px;
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 
@@ -247,20 +377,20 @@ const mockTransactions: WalletTransaction[] = [
 .recent-section h3 {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin: 0 0 16px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .amount-positive {
-  color: #CF1322;
+  color: #cf1322;
 }
 .amount-negative {
-  color: #0E7B3A;
+  color: #0e7b3a;
 }
 .time-text {
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
 }
 </style>

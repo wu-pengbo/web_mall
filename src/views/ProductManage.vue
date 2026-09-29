@@ -75,7 +75,7 @@ const goPublish = () => {
   router.push('/publish')
 }
 
-const toggleStatus = (item: any) => {
+const toggleStatus = (item: (typeof products.value)[number]) => {
   if (item.status === 'on') {
     if (confirm(`确定要下架商品 "${item.name}" 吗？`)) {
       item.status = 'off'

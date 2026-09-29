@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+// 预约格内订单项（宽松结构，兼容多容量模拟数据）
+interface CellOrder {
+  id: string
+  status?: string
+  orders?: CellOrder[]
+  [key: string]: unknown
+}
+
 // --- 模拟底层配置数据 ---
 const projectConfig = ref({
   name: '奥体中心羽毛球馆',
@@ -69,7 +77,7 @@ const currentDate = ref(dateTabs.value[0].date)
 
 // --- 模拟订单数据 ---
 // 格式：[日期_时段_资源ID] -> 订单详情数组 (支持多容量)
-const ordersMap = ref<Record<string, any[]>>({
+const ordersMap = ref<Record<string, CellOrder[]>>({
   '2026-05-08_14:00-15:00_1': [
     {
       id: 'E1001',
@@ -116,14 +124,14 @@ const ordersMap = ref<Record<string, any[]>>({
 })
 
 // 每个格子/时段的最大容量
-const getCapacity = (timeSlot: string, resourceId: number) => {
+const getCapacity = () => {
   // 这里可以根据实际 projectConfig 中 timeSlots 的配置返回
   // 暂时统一模拟为单资源容量为 4
   return 4
 }
 
 // --- 交互控制 ---
-const selectedCell = ref<any>(null)
+const selectedCell = ref<CellOrder | null>(null)
 const isDrawerVisible = ref(false)
 
 // 衍生统计数据
@@ -140,7 +148,7 @@ const todayOrderCount = computed(() => {
 
 // 基础的全部订单数据提取
 const baseOrderList = computed(() => {
-  const list: any[] = []
+  const list: CellOrder[] = []
   Object.entries(ordersMap.value).forEach(([key, orders]) => {
     const [date, timeSlot, resourceIdStr] = key.split('_')
     const resourceId = Number(resourceIdStr)
@@ -283,7 +291,7 @@ const handleApprove = (orderId?: string) => {
       const ordersArray = Array.isArray(ordersMap.value[key])
         ? ordersMap.value[key]
         : [ordersMap.value[key]]
-      const targetOrder = ordersArray.find((o: any) => o.id === targetId)
+      const targetOrder = ordersArray.find((o: CellOrder) => o.id === targetId)
       if (targetOrder) targetOrder.status = 'confirmed'
     }
 
@@ -309,13 +317,15 @@ const handleReject = (orderId?: string) => {
       const ordersArray = Array.isArray(ordersMap.value[key])
         ? ordersMap.value[key]
         : [ordersMap.value[key]]
-      ordersMap.value[key] = ordersArray.filter((o: any) => o.id !== targetId)
+      ordersMap.value[key] = ordersArray.filter((o: CellOrder) => o.id !== targetId)
       if (ordersMap.value[key].length === 0) delete ordersMap.value[key]
     }
 
     // 更新当前抽屉视图
     if (selectedCell.value.orders) {
-      selectedCell.value.orders = selectedCell.value.orders.filter((o: any) => o.id !== targetId)
+      selectedCell.value.orders = selectedCell.value.orders.filter(
+        (o: CellOrder) => o.id !== targetId,
+      )
     }
 
     alert('已拒绝预约，订单已取消')
@@ -338,7 +348,7 @@ const handleWriteOff = (orderId?: string) => {
       const ordersArray = Array.isArray(ordersMap.value[key])
         ? ordersMap.value[key]
         : [ordersMap.value[key]]
-      const targetOrder = ordersArray.find((o: any) => o.id === targetId)
+      const targetOrder = ordersArray.find((o: CellOrder) => o.id === targetId)
       if (targetOrder) targetOrder.status = 'completed'
     }
 
@@ -364,13 +374,15 @@ const handleCancel = (orderId?: string) => {
       const ordersArray = Array.isArray(ordersMap.value[key])
         ? ordersMap.value[key]
         : [ordersMap.value[key]]
-      ordersMap.value[key] = ordersArray.filter((o: any) => o.id !== targetId)
+      ordersMap.value[key] = ordersArray.filter((o: CellOrder) => o.id !== targetId)
       if (ordersMap.value[key].length === 0) delete ordersMap.value[key]
     }
 
     // 更新当前抽屉视图
     if (selectedCell.value.orders) {
-      selectedCell.value.orders = selectedCell.value.orders.filter((o: any) => o.id !== targetId)
+      selectedCell.value.orders = selectedCell.value.orders.filter(
+        (o: CellOrder) => o.id !== targetId,
+      )
     }
 
     alert('订单已取消')
@@ -380,7 +392,7 @@ const handleCancel = (orderId?: string) => {
   }
 }
 
-const handleListAction = (order: any) => {
+const handleListAction = (order: CellOrder) => {
   selectedCell.value = { ...order }
   isDrawerVisible.value = true
 }

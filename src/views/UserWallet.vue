@@ -15,7 +15,6 @@ const menuList = [
 
 const activeMenu = ref('wallet_overview')
 
-
 const handleMenuClick = (menuKey: string) => {
   activeMenu.value = menuKey
 }
@@ -46,9 +45,9 @@ interface UserWallet {
   balance: number
   principalBalance: number
   bonusBalance: number
- frozenAmount: number
+  frozenAmount: number
   withdrawFrozenAmount: number
- totalRecharge: number
+  totalRecharge: number
   totalConsume: number
   totalRefund: number
   status: 'normal' | 'frozen'
@@ -96,10 +95,10 @@ interface WithdrawRecord {
 
 // 子流水（FIFO 核销明细）
 interface BucketLog {
-  bucketNo: string      // 桶编号（对应充值批次单号）
-  bucketTime: string    // 充值时间（越早排越前 = FIFO）
-  deductAmount: number  // 本次从这个桶扣了多少
-  remainAmount: number  // 扣后这个桶还剩多少
+  bucketNo: string // 桶编号（对应充值批次单号）
+  bucketTime: string // 充值时间（越早排越前 = FIFO）
+  deductAmount: number // 本次从这个桶扣了多少
+  remainAmount: number // 扣后这个桶还剩多少
 }
 
 interface WalletTransaction {
@@ -115,7 +114,7 @@ interface WalletTransaction {
   operator: string
   time: string
   remark: string
-  bucketLogs?: BucketLog[]  // 仅 consume / withdraw 有
+  bucketLogs?: BucketLog[] // 仅 consume / withdraw 有
 }
 
 // ==================== 充值方案接口定义 ====================
@@ -196,7 +195,7 @@ const cancelEditConfig = () => {
 }
 
 const saveConfig = () => {
-  const merchant = mockMerchants.find(m => m.id === walletConfig.receiveMerchantId)
+  const merchant = mockMerchants.find((m) => m.id === walletConfig.receiveMerchantId)
   walletConfig.receiveMerchantName = merchant ? merchant.name : ''
   configSaved.value = true
   editingConfig.value = false
@@ -229,13 +228,31 @@ const configHistoryList = ref<ConfigHistoryRecord[]>([
     id: 1,
     operator: '张三',
     operateTime: '2026-06-10 14:30',
-    snapshot: { name: '我的钱包', enabled: true, withdrawEnabled: true, withdrawNeedReview: true, feeType: 'fixed', feeValue: 0, minWithdraw: 10, maxWithdraw: 50000 },
+    snapshot: {
+      name: '我的钱包',
+      enabled: true,
+      withdrawEnabled: true,
+      withdrawNeedReview: true,
+      feeType: 'fixed',
+      feeValue: 0,
+      minWithdraw: 10,
+      maxWithdraw: 50000,
+    },
   },
   {
     id: 2,
     operator: '李四',
     operateTime: '2026-06-09 10:00',
-    snapshot: { name: '零钱', enabled: false, withdrawEnabled: false, withdrawNeedReview: false, feeType: 'percent', feeValue: 0.1, minWithdraw: 100, maxWithdraw: 10000 },
+    snapshot: {
+      name: '零钱',
+      enabled: false,
+      withdrawEnabled: false,
+      withdrawNeedReview: false,
+      feeType: 'percent',
+      feeValue: 0.1,
+      minWithdraw: 100,
+      maxWithdraw: 10000,
+    },
   },
 ])
 
@@ -264,9 +281,42 @@ const rechargePlans = ref<RechargePlan[]>([
     customMin: 1,
     customMax: 50000,
     activities: [
-      { id: 'a1', name: '充100送10', type: 'bonus', conditionAmount: 100, bonusAmount: 10, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
-      { id: 'a2', name: '充500送50', type: 'bonus', conditionAmount: 500, bonusAmount: 50, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
-      { id: 'a3', name: '充1000打95折', type: 'discount', conditionAmount: 1000, discountPercent: 95, startTime: '', endTime: '', perUserLimit: 0, dailyLimit: 0, enabled: true },
+      {
+        id: 'a1',
+        name: '充100送10',
+        type: 'bonus',
+        conditionAmount: 100,
+        bonusAmount: 10,
+        startTime: '',
+        endTime: '',
+        perUserLimit: 0,
+        dailyLimit: 0,
+        enabled: true,
+      },
+      {
+        id: 'a2',
+        name: '充500送50',
+        type: 'bonus',
+        conditionAmount: 500,
+        bonusAmount: 50,
+        startTime: '',
+        endTime: '',
+        perUserLimit: 0,
+        dailyLimit: 0,
+        enabled: true,
+      },
+      {
+        id: 'a3',
+        name: '充1000打95折',
+        type: 'discount',
+        conditionAmount: 1000,
+        discountPercent: 95,
+        startTime: '',
+        endTime: '',
+        perUserLimit: 0,
+        dailyLimit: 0,
+        enabled: true,
+      },
     ],
   },
   {
@@ -283,8 +333,30 @@ const rechargePlans = ref<RechargePlan[]>([
     customMin: 1,
     customMax: 50000,
     activities: [
-      { id: 'a4', name: '充300送40', type: 'bonus', conditionAmount: 300, bonusAmount: 40, startTime: '2026-05-01 00:00:00', endTime: '2026-05-05 23:59:59', perUserLimit: 1, dailyLimit: 100, enabled: true },
-      { id: 'a5', name: '充500打9折', type: 'discount', conditionAmount: 500, discountPercent: 90, startTime: '2026-05-01 00:00:00', endTime: '2026-05-05 23:59:59', perUserLimit: 1, dailyLimit: 50, enabled: true },
+      {
+        id: 'a4',
+        name: '充300送40',
+        type: 'bonus',
+        conditionAmount: 300,
+        bonusAmount: 40,
+        startTime: '2026-05-01 00:00:00',
+        endTime: '2026-05-05 23:59:59',
+        perUserLimit: 1,
+        dailyLimit: 100,
+        enabled: true,
+      },
+      {
+        id: 'a5',
+        name: '充500打9折',
+        type: 'discount',
+        conditionAmount: 500,
+        discountPercent: 90,
+        startTime: '2026-05-01 00:00:00',
+        endTime: '2026-05-05 23:59:59',
+        perUserLimit: 1,
+        dailyLimit: 50,
+        enabled: true,
+      },
     ],
   },
 ])
@@ -345,34 +417,6 @@ const openPlanEdit = (plan: RechargePlan) => {
   planEditModal.value = true
 }
 
-const savePlan = () => {
-  if (!planEditData.name.trim()) {
-    alert('请输入方案名称')
-    return
-  }
-  if (planEditData.presets.length === 0) {
-    alert('请至少添加一个预选金额')
-    return
-  }
-  if (planEditMode.value === 'create') {
-    const newId = String(Date.now())
-    rechargePlans.value.push({
-      ...JSON.parse(JSON.stringify(planEditData)),
-      id: newId,
-      enabled: false,
-      activeTime: '',
-    })
-    alert('充值方案已创建')
-  } else {
-    const idx = rechargePlans.value.findIndex(p => p.id === planEditData.id)
-    if (idx > -1) {
-      rechargePlans.value[idx] = JSON.parse(JSON.stringify(planEditData))
-    }
-    alert('充值方案已保存')
-  }
-  planEditModal.value = false
-}
-
 const togglePlanEnabled = (plan: RechargePlan) => {
   if (plan.enabled) {
     // 禁用
@@ -380,7 +424,7 @@ const togglePlanEnabled = (plan: RechargePlan) => {
     plan.activeTime = ''
   } else {
     // 启用：先停用其他方案
-    rechargePlans.value.forEach(p => {
+    rechargePlans.value.forEach((p) => {
       p.enabled = false
       p.activeTime = ''
     })
@@ -395,7 +439,7 @@ const deletePlan = (plan: RechargePlan) => {
     return
   }
   if (!confirm(`确认删除方案「${plan.name}」？`)) return
-  rechargePlans.value = rechargePlans.value.filter(p => p.id !== plan.id)
+  rechargePlans.value = rechargePlans.value.filter((p) => p.id !== plan.id)
 }
 
 // 预选金额操作
@@ -407,21 +451,27 @@ const addPreset = () => {
 const removePreset = (index: number) => {
   planEditData.presets.splice(index, 1)
   // 重新排序
-  planEditData.presets.forEach((p, i) => { p.sort = i + 1 })
+  planEditData.presets.forEach((p, i) => {
+    p.sort = i + 1
+  })
 }
 
 const movePresetUp = (index: number) => {
   if (index <= 0) return
   const list = planEditData.presets
   ;[list[index - 1], list[index]] = [list[index], list[index - 1]]
-  list.forEach((p, i) => { p.sort = i + 1 })
+  list.forEach((p, i) => {
+    p.sort = i + 1
+  })
 }
 
 const movePresetDown = (index: number) => {
   if (index >= planEditData.presets.length - 1) return
   const list = planEditData.presets
   ;[list[index], list[index + 1]] = [list[index + 1], list[index]]
-  list.forEach((p, i) => { p.sort = i + 1 })
+  list.forEach((p, i) => {
+    p.sort = i + 1
+  })
 }
 
 // 充值活动操作
@@ -458,11 +508,19 @@ const saveActivity = () => {
     alert('触发条件金额必须大于0')
     return
   }
-  if (activityEditData.type === 'bonus' && (!activityEditData.bonusAmount || activityEditData.bonusAmount <= 0)) {
+  if (
+    activityEditData.type === 'bonus' &&
+    (!activityEditData.bonusAmount || activityEditData.bonusAmount <= 0)
+  ) {
     alert('赠送金额必须大于0')
     return
   }
-  if (activityEditData.type === 'discount' && (!activityEditData.discountPercent || activityEditData.discountPercent <= 0 || activityEditData.discountPercent >= 100)) {
+  if (
+    activityEditData.type === 'discount' &&
+    (!activityEditData.discountPercent ||
+      activityEditData.discountPercent <= 0 ||
+      activityEditData.discountPercent >= 100)
+  ) {
     alert('折扣比例须在1~99之间')
     return
   }
@@ -480,7 +538,7 @@ const removeActivity = (index: number) => {
 
 // 方案详情弹窗
 const planDetailData = computed(() => {
-  return rechargePlans.value.find(p => p.id === planDetailId.value)
+  return rechargePlans.value.find((p) => p.id === planDetailId.value)
 })
 
 const openPlanDetail = (plan: RechargePlan) => {
@@ -511,8 +569,8 @@ const trendData = [
 
 const maxTrend = computed(() => {
   let max = 0
-  trendData.forEach(d => {
-    ;['recharge', 'consume', 'refund'].forEach(k => {
+  trendData.forEach((d) => {
+    ;['recharge', 'consume', 'refund'].forEach((k) => {
       if (d[k as keyof typeof d] > max) max = d[k as keyof typeof d]
     })
   })
@@ -521,20 +579,134 @@ const maxTrend = computed(() => {
 
 // ==================== 模块3：用户钱包 ====================
 const mockUserWallets = ref<UserWallet[]>([
- { walletId: 'WLT-00001', uid: 'u10001', phone: '138****1234', balance: 1280.50, principalBalance: 1024, bonusBalance: 256.50, frozenAmount: 200, withdrawFrozenAmount: 50, totalRecharge: 5000, totalConsume: 3500, totalRefund: 219.50, status: 'normal', openTime: '2026-01-15 10:30:00' },
-  { walletId: 'WLT-00002', uid: 'u10002', phone: '139****5678', balance: 3560.00, principalBalance: 2848, bonusBalance: 712, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 8000, totalConsume: 4400, totalRefund: 40, status: 'normal', openTime: '2026-01-20 14:20:00' },
-  { walletId: 'WLT-00003', uid: 'u10003', phone: '137****9012', balance: 89.50, principalBalance: 72, bonusBalance: 17.50, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 1000, totalConsume: 910.50, totalRefund: 0, status: 'normal', openTime: '2026-02-03 09:15:00' },
-  { walletId: 'WLT-00004', uid: 'u10004', phone: '136****3456', balance: 5200.00, principalBalance: 4160, bonusBalance: 1040, frozenAmount: 1500, withdrawFrozenAmount: 300, totalRecharge: 10000, totalConsume: 3300, totalRefund: 0, status: 'frozen', openTime: '2026-02-10 16:45:00', frozenReason: '疑似异常交易' },
-  { walletId: 'WLT-00005', uid: 'u10005', phone: '135****7890', balance: 800.00, principalBalance: 640, bonusBalance: 160, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 2000, totalConsume: 1200, totalRefund: 0, status: 'normal', openTime: '2026-03-01 11:00:00' },
-  { walletId: 'WLT-00006', uid: 'u10006', phone: '134****2345', balance: 12500.00, principalBalance: 10000, bonusBalance: 2500, frozenAmount: 500, withdrawFrozenAmount: 200, totalRecharge: 20000, totalConsume: 7000, totalRefund: 0, status: 'normal', openTime: '2026-03-12 08:30:00' },
-  { walletId: 'WLT-00007', uid: 'u10007', phone: '133****6789', balance: 0, principalBalance: 0, bonusBalance: 0, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 500, totalConsume: 500, totalRefund: 0, status: 'normal', openTime: '2026-04-05 13:20:00' },
-  { walletId: 'WLT-00008', uid: 'u10008', phone: '132****0123', balance: 6800.00, principalBalance: 5440, bonusBalance: 1360, frozenAmount: 0, withdrawFrozenAmount: 0, totalRecharge: 10000, totalConsume: 3000, totalRefund: 200, status: 'frozen', openTime: '2026-04-18 10:00:00', frozenReason: '用户主动申请冻结' },
+  {
+    walletId: 'WLT-00001',
+    uid: 'u10001',
+    phone: '138****1234',
+    balance: 1280.5,
+    principalBalance: 1024,
+    bonusBalance: 256.5,
+    frozenAmount: 200,
+    withdrawFrozenAmount: 50,
+    totalRecharge: 5000,
+    totalConsume: 3500,
+    totalRefund: 219.5,
+    status: 'normal',
+    openTime: '2026-01-15 10:30:00',
+  },
+  {
+    walletId: 'WLT-00002',
+    uid: 'u10002',
+    phone: '139****5678',
+    balance: 3560.0,
+    principalBalance: 2848,
+    bonusBalance: 712,
+    frozenAmount: 0,
+    withdrawFrozenAmount: 0,
+    totalRecharge: 8000,
+    totalConsume: 4400,
+    totalRefund: 40,
+    status: 'normal',
+    openTime: '2026-01-20 14:20:00',
+  },
+  {
+    walletId: 'WLT-00003',
+    uid: 'u10003',
+    phone: '137****9012',
+    balance: 89.5,
+    principalBalance: 72,
+    bonusBalance: 17.5,
+    frozenAmount: 0,
+    withdrawFrozenAmount: 0,
+    totalRecharge: 1000,
+    totalConsume: 910.5,
+    totalRefund: 0,
+    status: 'normal',
+    openTime: '2026-02-03 09:15:00',
+  },
+  {
+    walletId: 'WLT-00004',
+    uid: 'u10004',
+    phone: '136****3456',
+    balance: 5200.0,
+    principalBalance: 4160,
+    bonusBalance: 1040,
+    frozenAmount: 1500,
+    withdrawFrozenAmount: 300,
+    totalRecharge: 10000,
+    totalConsume: 3300,
+    totalRefund: 0,
+    status: 'frozen',
+    openTime: '2026-02-10 16:45:00',
+    frozenReason: '疑似异常交易',
+  },
+  {
+    walletId: 'WLT-00005',
+    uid: 'u10005',
+    phone: '135****7890',
+    balance: 800.0,
+    principalBalance: 640,
+    bonusBalance: 160,
+    frozenAmount: 0,
+    withdrawFrozenAmount: 0,
+    totalRecharge: 2000,
+    totalConsume: 1200,
+    totalRefund: 0,
+    status: 'normal',
+    openTime: '2026-03-01 11:00:00',
+  },
+  {
+    walletId: 'WLT-00006',
+    uid: 'u10006',
+    phone: '134****2345',
+    balance: 12500.0,
+    principalBalance: 10000,
+    bonusBalance: 2500,
+    frozenAmount: 500,
+    withdrawFrozenAmount: 200,
+    totalRecharge: 20000,
+    totalConsume: 7000,
+    totalRefund: 0,
+    status: 'normal',
+    openTime: '2026-03-12 08:30:00',
+  },
+  {
+    walletId: 'WLT-00007',
+    uid: 'u10007',
+    phone: '133****6789',
+    balance: 0,
+    principalBalance: 0,
+    bonusBalance: 0,
+    frozenAmount: 0,
+    withdrawFrozenAmount: 0,
+    totalRecharge: 500,
+    totalConsume: 500,
+    totalRefund: 0,
+    status: 'normal',
+    openTime: '2026-04-05 13:20:00',
+  },
+  {
+    walletId: 'WLT-00008',
+    uid: 'u10008',
+    phone: '132****0123',
+    balance: 6800.0,
+    principalBalance: 5440,
+    bonusBalance: 1360,
+    frozenAmount: 0,
+    withdrawFrozenAmount: 0,
+    totalRecharge: 10000,
+    totalConsume: 3000,
+    totalRefund: 200,
+    status: 'frozen',
+    openTime: '2026-04-18 10:00:00',
+    frozenReason: '用户主动申请冻结',
+  },
 ])
 
 const walletSearchForm = reactive({ keyword: '', status: '' })
 
 const filteredWallets = computed(() => {
-  return mockUserWallets.value.filter(w => {
+  return mockUserWallets.value.filter((w) => {
     const kw = walletSearchForm.keyword
     const matchKw = !kw || w.walletId.includes(kw) || w.uid.includes(kw) || w.phone.includes(kw)
     const matchStatus = !walletSearchForm.status || w.status === walletSearchForm.status
@@ -548,7 +720,7 @@ const userFlowTxs = ref<WalletTransaction[]>([])
 
 const showUserFlow = (wallet: UserWallet) => {
   userFlowWallet.value = wallet
-  userFlowTxs.value = mockTransactions.value.filter(tx => tx.uid === wallet.uid).slice(0, 20)
+  userFlowTxs.value = mockTransactions.value.filter((tx) => tx.uid === wallet.uid).slice(0, 20)
   userFlowModal.value = true
 }
 
@@ -559,7 +731,6 @@ const toggleUserFlowBucket = (txId: string) => {
 }
 
 const userFlowTab = ref<'recharge' | 'withdraw' | 'transaction'>('recharge')
-
 
 const freezeModal = ref(false)
 const freezeWalletTarget = ref<UserWallet | null>(null)
@@ -594,12 +765,14 @@ const showFreezeModal = (wallet: UserWallet, mode: 'freeze' | 'unfreeze') => {
 
 const confirmFreezeAction = () => {
   if (!freezeWalletTarget.value || !freezeForm.reason) return
-  const target = mockUserWallets.value.find(w => w.walletId === freezeWalletTarget.value!.walletId)
+  const target = mockUserWallets.value.find(
+    (w) => w.walletId === freezeWalletTarget.value!.walletId,
+  )
   if (!target) return
   const isFreeze = freezeMode.value === 'freeze'
   const maxFreeze = target.balance - target.frozenAmount
   const maxUnfreeze = target.frozenAmount
-  
+
   if (isFreeze) {
     if (freezeForm.amount <= 0 || freezeForm.amount > maxFreeze) {
       alert(`冻结金额必须在 1 到 ${maxFreeze.toFixed(2)} 之间`)
@@ -611,21 +784,24 @@ const confirmFreezeAction = () => {
       return
     }
   }
-  
+
   const amt = isFreeze ? -freezeForm.amount : freezeForm.amount
-  const reasonObj = (isFreeze ? freezeReasonOptions : unfreezeReasonOptions).find(o => o.value === freezeForm.reason)
+  const reasonObj = (isFreeze ? freezeReasonOptions : unfreezeReasonOptions).find(
+    (o) => o.value === freezeForm.reason,
+  )
   const reasonText = reasonObj ? reasonObj.label : freezeForm.reason
-  const detailText = freezeForm.reason === 'other' && freezeForm.reasonDetail ? `（${freezeForm.reasonDetail}）` : ''
-  
+  const detailText =
+    freezeForm.reason === 'other' && freezeForm.reasonDetail ? `（${freezeForm.reasonDetail}）` : ''
+
   if (isFreeze) {
     target.frozenAmount += freezeForm.amount
     target.frozenReason = `${reasonText}：冻结 ¥${freezeForm.amount.toFixed(2)}`
   } else {
     target.frozenAmount -= freezeForm.amount
   }
-  
+
   // Generate transaction record
-  const nextId = Math.max(...mockTransactions.value.map(t => parseInt(t.id))) + 1
+  const nextId = Math.max(...mockTransactions.value.map((t) => parseInt(t.id))) + 1
   mockTransactions.value.push({
     id: String(nextId),
     transactionNo: `TXN-FRZ-${nextId.toString().padStart(3, '0')}`,
@@ -640,49 +816,172 @@ const confirmFreezeAction = () => {
     time: new Date().toISOString().replace('T', ' ').slice(0, 19),
     remark: `${isFreeze ? '冻结' : '解冻'}：${reasonText}${detailText}`,
   })
-  
+
   freezeModal.value = false
-  alert(`钱包 ${target.walletId} 已${isFreeze ? '冻结' : '解冻'}（${isFreeze ? '冻结' : '解冻'}金额：¥${freezeForm.amount.toFixed(2)}）`)
+  alert(
+    `钱包 ${target.walletId} 已${isFreeze ? '冻结' : '解冻'}（${isFreeze ? '冻结' : '解冻'}金额：¥${freezeForm.amount.toFixed(2)}）`,
+  )
 
-
-const freezeWallet = (item: UserWallet) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 模板(用户钱包 tab)真实引用，eslint 误报
+  const freezeWallet = (item: UserWallet) => {
     if (confirm(`确认冻结钱包「${item.walletId}」？冻结后该用户无法进行消费、提现等操作。`)) {
-    item.status = 'frozen'
-    item.frozenReason = '管理员冻结钱包'
-    alert('钱包已冻结')
+      item.status = 'frozen'
+      item.frozenReason = '管理员冻结钱包'
+      alert('钱包已冻结')
+    }
   }
-}
 
-const unfreezeWallet = (item: UserWallet) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 模板(用户钱包 tab)真实引用，eslint 误报
+  const unfreezeWallet = (item: UserWallet) => {
     if (confirm(`确认解冻钱包「${item.walletId}」？`)) {
-    item.status = 'normal'
-    item.frozenReason = undefined
-    alert('钱包已解冻')
+      item.status = 'normal'
+      item.frozenReason = undefined
+      alert('钱包已解冻')
+    }
   }
-}
-
 }
 
 // ==================== 模块4：充值管理 ====================
 const mockRechargeRecords = ref<RechargeRecord[]>([
-  { id: '1', rechargeNo: 'RCH-20260611-001', uid: 'u10001', phone: '138****1234', amount: 1000, receivedAmount: 1050, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 10:30:15', rechargeTime: '2026-06-11 10:30:18', applyTime: '2026-06-11 10:30:00', remark: '' , bonusAmount: 50, payOrderNo: 'PAY-20260611-001'},
-  { id: '2', rechargeNo: 'RCH-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, receivedAmount: 500, paymentStatus: 'paid', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-11 11:00:00', rechargeTime: '', applyTime: '2026-06-11 10:59:45', remark: '支付回调已收到，入账处理中', payOrderNo: 'PAY-20260611-002'},
-  { id: '3', rechargeNo: 'RCH-20260611-003', uid: 'u10005', phone: '135****7890', amount: 200, receivedAmount: 200, paymentStatus: 'pending', rechargeStatus: 'pending', receiveMerchantName: 'XX数码旗舰店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 11:15:30', remark: '' },
-  { id: '4', rechargeNo: 'RCH-20260611-004', uid: 'u10003', phone: '137****9012', amount: 3000, receivedAmount: 3000, paymentStatus: 'failed', rechargeStatus: 'pending', receiveMerchantName: '平台自营商户', paymentTime: '', rechargeTime: '', applyTime: '2026-06-11 12:00:00', remark: '支付接口返回失败' },
-  { id: '5', rechargeNo: 'RCH-20260610-001', uid: 'u10006', phone: '134****2345', amount: 5000, receivedAmount: 5200, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-10 09:20:00', rechargeTime: '2026-06-10 09:20:05', applyTime: '2026-06-10 09:19:50', remark: '' , bonusAmount: 200, payOrderNo: 'PAY-20260610-001'},
-  { id: '6', rechargeNo: 'RCH-20260610-002', uid: 'u10007', phone: '133****6789', amount: 100, receivedAmount: 100, paymentStatus: 'closed', rechargeStatus: 'pending', receiveMerchantName: 'XX服饰专营店', paymentTime: '', rechargeTime: '', applyTime: '2026-06-10 15:00:00', remark: '用户超时关闭' },
-  { id: '7', rechargeNo: 'RCH-20260609-001', uid: 'u10004', phone: '136****3456', amount: 10000, receivedAmount: 10000, paymentStatus: 'paid', rechargeStatus: 'failed', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 14:30:00', rechargeTime: '', applyTime: '2026-06-09 14:29:30', remark: '支付成功但入账异常，需人工处理', payOrderNo: 'PAY-20260609-001'},
-  { id: '8', rechargeNo: 'RCH-20260609-002', uid: 'u10008', phone: '132****0123', amount: 1500, receivedAmount: 1580, paymentStatus: 'paid', rechargeStatus: 'success', receiveMerchantName: '平台自营商户', paymentTime: '2026-06-09 16:45:00', rechargeTime: '2026-06-09 16:45:03', applyTime: '2026-06-09 16:44:50', remark: '' , bonusAmount: 80, payOrderNo: 'PAY-20260609-002'},
+  {
+    id: '1',
+    rechargeNo: 'RCH-20260611-001',
+    uid: 'u10001',
+    phone: '138****1234',
+    amount: 1000,
+    receivedAmount: 1050,
+    paymentStatus: 'paid',
+    rechargeStatus: 'success',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '2026-06-11 10:30:15',
+    rechargeTime: '2026-06-11 10:30:18',
+    applyTime: '2026-06-11 10:30:00',
+    remark: '',
+    bonusAmount: 50,
+    payOrderNo: 'PAY-20260611-001',
+  },
+  {
+    id: '2',
+    rechargeNo: 'RCH-20260611-002',
+    uid: 'u10002',
+    phone: '139****5678',
+    amount: 500,
+    receivedAmount: 500,
+    paymentStatus: 'paid',
+    rechargeStatus: 'pending',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '2026-06-11 11:00:00',
+    rechargeTime: '',
+    applyTime: '2026-06-11 10:59:45',
+    remark: '支付回调已收到，入账处理中',
+    payOrderNo: 'PAY-20260611-002',
+  },
+  {
+    id: '3',
+    rechargeNo: 'RCH-20260611-003',
+    uid: 'u10005',
+    phone: '135****7890',
+    amount: 200,
+    receivedAmount: 200,
+    paymentStatus: 'pending',
+    rechargeStatus: 'pending',
+    receiveMerchantName: 'XX数码旗舰店',
+    paymentTime: '',
+    rechargeTime: '',
+    applyTime: '2026-06-11 11:15:30',
+    remark: '',
+  },
+  {
+    id: '4',
+    rechargeNo: 'RCH-20260611-004',
+    uid: 'u10003',
+    phone: '137****9012',
+    amount: 3000,
+    receivedAmount: 3000,
+    paymentStatus: 'failed',
+    rechargeStatus: 'pending',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '',
+    rechargeTime: '',
+    applyTime: '2026-06-11 12:00:00',
+    remark: '支付接口返回失败',
+  },
+  {
+    id: '5',
+    rechargeNo: 'RCH-20260610-001',
+    uid: 'u10006',
+    phone: '134****2345',
+    amount: 5000,
+    receivedAmount: 5200,
+    paymentStatus: 'paid',
+    rechargeStatus: 'success',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '2026-06-10 09:20:00',
+    rechargeTime: '2026-06-10 09:20:05',
+    applyTime: '2026-06-10 09:19:50',
+    remark: '',
+    bonusAmount: 200,
+    payOrderNo: 'PAY-20260610-001',
+  },
+  {
+    id: '6',
+    rechargeNo: 'RCH-20260610-002',
+    uid: 'u10007',
+    phone: '133****6789',
+    amount: 100,
+    receivedAmount: 100,
+    paymentStatus: 'closed',
+    rechargeStatus: 'pending',
+    receiveMerchantName: 'XX服饰专营店',
+    paymentTime: '',
+    rechargeTime: '',
+    applyTime: '2026-06-10 15:00:00',
+    remark: '用户超时关闭',
+  },
+  {
+    id: '7',
+    rechargeNo: 'RCH-20260609-001',
+    uid: 'u10004',
+    phone: '136****3456',
+    amount: 10000,
+    receivedAmount: 10000,
+    paymentStatus: 'paid',
+    rechargeStatus: 'failed',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '2026-06-09 14:30:00',
+    rechargeTime: '',
+    applyTime: '2026-06-09 14:29:30',
+    remark: '支付成功但入账异常，需人工处理',
+    payOrderNo: 'PAY-20260609-001',
+  },
+  {
+    id: '8',
+    rechargeNo: 'RCH-20260609-002',
+    uid: 'u10008',
+    phone: '132****0123',
+    amount: 1500,
+    receivedAmount: 1580,
+    paymentStatus: 'paid',
+    rechargeStatus: 'success',
+    receiveMerchantName: '平台自营商户',
+    paymentTime: '2026-06-09 16:45:00',
+    rechargeTime: '2026-06-09 16:45:03',
+    applyTime: '2026-06-09 16:44:50',
+    remark: '',
+    bonusAmount: 80,
+    payOrderNo: 'PAY-20260609-002',
+  },
 ])
 
 const rechargeSearchForm = reactive({ keyword: '', rechargeStatus: '' })
 
 const filteredRecharges = computed(() => {
-  return mockRechargeRecords.value.filter(r => {
+  return mockRechargeRecords.value.filter((r) => {
     const kw = rechargeSearchForm.keyword
     const matchKw = !kw || r.rechargeNo.includes(kw) || r.uid.includes(kw) || r.phone.includes(kw)
     const matchPay = r.paymentStatus === 'paid'
-    const matchRech = !rechargeSearchForm.rechargeStatus || r.rechargeStatus === rechargeSearchForm.rechargeStatus
+    const matchRech =
+      !rechargeSearchForm.rechargeStatus || r.rechargeStatus === rechargeSearchForm.rechargeStatus
     return matchKw && matchPay && matchRech
   })
 })
@@ -696,7 +995,8 @@ const showRechargeDetail = (item: RechargeRecord) => {
 }
 
 const manualRecharge = (item: RechargeRecord) => {
-  if (!confirm(`确认手动将 ¥${item.receivedAmount.toFixed(2)} 入账到用户 ${item.uid} 的钱包？`)) return
+  if (!confirm(`确认手动将 ¥${item.receivedAmount.toFixed(2)} 入账到用户 ${item.uid} 的钱包？`))
+    return
   item.rechargeStatus = 'success'
   item.rechargeTime = new Date().toLocaleString('zh-CN', { hour12: false })
   alert(`充值单 ${item.rechargeNo} 已手动入账成功`)
@@ -727,8 +1027,18 @@ const showRechargeFlow = (record: RechargeRecord) => {
       withdrawable: true,
       sourceRule: '用户充值本金，按充值金额入账',
       consumptions: [
-        { orderNo: 'ORD-20260615-001', type: 'consume', amount: Math.round(principal * 0.25), time: '2026-06-15 14:30:00' },
-        { orderNo: 'ORD-20260618-002', type: 'consume', amount: Math.round(principal * 0.10), time: '2026-06-18 09:15:00' },
+        {
+          orderNo: 'ORD-20260615-001',
+          type: 'consume',
+          amount: Math.round(principal * 0.25),
+          time: '2026-06-15 14:30:00',
+        },
+        {
+          orderNo: 'ORD-20260618-002',
+          type: 'consume',
+          amount: Math.round(principal * 0.1),
+          time: '2026-06-18 09:15:00',
+        },
       ],
     },
   ]
@@ -737,11 +1047,16 @@ const showRechargeFlow = (record: RechargeRecord) => {
     rechargeFlowBuckets.value.push({
       type: 'bonus',
       originalAmount: bonus,
-      remainingAmount: Math.round(bonus * 0.80),
+      remainingAmount: Math.round(bonus * 0.8),
       withdrawable: false,
       sourceRule: '充值活动赠送，按活动规则入账',
       consumptions: [
-        { orderNo: 'ORD-20260616-003', type: 'consume', amount: Math.round(bonus * 0.20), time: '2026-06-16 11:00:00' },
+        {
+          orderNo: 'ORD-20260616-003',
+          type: 'consume',
+          amount: Math.round(bonus * 0.2),
+          time: '2026-06-16 11:00:00',
+        },
       ],
     })
   }
@@ -749,28 +1064,121 @@ const showRechargeFlow = (record: RechargeRecord) => {
 }
 
 const paymentStatusLabel: Record<string, string> = {
-  pending: '待支付', paid: '支付成功', failed: '支付失败', closed: '已关闭',
+  pending: '待支付',
+  paid: '支付成功',
+  failed: '支付失败',
+  closed: '已关闭',
 }
 const rechargeStatusLabel: Record<string, string> = {
-  pending: '待入账', success: '已入账', failed: '入账失败',
+  pending: '待入账',
+  success: '已入账',
+  failed: '入账失败',
 }
 
 // ==================== 模块5：提现管理 ====================
 const mockWithdrawRecords = ref<WithdrawRecord[]>([
-  { id: '1', withdrawNo: 'WDR-20260611-001', uid: 'u10001', phone: '138****1234', amount: 200, refundType: 'full', relatedOrderNo: 'ORD-20260610-001', relatedRechargeNo: 'RCH-2026060-001', originalPayMethod: 'wechat', fee: 0, actualAmount: 200, status: 'pending', operator: '', applyTime: '2026-06-11 09:00:00', completeTime: '' },
-  { id: '2', withdrawNo: 'WDR-20260611-002', uid: 'u10002', phone: '139****5678', amount: 500, refundType: 'partial', relatedOrderNo: 'ORD-20260608-003', relatedRechargeNo: 'RCH-2026068-003', originalPayMethod: 'alipay', fee: 2.50, actualAmount: 497.50, status: 'approved', operator: '张三', applyTime: '2026-06-11 10:30:00', completeTime: '', partialRefundReason: '商品部分退货' },
-  { id: '3', withdrawNo: 'WDR-20260610-001', uid: 'u10005', phone: '135****7890', amount: 800, refundType: 'full', relatedOrderNo: 'ORD-20260605-002', relatedRechargeNo: 'RCH-2026065-002', originalPayMethod: 'wechat', fee: 0, actualAmount: 800, status: 'refunded', operator: '张三', applyTime: '2026-06-10 08:00:00', completeTime: '2026-06-10 14:30:00' },
-  { id: '4', withdrawNo: 'WDR-20260610-002', uid: 'u10006', phone: '134****2345', amount: 1500, refundType: 'full', relatedOrderNo: 'ORD-20260609-001', relatedRechargeNo: 'RCH-2026069-001', originalPayMethod: 'bank', fee: 0, actualAmount: 1500, status: 'rejected', operator: '李四', applyTime: '2026-06-10 11:00:00', completeTime: '2026-06-10 16:00:00', rejectReason: '提现申请超出规定期限' },
-  { id: '5', withdrawNo: 'WDR-20260609-001', uid: 'u10003', phone: '137****9012', amount: 89.50, refundType: 'full', relatedOrderNo: 'ORD-20260608-005', relatedRechargeNo: 'RCH-2026068-005', originalPayMethod: 'wechat', fee: 0, actualAmount: 89.50, status: 'refunded', operator: '系统', applyTime: '2026-06-09 15:00:00', completeTime: '2026-06-09 15:05:00' },
+  {
+    id: '1',
+    withdrawNo: 'WDR-20260611-001',
+    uid: 'u10001',
+    phone: '138****1234',
+    amount: 200,
+    refundType: 'full',
+    relatedOrderNo: 'ORD-20260610-001',
+    relatedRechargeNo: 'RCH-2026060-001',
+    originalPayMethod: 'wechat',
+    fee: 0,
+    actualAmount: 200,
+    status: 'pending',
+    operator: '',
+    applyTime: '2026-06-11 09:00:00',
+    completeTime: '',
+  },
+  {
+    id: '2',
+    withdrawNo: 'WDR-20260611-002',
+    uid: 'u10002',
+    phone: '139****5678',
+    amount: 500,
+    refundType: 'partial',
+    relatedOrderNo: 'ORD-20260608-003',
+    relatedRechargeNo: 'RCH-2026068-003',
+    originalPayMethod: 'alipay',
+    fee: 2.5,
+    actualAmount: 497.5,
+    status: 'approved',
+    operator: '张三',
+    applyTime: '2026-06-11 10:30:00',
+    completeTime: '',
+    partialRefundReason: '商品部分退货',
+  },
+  {
+    id: '3',
+    withdrawNo: 'WDR-20260610-001',
+    uid: 'u10005',
+    phone: '135****7890',
+    amount: 800,
+    refundType: 'full',
+    relatedOrderNo: 'ORD-20260605-002',
+    relatedRechargeNo: 'RCH-2026065-002',
+    originalPayMethod: 'wechat',
+    fee: 0,
+    actualAmount: 800,
+    status: 'refunded',
+    operator: '张三',
+    applyTime: '2026-06-10 08:00:00',
+    completeTime: '2026-06-10 14:30:00',
+  },
+  {
+    id: '4',
+    withdrawNo: 'WDR-20260610-002',
+    uid: 'u10006',
+    phone: '134****2345',
+    amount: 1500,
+    refundType: 'full',
+    relatedOrderNo: 'ORD-20260609-001',
+    relatedRechargeNo: 'RCH-2026069-001',
+    originalPayMethod: 'bank',
+    fee: 0,
+    actualAmount: 1500,
+    status: 'rejected',
+    operator: '李四',
+    applyTime: '2026-06-10 11:00:00',
+    completeTime: '2026-06-10 16:00:00',
+    rejectReason: '提现申请超出规定期限',
+  },
+  {
+    id: '5',
+    withdrawNo: 'WDR-20260609-001',
+    uid: 'u10003',
+    phone: '137****9012',
+    amount: 89.5,
+    refundType: 'full',
+    relatedOrderNo: 'ORD-20260608-005',
+    relatedRechargeNo: 'RCH-2026068-005',
+    originalPayMethod: 'wechat',
+    fee: 0,
+    actualAmount: 89.5,
+    status: 'refunded',
+    operator: '系统',
+    applyTime: '2026-06-09 15:00:00',
+    completeTime: '2026-06-09 15:05:00',
+  },
 ])
 
 const withdrawSearchForm = reactive({ keyword: '', refundType: '', status: '' })
 
 const filteredWithdraws = computed(() => {
-  return mockWithdrawRecords.value.filter(w => {
+  return mockWithdrawRecords.value.filter((w) => {
     const kw = withdrawSearchForm.keyword
-    const matchKw = !kw || w.withdrawNo.includes(kw) || w.uid.includes(kw) || w.phone.includes(kw) || w.relatedOrderNo.includes(kw)
-    const matchType = !withdrawSearchForm.refundType || w.refundType === withdrawSearchForm.refundType
+    const matchKw =
+      !kw ||
+      w.withdrawNo.includes(kw) ||
+      w.uid.includes(kw) ||
+      w.phone.includes(kw) ||
+      w.relatedOrderNo.includes(kw)
+    const matchType =
+      !withdrawSearchForm.refundType || w.refundType === withdrawSearchForm.refundType
     const matchStatus = !withdrawSearchForm.status || w.status === withdrawSearchForm.status
     return matchKw && matchType && matchStatus
   })
@@ -785,7 +1193,8 @@ const showWithdrawDetail = (item: WithdrawRecord) => {
 }
 
 const approveWithdraw = (item: WithdrawRecord) => {
-  if (!confirm(`确认审核通过提现单 ${item.withdrawNo}？\n提现金额：¥${item.amount.toFixed(2)}`)) return
+  if (!confirm(`确认审核通过提现单 ${item.withdrawNo}？\n提现金额：¥${item.amount.toFixed(2)}`))
+    return
   item.status = 'approved'
   item.operator = '当前用户'
   alert(`提现单 ${item.withdrawNo} 已审核通过`)
@@ -809,99 +1218,274 @@ const rejectWithdraw = (item: WithdrawRecord) => {
 }
 
 const withdrawStatusLabel: Record<string, string> = {
-  pending: '待审核', approved: '审核通过待打款', refunded: '已打款', rejected: '已拒绝',
-}
-const payMethodLabel: Record<string, string> = {
-  wechat: '微信', alipay: '支付宝', bank: '银行卡',
+  pending: '待审核',
+  approved: '审核通过待打款',
+  refunded: '已打款',
+  rejected: '已拒绝',
 }
 
 // ==================== 模块6：交易流水 ====================
 const mockTransactions = ref<WalletTransaction[]>([
   {
-    id: '1', transactionNo: 'TXN-20260611-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260601-001',
-    type: 'recharge', amount: 1000, balance: 2280.50, relatedNo: 'RCH-20260611-001',
-    merchant: '平台自营商户', operator: '系统', time: '2026-06-11 10:30:18', remark: '线上充值',
+    id: '1',
+    transactionNo: 'TXN-20260611-001',
+    uid: 'u10001',
+    phone: '138****1234',
+    relatedRechargeNo: 'RCH-20260601-001',
+    type: 'recharge',
+    amount: 1000,
+    balance: 2280.5,
+    relatedNo: 'RCH-20260611-001',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-11 10:30:18',
+    remark: '线上充值',
   },
   {
-    id: '2', transactionNo: 'TXN-20260611-002', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260601-001',
-    type: 'consume', amount: -188, balance: 2092.50, relatedNo: 'ORD-20260611-001',
-    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-11 14:20:00', remark: '订单消费',
+    id: '2',
+    transactionNo: 'TXN-20260611-002',
+    uid: 'u10001',
+    phone: '138****1234',
+    relatedRechargeNo: 'RCH-20260601-001',
+    type: 'consume',
+    amount: -188,
+    balance: 2092.5,
+    relatedNo: 'ORD-20260611-001',
+    merchant: 'XX服饰专营店',
+    operator: '系统',
+    time: '2026-06-11 14:20:00',
+    remark: '订单消费',
     bucketLogs: [
-      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 100, remainAmount: 0 },
-      { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 312 },
+      {
+        bucketNo: 'RCH-20260601-001',
+        bucketTime: '2026-06-01 10:00:00',
+        deductAmount: 100,
+        remainAmount: 0,
+      },
+      {
+        bucketNo: 'RCH-20260608-002',
+        bucketTime: '2026-06-08 15:30:00',
+        deductAmount: 88,
+        remainAmount: 312,
+      },
     ],
   },
   {
-    id: '3', transactionNo: 'TXN-20260610-001', uid: 'u10002', phone: '139****5678', relatedRechargeNo: 'RCH-20260520-001',
-    type: 'recharge', amount: 500, balance: 4060, relatedNo: 'RCH-20260610-003',
-    merchant: '平台自营商户', operator: '系统', time: '2026-06-10 16:00:00', remark: '线上充值',
+    id: '3',
+    transactionNo: 'TXN-20260610-001',
+    uid: 'u10002',
+    phone: '139****5678',
+    relatedRechargeNo: 'RCH-20260520-001',
+    type: 'recharge',
+    amount: 500,
+    balance: 4060,
+    relatedNo: 'RCH-20260610-003',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-10 16:00:00',
+    remark: '线上充值',
   },
   {
-    id: '4', transactionNo: 'TXN-20260610-002', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260520-001',
-    type: 'refund', amount: 200, balance: 1000, relatedNo: 'ORD-20260609-005',
-    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-10 14:30:00', remark: '订单退款',
+    id: '4',
+    transactionNo: 'TXN-20260610-002',
+    uid: 'u10005',
+    phone: '135****7890',
+    relatedRechargeNo: 'RCH-20260520-001',
+    type: 'refund',
+    amount: 200,
+    balance: 1000,
+    relatedNo: 'ORD-20260609-005',
+    merchant: 'XX服饰专营店',
+    operator: '系统',
+    time: '2026-06-10 14:30:00',
+    remark: '订单退款',
     bucketLogs: [
-      { bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 200, remainAmount: 200 },
+      {
+        bucketNo: 'RCH-20260520-001',
+        bucketTime: '2026-05-20 09:00:00',
+        deductAmount: 200,
+        remainAmount: 200,
+      },
     ],
   },
   {
-    id: '5', transactionNo: 'TXN-20260609-001', uid: 'u10004', phone: '136****3456', relatedRechargeNo: 'RCH-20260520-001',
-    type: 'withdraw', amount: -800, balance: 4400, relatedNo: 'WDR-20260609-001',
-    merchant: '系统', operator: '张三', time: '2026-06-09 10:00:00', remark: '用户提现',
+    id: '5',
+    transactionNo: 'TXN-20260609-001',
+    uid: 'u10004',
+    phone: '136****3456',
+    relatedRechargeNo: 'RCH-20260520-001',
+    type: 'withdraw',
+    amount: -800,
+    balance: 4400,
+    relatedNo: 'WDR-20260609-001',
+    merchant: '系统',
+    operator: '张三',
+    time: '2026-06-09 10:00:00',
+    remark: '用户提现',
     bucketLogs: [
-      { bucketNo: 'RCH-20260520-001', bucketTime: '2026-05-20 09:00:00', deductAmount: 500, remainAmount: 0 },
-      { bucketNo: 'RCH-20260525-002', bucketTime: '2026-05-25 14:00:00', deductAmount: 300, remainAmount: 700 },
+      {
+        bucketNo: 'RCH-20260520-001',
+        bucketTime: '2026-05-20 09:00:00',
+        deductAmount: 500,
+        remainAmount: 0,
+      },
+      {
+        bucketNo: 'RCH-20260525-002',
+        bucketTime: '2026-05-25 14:00:00',
+        deductAmount: 300,
+        remainAmount: 700,
+      },
     ],
   },
   {
-    id: '6', transactionNo: 'TXN-20260609-002', uid: 'u10008', phone: '132****0123', relatedRechargeNo: 'RCH-20260601-002',
-    type: 'recharge', amount: 1500, balance: 8300, relatedNo: 'RCH-20260609-002',
-    merchant: '平台自营商户', operator: '系统', time: '2026-06-09 16:45:03', remark: '线上充值',
+    id: '6',
+    transactionNo: 'TXN-20260609-002',
+    uid: 'u10008',
+    phone: '132****0123',
+    relatedRechargeNo: 'RCH-20260601-002',
+    type: 'recharge',
+    amount: 1500,
+    balance: 8300,
+    relatedNo: 'RCH-20260609-002',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-09 16:45:03',
+    remark: '线上充值',
   },
   {
-    id: '7', transactionNo: 'TXN-20260608-001', uid: 'u10002', phone: '139****5678', relatedRechargeNo: 'RCH-20260601-002',
-    type: 'consume', amount: -129, balance: 3560, relatedNo: 'ORD-20260608-002',
-    merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-08 11:30:00', remark: '订单消费',
+    id: '7',
+    transactionNo: 'TXN-20260608-001',
+    uid: 'u10002',
+    phone: '139****5678',
+    relatedRechargeNo: 'RCH-20260601-002',
+    type: 'consume',
+    amount: -129,
+    balance: 3560,
+    relatedNo: 'ORD-20260608-002',
+    merchant: 'XX数码旗舰店',
+    operator: '系统',
+    time: '2026-06-08 11:30:00',
+    remark: '订单消费',
     bucketLogs: [
-      { bucketNo: 'RCH-20260601-002', bucketTime: '2026-06-01 14:00:00', deductAmount: 129, remainAmount: 871 },
+      {
+        bucketNo: 'RCH-20260601-002',
+        bucketTime: '2026-06-01 14:00:00',
+        deductAmount: 129,
+        remainAmount: 871,
+      },
     ],
   },
   {
-    id: '8', transactionNo: 'TXN-20260607-001', uid: 'u10003', phone: '137****9012', relatedRechargeNo: 'RCH-20260605-003',
-    type: 'consume', amount: -59, balance: 148.50, relatedNo: 'ORD-20260607-001',
-    merchant: 'XX食品店', operator: '系统', time: '2026-06-07 09:15:00', remark: '订单消费',
+    id: '8',
+    transactionNo: 'TXN-20260607-001',
+    uid: 'u10003',
+    phone: '137****9012',
+    relatedRechargeNo: 'RCH-20260605-003',
+    type: 'consume',
+    amount: -59,
+    balance: 148.5,
+    relatedNo: 'ORD-20260607-001',
+    merchant: 'XX食品店',
+    operator: '系统',
+    time: '2026-06-07 09:15:00',
+    remark: '订单消费',
     bucketLogs: [
-      { bucketNo: 'RCH-20260605-003', bucketTime: '2026-06-05 11:00:00', deductAmount: 59, remainAmount: 41 },
+      {
+        bucketNo: 'RCH-20260605-003',
+        bucketTime: '2026-06-05 11:00:00',
+        deductAmount: 59,
+        remainAmount: 41,
+      },
     ],
   },
   {
-    id: '9', transactionNo: 'TXN-20260605-001', uid: 'u10006', phone: '134****2345', relatedRechargeNo: 'RCH-20260520-005',
-    type: 'recharge', amount: 2000, balance: 13500, relatedNo: 'RCH-20260605-001',
-    merchant: '平台自营商户', operator: '系统', time: '2026-06-05 14:00:00', remark: '线上充值',
+    id: '9',
+    transactionNo: 'TXN-20260605-001',
+    uid: 'u10006',
+    phone: '134****2345',
+    relatedRechargeNo: 'RCH-20260520-005',
+    type: 'recharge',
+    amount: 2000,
+    balance: 13500,
+    relatedNo: 'RCH-20260605-001',
+    merchant: '平台自营商户',
+    operator: '系统',
+    time: '2026-06-05 14:00:00',
+    remark: '线上充值',
   },
   {
-    id: '10', transactionNo: 'TXN-20260604-001', uid: 'u10006', phone: '134****2345', relatedRechargeNo: 'RCH-20260520-005',
-    type: 'consume', amount: -500, balance: 11500, relatedNo: 'ORD-20260604-003',
-    merchant: 'XX服饰专营店', operator: '系统', time: '2026-06-04 18:00:00', remark: '订单消费',
+    id: '10',
+    transactionNo: 'TXN-20260604-001',
+    uid: 'u10006',
+    phone: '134****2345',
+    relatedRechargeNo: 'RCH-20260520-005',
+    type: 'consume',
+    amount: -500,
+    balance: 11500,
+    relatedNo: 'ORD-20260604-003',
+    merchant: 'XX服饰专营店',
+    operator: '系统',
+    time: '2026-06-04 18:00:00',
+    remark: '订单消费',
     bucketLogs: [
-      { bucketNo: 'RCH-20260520-005', bucketTime: '2026-05-20 16:00:00', deductAmount: 500, remainAmount: 1500 },
+      {
+        bucketNo: 'RCH-20260520-005',
+        bucketTime: '2026-05-20 16:00:00',
+        deductAmount: 500,
+        remainAmount: 1500,
+      },
     ],
   },
   {
-    id: '11', transactionNo: 'TXN-20260603-001', uid: 'u10001', phone: '138****1234', relatedRechargeNo: 'RCH-20260515-001',
-    type: 'refund', amount: 219.50, balance: 1280.50, relatedNo: 'ORD-20260530-002',
-    merchant: 'XX数码旗舰店', operator: '系统', time: '2026-06-03 10:00:00', remark: '订单退款',
+    id: '11',
+    transactionNo: 'TXN-20260603-001',
+    uid: 'u10001',
+    phone: '138****1234',
+    relatedRechargeNo: 'RCH-20260515-001',
+    type: 'refund',
+    amount: 219.5,
+    balance: 1280.5,
+    relatedNo: 'ORD-20260530-002',
+    merchant: 'XX数码旗舰店',
+    operator: '系统',
+    time: '2026-06-03 10:00:00',
+    remark: '订单退款',
     bucketLogs: [
-      { bucketNo: 'RCH-20260608-002', bucketTime: '2026-06-08 15:30:00', deductAmount: 88, remainAmount: 400 },
-      { bucketNo: 'RCH-20260601-001', bucketTime: '2026-06-01 10:00:00', deductAmount: 131.50, remainAmount: 131.50 },
+      {
+        bucketNo: 'RCH-20260608-002',
+        bucketTime: '2026-06-08 15:30:00',
+        deductAmount: 88,
+        remainAmount: 400,
+      },
+      {
+        bucketNo: 'RCH-20260601-001',
+        bucketTime: '2026-06-01 10:00:00',
+        deductAmount: 131.5,
+        remainAmount: 131.5,
+      },
     ],
   },
   {
-    id: '12', transactionNo: 'TXN-20260602-001', uid: 'u10005', phone: '135****7890', relatedRechargeNo: 'RCH-20260515-001',
-    type: 'withdraw', amount: -200, balance: 800, relatedNo: 'WDR-20260602-001',
-    merchant: '系统', operator: '系统', time: '2026-06-02 15:00:00', remark: '用户提现',
+    id: '12',
+    transactionNo: 'TXN-20260602-001',
+    uid: 'u10005',
+    phone: '135****7890',
+    relatedRechargeNo: 'RCH-20260515-001',
+    type: 'withdraw',
+    amount: -200,
+    balance: 800,
+    relatedNo: 'WDR-20260602-001',
+    merchant: '系统',
+    operator: '系统',
+    time: '2026-06-02 15:00:00',
+    remark: '用户提现',
     bucketLogs: [
-      { bucketNo: 'RCH-20260515-001', bucketTime: '2026-05-15 10:00:00', deductAmount: 200, remainAmount: 0 },
+      {
+        bucketNo: 'RCH-20260515-001',
+        bucketTime: '2026-05-15 10:00:00',
+        deductAmount: 200,
+        remainAmount: 0,
+      },
     ],
   },
 ])
@@ -909,9 +1493,10 @@ const mockTransactions = ref<WalletTransaction[]>([
 const ledgerSearchForm = reactive({ keyword: '', type: '', merchant: '' })
 
 const filteredLedger = computed(() => {
-  return mockTransactions.value.filter(tx => {
+  return mockTransactions.value.filter((tx) => {
     const kw = ledgerSearchForm.keyword
-    const matchKw = !kw || tx.transactionNo.includes(kw) || tx.uid.includes(kw) || tx.phone.includes(kw)
+    const matchKw =
+      !kw || tx.transactionNo.includes(kw) || tx.uid.includes(kw) || tx.phone.includes(kw)
     const matchType = !ledgerSearchForm.type || tx.type === ledgerSearchForm.type
     const matchMerchant = !ledgerSearchForm.merchant || tx.merchant === ledgerSearchForm.merchant
     return matchKw && matchType && matchMerchant && (tx.type === 'consume' || tx.type === 'refund')
@@ -929,9 +1514,12 @@ const showTxDetail = (item: WalletTransaction) => {
 
 // 交易列表中展开的子流水行 ID
 
-
 const txTypeLabel: Record<string, string> = {
-  recharge: '充值', refund: '退款', consume: '消费', withdraw: '提现', freeze: '冻结',
+  recharge: '充值',
+  refund: '退款',
+  consume: '消费',
+  withdraw: '提现',
+  freeze: '冻结',
 }
 
 // ==================== 模块：商户签约 ====================
@@ -948,9 +1536,36 @@ interface MerchantSign {
 }
 
 const signList = ref<MerchantSign[]>([
-  { id: 'ms-001', merchantName: '平台自营商户', status: 'signed', contactPerson: '张三', contactPhone: '138****0001', signTime: '2026-01-15', terminateTime: '', remark: '' },
-  { id: 'ms-002', merchantName: 'XX数码旗舰店', status: 'signed', contactPerson: '李四', contactPhone: '139****0002', signTime: '2026-03-20', terminateTime: '', remark: '' },
-  { id: 'ms-003', merchantName: 'XX服饰专营店', status: 'terminated', contactPerson: '王五', contactPhone: '137****0003', signTime: '2025-11-01', terminateTime: '2026-04-30', remark: '合作到期' },
+  {
+    id: 'ms-001',
+    merchantName: '平台自营商户',
+    status: 'signed',
+    contactPerson: '张三',
+    contactPhone: '138****0001',
+    signTime: '2026-01-15',
+    terminateTime: '',
+    remark: '',
+  },
+  {
+    id: 'ms-002',
+    merchantName: 'XX数码旗舰店',
+    status: 'signed',
+    contactPerson: '李四',
+    contactPhone: '139****0002',
+    signTime: '2026-03-20',
+    terminateTime: '',
+    remark: '',
+  },
+  {
+    id: 'ms-003',
+    merchantName: 'XX服饰专营店',
+    status: 'terminated',
+    contactPerson: '王五',
+    contactPhone: '137****0003',
+    signTime: '2025-11-01',
+    terminateTime: '2026-04-30',
+    remark: '合作到期',
+  },
 ])
 
 const signFilter = reactive({
@@ -967,7 +1582,11 @@ const signStatusOptions = [
 const filteredSignList = computed(() => {
   return signList.value.filter((s) => {
     const kw = signFilter.keyword
-    const matchKw = !kw || s.merchantName.includes(kw) || s.contactPerson.includes(kw) || s.contactPhone.includes(kw)
+    const matchKw =
+      !kw ||
+      s.merchantName.includes(kw) ||
+      s.contactPerson.includes(kw) ||
+      s.contactPhone.includes(kw)
     const matchStatus = !signFilter.status || s.status === signFilter.status
     return matchKw && matchStatus
   })
@@ -1021,7 +1640,6 @@ const handleAgreementUpload = () => {
   input.click()
 }
 
-
 const submitSign = () => {
   if (!signForm.merchantName) {
     alert('请选择商户')
@@ -1035,7 +1653,7 @@ const submitSign = () => {
       target.contactPhone = signForm.contactPhone
       target.remark = signForm.remark
     }
-      target.agreement = signForm.agreement
+    target.agreement = signForm.agreement
     alert('签约信息已更新')
   } else {
     const newSign: MerchantSign = {
@@ -1048,7 +1666,7 @@ const submitSign = () => {
       terminateTime: '',
       remark: signForm.remark,
     }
-      agreement: signForm.agreement,
+    newSign.agreement = signForm.agreement
     signList.value.unshift(newSign)
     alert('签约成功')
   }
@@ -1099,7 +1717,6 @@ const openSettlementFlow = (item: MerchantSign) => {
   settlementTab.value = 'consume'
   showSettlementModal.value = true
 }
-
 </script>
 
 <template>
@@ -1122,20 +1739,39 @@ const openSettlementFlow = (item: MerchantSign) => {
 
     <!-- 右侧内容区 -->
     <div class="main-content">
-
-            <!-- ===== 模块1：钱包设置 ===== -->
+      <!-- ===== 模块1：钱包设置 ===== -->
       <div v-if="activeMenu === 'wallet_config'" class="content-panel">
         <div class="panel-header">
           <h2>钱包设置</h2>
           <span class="panel-subtitle">全局钱包功能开关及业务规则配置</span>
-          <button v-if="configSaved && !editingConfig" class="btn btn-primary btn-xs" @click="startEditConfig" style="margin-left: auto">编辑</button>
+          <button
+            v-if="configSaved && !editingConfig"
+            class="btn btn-primary btn-xs"
+            @click="startEditConfig"
+            style="margin-left: auto"
+          >
+            编辑
+          </button>
         </div>
         <div class="panel-body">
           <!-- ========== 编辑模式：表单编辑 ========== -->
           <template v-if="!configSaved || editingConfig">
             <div class="wcfg-card">
               <div class="wcfg-card-header">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#4F6EF7"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="9" y1="9" x2="15" y2="9" />
+                  <line x1="9" y1="13" x2="15" y2="13" />
+                  <line x1="9" y1="17" x2="12" y2="17" />
+                </svg>
                 <span>基础设置</span>
               </div>
               <div class="wcfg-card-body">
@@ -1149,7 +1785,12 @@ const openSettlementFlow = (item: MerchantSign) => {
                   </div>
                   <div class="wcfg-field" v-if="walletConfig.enabled">
                     <label class="wcfg-label required">钱包名称</label>
-                    <input type="text" class="form-input" v-model="walletConfig.name" placeholder="如：零钱、余额" />
+                    <input
+                      type="text"
+                      class="form-input"
+                      v-model="walletConfig.name"
+                      placeholder="如：零钱、余额"
+                    />
                   </div>
                 </div>
               </div>
@@ -1158,7 +1799,18 @@ const openSettlementFlow = (item: MerchantSign) => {
             <template v-if="walletConfig.enabled">
               <div class="wcfg-card">
                 <div class="wcfg-card-header">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#4F6EF7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
                   <span>充值设置</span>
                 </div>
                 <div class="wcfg-card-body">
@@ -1166,23 +1818,41 @@ const openSettlementFlow = (item: MerchantSign) => {
                     <div class="wcfg-field">
                       <label class="wcfg-label required">最低充值金额</label>
                       <div class="wcfg-input-group">
-                        <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minRecharge" min="0.01" step="0.01" />
+                        <input
+                          type="number"
+                          class="form-input form-input-sm"
+                          v-model.number="walletConfig.minRecharge"
+                          min="0.01"
+                          step="0.01"
+                        />
                         <span class="wcfg-unit">元</span>
                       </div>
                     </div>
                     <div class="wcfg-field">
                       <label class="wcfg-label required">最高充值金额</label>
                       <div class="wcfg-input-group">
-                        <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.maxRecharge" min="1" step="0.01" />
+                        <input
+                          type="number"
+                          class="form-input form-input-sm"
+                          v-model.number="walletConfig.maxRecharge"
+                          min="1"
+                          step="0.01"
+                        />
                         <span class="wcfg-unit">元</span>
                       </div>
                     </div>
                   </div>
                   <div class="wcfg-field" style="margin-bottom: 0">
                     <label class="wcfg-label required">收款商户</label>
-                    <select class="form-select" v-model="walletConfig.receiveMerchantId" style="width: 240px">
+                    <select
+                      class="form-select"
+                      v-model="walletConfig.receiveMerchantId"
+                      style="width: 240px"
+                    >
                       <option value="">请选择商户</option>
-                      <option v-for="m in mockMerchants" :key="m.id" :value="m.id">{{ m.name }}</option>
+                      <option v-for="m in mockMerchants" :key="m.id" :value="m.id">
+                        {{ m.name }}
+                      </option>
                     </select>
                     <span class="wcfg-hint">用户充值时资金打入该商户账户</span>
                   </div>
@@ -1191,7 +1861,17 @@ const openSettlementFlow = (item: MerchantSign) => {
 
               <div class="wcfg-card">
                 <div class="wcfg-card-header">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#4F6EF7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
                   <span>提现设置</span>
                 </div>
                 <div class="wcfg-card-body">
@@ -1209,7 +1889,9 @@ const openSettlementFlow = (item: MerchantSign) => {
                         <input type="checkbox" v-model="walletConfig.withdrawNeedReview" />
                         <span class="toggle-slider"></span>
                       </label>
-                      <span class="wcfg-hint">{{ walletConfig.withdrawNeedReview ? '开启（人工审批）' : '关闭（自动放行）' }}</span>
+                      <span class="wcfg-hint">{{
+                        walletConfig.withdrawNeedReview ? '开启（人工审批）' : '关闭（自动放行）'
+                      }}</span>
                     </div>
                   </div>
                   <template v-if="walletConfig.withdrawEnabled">
@@ -1218,12 +1900,25 @@ const openSettlementFlow = (item: MerchantSign) => {
                       <div class="wcfg-field">
                         <label class="wcfg-label">手续费</label>
                         <div class="wcfg-input-group">
-                          <select class="form-select form-input-sm" v-model="walletConfig.feeType" style="width: 100px">
+                          <select
+                            class="form-select form-input-sm"
+                            v-model="walletConfig.feeType"
+                            style="width: 100px"
+                          >
                             <option value="fixed">固定</option>
                             <option value="percent">比例</option>
                           </select>
-                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.feeValue" min="0" step="0.01" style="width: 80px" />
-                          <span class="wcfg-unit">{{ walletConfig.feeType === "fixed" ? "元/笔" : "%" }}</span>
+                          <input
+                            type="number"
+                            class="form-input form-input-sm"
+                            v-model.number="walletConfig.feeValue"
+                            min="0"
+                            step="0.01"
+                            style="width: 80px"
+                          />
+                          <span class="wcfg-unit">{{
+                            walletConfig.feeType === 'fixed' ? '元/笔' : '%'
+                          }}</span>
                         </div>
                       </div>
                     </div>
@@ -1231,11 +1926,13 @@ const openSettlementFlow = (item: MerchantSign) => {
                       <div class="wcfg-field">
                         <label class="wcfg-label">提现方式</label>
                         <div class="wcfg-input-group">
-                          <select class="form-select form-input-md" >
+                          <select class="form-select form-input-md">
                             <option value="refund_to_recharge" selected>原充值订单退款</option>
                             <option value="merchant_sub_account" disabled>主商户账户分账</option>
                           </select>
-                          <span class="wcfg-hint" style="color:#faad14;font-size:12px">暂不可选，仅原充值订单退款可选</span>
+                          <span class="wcfg-hint" style="color: #faad14; font-size: 12px"
+                            >暂不可选，仅原充值订单退款可选</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -1244,14 +1941,26 @@ const openSettlementFlow = (item: MerchantSign) => {
                       <div class="wcfg-field">
                         <label class="wcfg-label required">最低提现金额</label>
                         <div class="wcfg-input-group">
-                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minWithdraw" min="0.01" step="0.01" />
+                          <input
+                            type="number"
+                            class="form-input form-input-sm"
+                            v-model.number="walletConfig.minWithdraw"
+                            min="0.01"
+                            step="0.01"
+                          />
                           <span class="wcfg-unit">元</span>
                         </div>
                       </div>
                       <div class="wcfg-field">
                         <label class="wcfg-label required">最高提现金额</label>
                         <div class="wcfg-input-group">
-                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.maxWithdraw" min="1" step="0.01" />
+                          <input
+                            type="number"
+                            class="form-input form-input-sm"
+                            v-model.number="walletConfig.maxWithdraw"
+                            min="1"
+                            step="0.01"
+                          />
                           <span class="wcfg-unit">元</span>
                         </div>
                       </div>
@@ -1260,14 +1969,26 @@ const openSettlementFlow = (item: MerchantSign) => {
                       <div class="wcfg-field">
                         <label class="wcfg-label">日提现限额</label>
                         <div class="wcfg-input-group">
-                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.dailyWithdrawLimit" min="1" step="0.01" />
+                          <input
+                            type="number"
+                            class="form-input form-input-sm"
+                            v-model.number="walletConfig.dailyWithdrawLimit"
+                            min="1"
+                            step="0.01"
+                          />
                           <span class="wcfg-unit">元</span>
                         </div>
                       </div>
                       <div class="wcfg-field">
                         <label class="wcfg-label">提现后余额下限</label>
                         <div class="wcfg-input-group">
-                          <input type="number" class="form-input form-input-sm" v-model.number="walletConfig.minBalanceAfterWithdraw" min="0" step="0.01" />
+                          <input
+                            type="number"
+                            class="form-input form-input-sm"
+                            v-model.number="walletConfig.minBalanceAfterWithdraw"
+                            min="0"
+                            step="0.01"
+                          />
                           <span class="wcfg-unit">元（0=不限制）</span>
                         </div>
                       </div>
@@ -1278,7 +1999,13 @@ const openSettlementFlow = (item: MerchantSign) => {
             </template>
 
             <div style="display: flex; gap: 12px; margin-top: 24px">
-              <button class="btn btn-primary" @click="saveConfig" :disabled="!walletConfig.receiveMerchantId">保存配置</button>
+              <button
+                class="btn btn-primary"
+                @click="saveConfig"
+                :disabled="!walletConfig.receiveMerchantId"
+              >
+                保存配置
+              </button>
               <button class="btn btn-default" @click="cancelEditConfig">取消</button>
             </div>
           </template>
@@ -1288,13 +2015,32 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div class="wcfg-view-grid">
               <div class="wcfg-view-card">
                 <div class="wcfg-view-card-header">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#4F6EF7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="9" y1="9" x2="15" y2="9" />
+                    <line x1="9" y1="13" x2="15" y2="13" />
+                    <line x1="9" y1="17" x2="12" y2="17" />
+                  </svg>
                   <span>基础设置</span>
                 </div>
                 <div class="wcfg-view-card-body">
                   <div class="wcfg-view-field">
                     <span class="wcfg-view-label">钱包开关</span>
-                    <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.enabled ? 'on' : 'off'">{{ walletConfig.enabled ? '已开启' : '已关闭' }}</span></span>
+                    <span class="wcfg-view-value"
+                      ><span
+                        class="wcfg-status-badge"
+                        :class="walletConfig.enabled ? 'on' : 'off'"
+                        >{{ walletConfig.enabled ? '已开启' : '已关闭' }}</span
+                      ></span
+                    >
                   </div>
                   <div class="wcfg-view-field">
                     <span class="wcfg-view-label">钱包名称</span>
@@ -1305,63 +2051,122 @@ const openSettlementFlow = (item: MerchantSign) => {
               <template v-if="walletConfig.enabled">
                 <div class="wcfg-view-card">
                   <div class="wcfg-view-card-header">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#4F6EF7"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 6v6l4 2" />
+                    </svg>
                     <span>充值设置</span>
                   </div>
                   <div class="wcfg-view-card-body">
                     <div class="wcfg-view-field">
                       <span class="wcfg-view-label">最低充值金额</span>
-                      <span class="wcfg-view-value price-text">¥{{ walletConfig.minRecharge.toFixed(2) }}</span>
+                      <span class="wcfg-view-value price-text"
+                        >¥{{ walletConfig.minRecharge.toFixed(2) }}</span
+                      >
                     </div>
                     <div class="wcfg-view-field">
                       <span class="wcfg-view-label">最高充值金额</span>
-                      <span class="wcfg-view-value price-text">¥{{ walletConfig.maxRecharge.toFixed(2) }}</span>
+                      <span class="wcfg-view-value price-text"
+                        >¥{{ walletConfig.maxRecharge.toFixed(2) }}</span
+                      >
                     </div>
                     <div class="wcfg-view-field">
                       <span class="wcfg-view-label">收款商户</span>
-                      <span class="wcfg-view-value">{{ walletConfig.receiveMerchantName || '-' }}</span>
+                      <span class="wcfg-view-value">{{
+                        walletConfig.receiveMerchantName || '-'
+                      }}</span>
                     </div>
                   </div>
                 </div>
                 <div class="wcfg-view-card">
                   <div class="wcfg-view-card-header">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#4F6EF7"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
                     <span>提现设置</span>
                   </div>
                   <div class="wcfg-view-card-body">
                     <div class="wcfg-view-field">
                       <span class="wcfg-view-label">提现开关</span>
-                      <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.withdrawEnabled ? 'on' : 'off'">{{ walletConfig.withdrawEnabled ? '已开启' : '已关闭' }}</span></span>
+                      <span class="wcfg-view-value"
+                        ><span
+                          class="wcfg-status-badge"
+                          :class="walletConfig.withdrawEnabled ? 'on' : 'off'"
+                          >{{ walletConfig.withdrawEnabled ? '已开启' : '已关闭' }}</span
+                        ></span
+                      >
                     </div>
                     <template v-if="walletConfig.withdrawEnabled">
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">提现审核</span>
-                        <span class="wcfg-view-value"><span class="wcfg-status-badge" :class="walletConfig.withdrawNeedReview ? 'on' : 'off'">{{ walletConfig.withdrawNeedReview ? '开启' : '关闭' }}</span></span>
+                        <span class="wcfg-view-value"
+                          ><span
+                            class="wcfg-status-badge"
+                            :class="walletConfig.withdrawNeedReview ? 'on' : 'off'"
+                            >{{ walletConfig.withdrawNeedReview ? '开启' : '关闭' }}</span
+                          ></span
+                        >
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">手续费</span>
-                        <span class="wcfg-view-value">{{ walletConfig.feeType === 'fixed' ? walletConfig.feeValue + ' 元/笔' : walletConfig.feeValue + ' %' }}</span>
+                        <span class="wcfg-view-value">{{
+                          walletConfig.feeType === 'fixed'
+                            ? walletConfig.feeValue + ' 元/笔'
+                            : walletConfig.feeValue + ' %'
+                        }}</span>
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">提现方式</span>
-                        <span class="wcfg-view-value">{{ walletConfig.withdrawMethod === 'refund_to_recharge' ? '原充值订单退款' : '主商户账户分账' }}</span>
-                        <span class="wcfg-view-value">{{ walletConfig.feeType === 'fixed' ? walletConfig.feeValue + ' 元/笔' : walletConfig.feeValue + ' %' }}</span>
+                        <span class="wcfg-view-value">{{
+                          walletConfig.withdrawMethod === 'refund_to_recharge'
+                            ? '原充值订单退款'
+                            : '主商户账户分账'
+                        }}</span>
+                        <span class="wcfg-view-value">{{
+                          walletConfig.feeType === 'fixed'
+                            ? walletConfig.feeValue + ' 元/笔'
+                            : walletConfig.feeValue + ' %'
+                        }}</span>
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">最低提现金额</span>
-                        <span class="wcfg-view-value price-text">¥{{ walletConfig.minWithdraw.toFixed(2) }}</span>
+                        <span class="wcfg-view-value price-text"
+                          >¥{{ walletConfig.minWithdraw.toFixed(2) }}</span
+                        >
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">最高提现金额</span>
-                        <span class="wcfg-view-value price-text">¥{{ walletConfig.maxWithdraw.toFixed(2) }}</span>
+                        <span class="wcfg-view-value price-text"
+                          >¥{{ walletConfig.maxWithdraw.toFixed(2) }}</span
+                        >
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">日提现限额</span>
-                        <span class="wcfg-view-value price-text">¥{{ walletConfig.dailyWithdrawLimit.toFixed(2) }}</span>
+                        <span class="wcfg-view-value price-text"
+                          >¥{{ walletConfig.dailyWithdrawLimit.toFixed(2) }}</span
+                        >
                       </div>
                       <div class="wcfg-view-field">
                         <span class="wcfg-view-label">提现后余额下限</span>
-                        <span class="wcfg-view-value price-text">¥{{ walletConfig.minBalanceAfterWithdraw.toFixed(2) }}</span>
+                        <span class="wcfg-view-value price-text"
+                          >¥{{ walletConfig.minBalanceAfterWithdraw.toFixed(2) }}</span
+                        >
                       </div>
                     </template>
                   </div>
@@ -1371,7 +2176,10 @@ const openSettlementFlow = (item: MerchantSign) => {
 
             <!-- 修改记录 -->
             <div class="history-section" style="margin-top: 32px">
-              <div class="history-header" @click="configHistorySectionOpen = !configHistorySectionOpen">
+              <div
+                class="history-header"
+                @click="configHistorySectionOpen = !configHistorySectionOpen"
+              >
                 <span class="history-toggle">{{ configHistorySectionOpen ? '▼' : '▶' }}</span>
                 <span class="history-title">修改记录</span>
                 <span class="history-count">共 {{ configHistoryList.length }} 条</span>
@@ -1409,15 +2217,23 @@ const openSettlementFlow = (item: MerchantSign) => {
                               </div>
                               <div class="snapshot-field">
                                 <span class="snapshot-label">钱包开关</span>
-                                <span class="snapshot-value">{{ record.snapshot.enabled ? '开启' : '关闭' }}</span>
+                                <span class="snapshot-value">{{
+                                  record.snapshot.enabled ? '开启' : '关闭'
+                                }}</span>
                               </div>
                               <div class="snapshot-field">
                                 <span class="snapshot-label">提现开关</span>
-                                <span class="snapshot-value">{{ record.snapshot.withdrawEnabled ? '开启' : '关闭' }}</span>
+                                <span class="snapshot-value">{{
+                                  record.snapshot.withdrawEnabled ? '开启' : '关闭'
+                                }}</span>
                               </div>
                               <div class="snapshot-field">
                                 <span class="snapshot-label">手续费</span>
-                                <span class="snapshot-value">{{ record.snapshot.feeType === 'fixed' ? record.snapshot.feeValue + '元/笔' : record.snapshot.feeValue + '%' }}</span>
+                                <span class="snapshot-value">{{
+                                  record.snapshot.feeType === 'fixed'
+                                    ? record.snapshot.feeValue + '元/笔'
+                                    : record.snapshot.feeValue + '%'
+                                }}</span>
                               </div>
                             </div>
                           </div>
@@ -1430,7 +2246,8 @@ const openSettlementFlow = (item: MerchantSign) => {
             </div>
           </template>
         </div>
-      </div><!-- ===== 充值方案 ===== -->
+      </div>
+      <!-- ===== 充值方案 ===== -->
 
       <!-- ===== 商户签约 ===== -->
       <div v-if="activeMenu === 'wallet_merchant_sign'" class="content-panel">
@@ -1442,7 +2259,13 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="filter-bar">
             <div class="filter-item">
               <label>商户名称</label>
-              <input type="text" class="form-input" v-model="signFilter.keyword" placeholder="商户名称/联系人/电话" style="width: 200px" />
+              <input
+                type="text"
+                class="form-input"
+                v-model="signFilter.keyword"
+                placeholder="商户名称/联系人/电话"
+                style="width: 200px"
+              />
             </div>
             <div class="filter-item">
               <label>签约状态</label>
@@ -1479,8 +2302,19 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td>{{ item.terminateTime || '-' }}</td>
                 <td>
                   <a class="action-link" @click="openSignModal(item)">编辑</a>
-                  <a class="action-link primary" @click="openSettlementFlow(item)" style="margin-left: 8px">收款流水</a>
-                  <a v-if="item.status === 'signed'" class="action-link danger" @click="terminateSign(item)" style="margin-left: 8px">解约</a>
+                  <a
+                    class="action-link primary"
+                    @click="openSettlementFlow(item)"
+                    style="margin-left: 8px"
+                    >收款流水</a
+                  >
+                  <a
+                    v-if="item.status === 'signed'"
+                    class="action-link danger"
+                    @click="terminateSign(item)"
+                    style="margin-left: 8px"
+                    >解约</a
+                  >
                 </td>
               </tr>
               <tr v-if="filteredSignList.length === 0">
@@ -1496,72 +2330,150 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div class="modal-header">
               <h3>{{ isEditSign ? '编辑签约' : '新增签约' }}</h3>
               <div class="modal-close" @click="closeSignModal">
-                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                <svg
+                  class="modal-close-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
               </div>
             </div>
             <div class="modal-body">
               <div class="form-item">
                 <label class="form-label required">商户</label>
-                <select class="form-select" v-model="signForm.merchantName" :disabled="isEditSign" style="width: 100%">
+                <select
+                  class="form-select"
+                  v-model="signForm.merchantName"
+                  :disabled="isEditSign"
+                  style="width: 100%"
+                >
                   <option value="">请选择商户</option>
-                  <option v-for="m in mockMerchants" :key="m.id" :value="m.name">{{ m.name }}</option>
+                  <option v-for="m in mockMerchants" :key="m.id" :value="m.name">
+                    {{ m.name }}
+                  </option>
                 </select>
               </div>
               <div class="form-item">
                 <label class="form-label">联系人</label>
-                <input type="text" class="form-input" v-model="signForm.contactPerson" placeholder="选填" style="width: 100%" />
+                <input
+                  type="text"
+                  class="form-input"
+                  v-model="signForm.contactPerson"
+                  placeholder="选填"
+                  style="width: 100%"
+                />
               </div>
               <div class="form-item">
                 <label class="form-label">联系电话</label>
-                <input type="text" class="form-input" v-model="signForm.contactPhone" placeholder="选填" style="width: 100%" />
+                <input
+                  type="text"
+                  class="form-input"
+                  v-model="signForm.contactPhone"
+                  placeholder="选填"
+                  style="width: 100%"
+                />
               </div>
               <div class="form-item">
                 <label class="form-label">备注</label>
-                <textarea class="form-textarea" v-model="signForm.remark" rows="2" placeholder="选填" style="width: 100%"></textarea>
+                <textarea
+                  class="form-textarea"
+                  v-model="signForm.remark"
+                  rows="2"
+                  placeholder="选填"
+                  style="width: 100%"
+                ></textarea>
               </div>
               <div class="form-item">
                 <label class="form-label">签约协议</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <button class="btn btn-default" style="height: 32px; padding: 0 16px; font-size: 13px; flex-shrink: 0;" @click="handleAgreementUpload">上传协议扫描件</button>
-                  <span v-if="signForm.agreement" style="font-size: 13px; color: #00A854; white-space: nowrap;">已上传：{{ signForm.agreement }}</span>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <button
+                    class="btn btn-default"
+                    style="height: 32px; padding: 0 16px; font-size: 13px; flex-shrink: 0"
+                    @click="handleAgreementUpload"
+                  >
+                    上传协议扫描件
+                  </button>
+                  <span
+                    v-if="signForm.agreement"
+                    style="font-size: 13px; color: #00a854; white-space: nowrap"
+                    >已上传：{{ signForm.agreement }}</span
+                  >
                 </div>
               </div>
             </div>
             <div class="modal-footer">
               <button class="btn btn-default" @click="closeSignModal">取消</button>
-              <button class="btn btn-primary" @click="submitSign">{{ isEditSign ? '保存' : '确认签约' }}</button>
+              <button class="btn btn-primary" @click="submitSign">
+                {{ isEditSign ? '保存' : '确认签约' }}
+              </button>
             </div>
           </div>
         </div>
 
         <!-- 收款流水弹窗 -->
         <div class="modal-overlay" v-if="showSettlementModal" @click="showSettlementModal = false">
-          <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;" @click.stop>
+          <div
+            class="modal-content"
+            style="width: auto; min-width: 720px; max-width: 90vw"
+            @click.stop
+          >
             <div class="modal-header">
               <h3>收款流水 - {{ settlementMerchant?.merchantName }}</h3>
               <div class="modal-close" @click="showSettlementModal = false">
-                <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                <svg
+                  class="modal-close-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
               </div>
             </div>
             <div class="modal-body">
               <div class="settle-stats">
                 <div class="settle-stat-card consume">
                   <div class="settle-stat-label">消费总额</div>
-                  <div class="settle-stat-value">¥{{ settlementTotalConsume.toLocaleString() }}</div>
+                  <div class="settle-stat-value">
+                    ¥{{ settlementTotalConsume.toLocaleString() }}
+                  </div>
                 </div>
                 <div class="settle-stat-card refund">
                   <div class="settle-stat-label">退款总额</div>
                   <div class="settle-stat-value">¥{{ settlementTotalRefund.toLocaleString() }}</div>
                 </div>
-                <div class="settle-stat-card" :class="settlementNet >= 0 ? 'net-positive' : 'net-negative'">
+                <div
+                  class="settle-stat-card"
+                  :class="settlementNet >= 0 ? 'net-positive' : 'net-negative'"
+                >
                   <div class="settle-stat-label">净结算</div>
-                  <div class="settle-stat-value">{{ settlementNet >= 0 ? '+' : '' }}¥{{ settlementNet.toLocaleString() }}</div>
+                  <div class="settle-stat-value">
+                    {{ settlementNet >= 0 ? '+' : '' }}¥{{ settlementNet.toLocaleString() }}
+                  </div>
                 </div>
               </div>
 
               <div class="segmented-control">
-                <button class="segmented-btn" :class="{ active: settlementTab === 'consume' }" @click="settlementTab = 'consume'">消费流水</button>
-                <button class="segmented-btn" :class="{ active: settlementTab === 'refund' }" @click="settlementTab = 'refund'">退款流水</button>
+                <button
+                  class="segmented-btn"
+                  :class="{ active: settlementTab === 'consume' }"
+                  @click="settlementTab = 'consume'"
+                >
+                  消费流水
+                </button>
+                <button
+                  class="segmented-btn"
+                  :class="{ active: settlementTab === 'refund' }"
+                  @click="settlementTab = 'refund'"
+                >
+                  退款流水
+                </button>
               </div>
               <table class="data-table table-nowrap" v-if="settlementTab === 'consume'">
                 <thead>
@@ -1629,7 +2541,17 @@ const openSettlementFlow = (item: MerchantSign) => {
           <button class="btn btn-primary" @click="openPlanCreate">+ 新增方案</button>
         </div>
         <div class="panel-body">
-          <div class="plan-tip" style="margin-bottom: 16px; padding: 10px 14px; background: #FFF7E6; border-radius: 6px; color: #D46B08; font-size: 13px;">
+          <div
+            class="plan-tip"
+            style="
+              margin-bottom: 16px;
+              padding: 10px 14px;
+              background: #fff7e6;
+              border-radius: 6px;
+              color: #d46b08;
+              font-size: 13px;
+            "
+          >
             同一时间仅有一个方案生效，启用新方案将自动停用当前生效方案。
           </div>
           <table class="data-table">
@@ -1645,16 +2567,25 @@ const openSettlementFlow = (item: MerchantSign) => {
             </thead>
             <tbody>
               <tr v-for="plan in rechargePlans" :key="plan.id">
-                <td><strong>{{ plan.name }}</strong></td>
+                <td>
+                  <strong>{{ plan.name }}</strong>
+                </td>
                 <td>
                   <span v-for="(p, i) in plan.presets" :key="p.id">
                     {{ i > 0 ? ' / ' : '' }}¥{{ p.amount }}
                   </span>
-                  <span v-if="plan.allowCustom" style="color: #86909C; margin-left: 4px">+ 自定义</span>
+                  <span v-if="plan.allowCustom" style="color: #86909c; margin-left: 4px"
+                    >+ 自定义</span
+                  >
                 </td>
                 <td>
-                  <span v-if="plan.activities.length === 0" style="color: #86909C">无</span>
-                  <span v-else>{{ plan.activities.filter(a => a.enabled).length }}/{{ plan.activities.length }} 启用</span>
+                  <span v-if="plan.activities.length === 0" style="color: #86909c">无</span>
+                  <span v-else
+                    >{{ plan.activities.filter((a) => a.enabled).length }}/{{
+                      plan.activities.length
+                    }}
+                    启用</span
+                  >
                 </td>
                 <td>
                   <span class="status-tag" :class="plan.enabled ? 'refunded' : 'closed'">
@@ -1664,17 +2595,31 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td>{{ plan.activeTime || '-' }}</td>
                 <td>
                   <span class="action-link primary" @click="openPlanEdit(plan)">编辑</span>
-                  <span class="action-link primary" @click="openPlanDetail(plan)" style="margin-left: 8px">详情</span>
+                  <span
+                    class="action-link primary"
+                    @click="openPlanDetail(plan)"
+                    style="margin-left: 8px"
+                    >详情</span
+                  >
                   <span
                     :class="plan.enabled ? 'action-link danger' : 'action-link primary'"
                     @click="togglePlanEnabled(plan)"
                     style="margin-left: 8px"
-                  >{{ plan.enabled ? '禁用' : '启用' }}</span>
-                  <span v-if="!plan.enabled" class="action-link danger" @click="deletePlan(plan)" style="margin-left: 8px">删除</span>
+                    >{{ plan.enabled ? '禁用' : '启用' }}</span
+                  >
+                  <span
+                    v-if="!plan.enabled"
+                    class="action-link danger"
+                    @click="deletePlan(plan)"
+                    style="margin-left: 8px"
+                    >删除</span
+                  >
                 </td>
               </tr>
               <tr v-if="rechargePlans.length === 0">
-                <td colspan="4" style="text-align: center; color: #86909C; padding: 40px">暂无充值方案，点击上方新增</td>
+                <td colspan="4" style="text-align: center; color: #86909c; padding: 40px">
+                  暂无充值方案，点击上方新增
+                </td>
               </tr>
             </tbody>
           </table>
@@ -1703,16 +2648,25 @@ const openSettlementFlow = (item: MerchantSign) => {
             <h3>近6个月趋势</h3>
             <div class="trend-chart">
               <div class="trend-legend">
-                <span class="legend-item"><i style="background: #4F6EF7"></i>充值</span>
-                <span class="legend-item"><i style="background: #D46B08"></i>消费</span>
-                <span class="legend-item"><i style="background: #0E7B3A"></i>退款</span>
+                <span class="legend-item"><i style="background: #4f6ef7"></i>充值</span>
+                <span class="legend-item"><i style="background: #d46b08"></i>消费</span>
+                <span class="legend-item"><i style="background: #0e7b3a"></i>退款</span>
               </div>
               <div class="trend-bars">
                 <div v-for="d in trendData" :key="d.month" class="trend-group">
                   <div class="bar-cluster">
-                    <div class="bar bar-recharge" :style="{ height: (d.recharge / maxTrend * 180) + 'px' }"></div>
-                    <div class="bar bar-consume" :style="{ height: (d.consume / maxTrend * 180) + 'px' }"></div>
-                    <div class="bar bar-refund" :style="{ height: (d.refund / maxTrend * 180) + 'px' }"></div>
+                    <div
+                      class="bar bar-recharge"
+                      :style="{ height: (d.recharge / maxTrend) * 180 + 'px' }"
+                    ></div>
+                    <div
+                      class="bar bar-consume"
+                      :style="{ height: (d.consume / maxTrend) * 180 + 'px' }"
+                    ></div>
+                    <div
+                      class="bar bar-refund"
+                      :style="{ height: (d.refund / maxTrend) * 180 + 'px' }"
+                    ></div>
                   </div>
                   <div class="trend-label">{{ d.month }}</div>
                 </div>
@@ -1737,8 +2691,14 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tr v-for="tx in mockTransactions.slice(0, 8)" :key="tx.id">
                   <td>{{ tx.transactionNo }}</td>
                   <td>{{ tx.phone }}</td>
-                  <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
-                  <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+                  <td>
+                    <span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span>
+                  </td>
+                  <td
+                    :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }"
+                  >
+                    {{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}
+                  </td>
                   <td class="time-text">{{ tx.time }}</td>
                 </tr>
               </tbody>
@@ -1756,7 +2716,13 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="filter-bar">
             <div class="filter-item">
               <label>搜索</label>
-              <input type="text" class="form-input" v-model="walletSearchForm.keyword" placeholder="钱包ID / UID / 手机号" style="width: 200px" />
+              <input
+                type="text"
+                class="form-input"
+                v-model="walletSearchForm.keyword"
+                placeholder="钱包ID / UID / 手机号"
+                style="width: 200px"
+              />
             </div>
             <div class="filter-item">
               <label>状态</label>
@@ -1767,8 +2733,17 @@ const openSettlementFlow = (item: MerchantSign) => {
               </select>
             </div>
             <div class="filter-item">
-              <button class="btn btn-primary" @click="">查询</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="walletSearchForm.keyword = ''; walletSearchForm.status = ''">重置</button>
+              <button class="btn btn-primary">查询</button>
+              <button
+                class="btn btn-default"
+                style="margin-left: 8px"
+                @click="
+                  walletSearchForm.keyword = ''
+                  walletSearchForm.status = ''
+                "
+              >
+                重置
+              </button>
             </div>
           </div>
 
@@ -1794,11 +2769,21 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <td class="price-text">¥{{ w.balance.toFixed(2) }}</td>
                 <td>{{ w.frozenAmount > 0 ? '¥' + w.frozenAmount.toFixed(2) : '-' }}</td>
                 <td>¥{{ w.totalRecharge.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="w.status">{{ w.status === 'normal' ? '正常' : '已冻结' }}</span></td>
+                <td>
+                  <span class="status-tag" :class="w.status">{{
+                    w.status === 'normal' ? '正常' : '已冻结'
+                  }}</span>
+                </td>
                 <td class="time-text">{{ w.openTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showUserFlow(w)">查看详情</span>
-                  <span v-if="w.status === 'normal'" class="action-link danger" @click="showFreezeModal(w, 'freeze')" style="margin-left: 8px">冻结余额</span>
+                  <span
+                    v-if="w.status === 'normal'"
+                    class="action-link danger"
+                    @click="showFreezeModal(w, 'freeze')"
+                    style="margin-left: 8px"
+                    >冻结余额</span
+                  >
                 </td>
               </tr>
               <tr v-if="filteredWallets.length === 0">
@@ -1828,11 +2813,21 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="filter-bar">
             <div class="filter-item">
               <label>搜索</label>
-              <input type="text" class="form-input" v-model="rechargeSearchForm.keyword" placeholder="充值单号 / UID / 手机号" style="width: 200px" />
+              <input
+                type="text"
+                class="form-input"
+                v-model="rechargeSearchForm.keyword"
+                placeholder="充值单号 / UID / 手机号"
+                style="width: 200px"
+              />
             </div>
             <div class="filter-item">
               <label>充值状态</label>
-              <select class="form-select" v-model="rechargeSearchForm.rechargeStatus" style="width: 120px">
+              <select
+                class="form-select"
+                v-model="rechargeSearchForm.rechargeStatus"
+                style="width: 120px"
+              >
                 <option value="">全部</option>
                 <option value="pending">待入账</option>
                 <option value="success">已入账</option>
@@ -1840,8 +2835,17 @@ const openSettlementFlow = (item: MerchantSign) => {
               </select>
             </div>
             <div class="filter-item">
-              <button class="btn btn-primary" @click="">查询</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="rechargeSearchForm.keyword = ''; rechargeSearchForm.rechargeStatus = ''">重置</button>
+              <button class="btn btn-primary">查询</button>
+              <button
+                class="btn btn-default"
+                style="margin-left: 8px"
+                @click="
+                  rechargeSearchForm.keyword = ''
+                  rechargeSearchForm.rechargeStatus = ''
+                "
+              >
+                重置
+              </button>
             </div>
           </div>
 
@@ -1864,17 +2868,41 @@ const openSettlementFlow = (item: MerchantSign) => {
               <tr v-for="r in filteredRecharges" :key="r.id">
                 <td>{{ r.rechargeNo }}</td>
                 <td>{{ r.payOrderNo || '-' }}</td>
-                <td>{{ r.uid }}<br/><span class="sub-text">{{ r.phone }}</span></td>
+                <td>
+                  {{ r.uid }}<br /><span class="sub-text">{{ r.phone }}</span>
+                </td>
                 <td class="price-text">¥{{ r.amount.toFixed(2) }}</td>
                 <td class="price-text">¥{{ r.receivedAmount.toFixed(2) }}</td>
                 <td>{{ r.receiveMerchantName }}</td>
-                <td><span class="status-tag" :class="r.paymentStatus">{{ paymentStatusLabel[r.paymentStatus] }}</span></td>
-                <td><span class="status-tag" :class="r.rechargeStatus === 'success' ? 'completed' : r.rechargeStatus">{{ rechargeStatusLabel[r.rechargeStatus] }}</span></td>
+                <td>
+                  <span class="status-tag" :class="r.paymentStatus">{{
+                    paymentStatusLabel[r.paymentStatus]
+                  }}</span>
+                </td>
+                <td>
+                  <span
+                    class="status-tag"
+                    :class="r.rechargeStatus === 'success' ? 'completed' : r.rechargeStatus"
+                    >{{ rechargeStatusLabel[r.rechargeStatus] }}</span
+                  >
+                </td>
                 <td class="time-text">{{ r.applyTime }}</td>
                 <td>
                   <span class="action-link primary" @click="showRechargeDetail(r)">详情</span>
-                  <span v-if="r.rechargeStatus === 'success'" class="action-link primary" @click="showRechargeFlow(r)" style="margin: 0 8px">查看流水</span>
-                  <span v-if="r.paymentStatus === 'paid' && r.rechargeStatus === 'failed'" class="action-link danger" @click="manualRecharge(r)" style="margin-left: 8px">手动入账</span>
+                  <span
+                    v-if="r.rechargeStatus === 'success'"
+                    class="action-link primary"
+                    @click="showRechargeFlow(r)"
+                    style="margin: 0 8px"
+                    >查看流水</span
+                  >
+                  <span
+                    v-if="r.paymentStatus === 'paid' && r.rechargeStatus === 'failed'"
+                    class="action-link danger"
+                    @click="manualRecharge(r)"
+                    style="margin-left: 8px"
+                    >手动入账</span
+                  >
                 </td>
               </tr>
             </tbody>
@@ -1901,7 +2929,13 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="filter-bar">
             <div class="filter-item">
               <label>搜索</label>
-              <input type="text" class="form-input" v-model="withdrawSearchForm.keyword" placeholder="提现单号 / UID / 关联订单号" style="width: 220px" />
+              <input
+                type="text"
+                class="form-input"
+                v-model="withdrawSearchForm.keyword"
+                placeholder="提现单号 / UID / 关联订单号"
+                style="width: 220px"
+              />
             </div>
             <div class="filter-item">
               <label>状态</label>
@@ -1914,8 +2948,18 @@ const openSettlementFlow = (item: MerchantSign) => {
               </select>
             </div>
             <div class="filter-item">
-              <button class="btn btn-primary" @click="">查询</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="withdrawSearchForm.keyword = ''; withdrawSearchForm.refundType = ''; withdrawSearchForm.status = ''">重置</button>
+              <button class="btn btn-primary">查询</button>
+              <button
+                class="btn btn-default"
+                style="margin-left: 8px"
+                @click="
+                  withdrawSearchForm.keyword = ''
+                  withdrawSearchForm.refundType = ''
+                  withdrawSearchForm.status = ''
+                "
+              >
+                重置
+              </button>
             </div>
           </div>
 
@@ -1925,25 +2969,49 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <th>提现单号</th>
                 <th>用户</th>
                 <th>提现金额</th>
-                                <th>关联订单</th>
+                <th>关联订单</th>
                 <th>关联充值</th>
-                                <th>状态</th>
+                <th>状态</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="w in filteredWithdraws" :key="w.id">
                 <td>{{ w.withdrawNo }}</td>
-                <td>{{ w.uid }}<br/><span class="sub-text">{{ w.phone }}</span></td>
+                <td>
+                  {{ w.uid }}<br /><span class="sub-text">{{ w.phone }}</span>
+                </td>
                 <td class="price-text">¥{{ w.amount.toFixed(2) }}</td>
-                                <td>{{ w.relatedOrderNo }}</td>
+                <td>{{ w.relatedOrderNo }}</td>
                 <td>{{ w.relatedRechargeNo || '-' }}</td>
-                                <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
+                <td>
+                  <span class="status-tag" :class="w.status">{{
+                    withdrawStatusLabel[w.status]
+                  }}</span>
+                </td>
                 <td>
                   <span class="action-link primary" @click="showWithdrawDetail(w)">详情</span>
-                  <span v-if="w.status === 'pending'" class="action-link primary" @click="approveWithdraw(w)" style="margin-left: 8px">审核</span>
-                  <span v-if="w.status === 'pending'" class="action-link danger" @click="rejectWithdraw(w)" style="margin-left: 8px">拒绝</span>
-                  <span v-if="w.status === 'approved'" class="action-link primary" @click="confirmRefund(w)" style="margin-left: 8px">确认打款</span>
+                  <span
+                    v-if="w.status === 'pending'"
+                    class="action-link primary"
+                    @click="approveWithdraw(w)"
+                    style="margin-left: 8px"
+                    >审核</span
+                  >
+                  <span
+                    v-if="w.status === 'pending'"
+                    class="action-link danger"
+                    @click="rejectWithdraw(w)"
+                    style="margin-left: 8px"
+                    >拒绝</span
+                  >
+                  <span
+                    v-if="w.status === 'approved'"
+                    class="action-link primary"
+                    @click="confirmRefund(w)"
+                    style="margin-left: 8px"
+                    >确认打款</span
+                  >
                 </td>
               </tr>
             </tbody>
@@ -1969,7 +3037,13 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="filter-bar">
             <div class="filter-item">
               <label>搜索</label>
-              <input type="text" class="form-input" v-model="ledgerSearchForm.keyword" placeholder="流水号 / UID / 手机号" style="width: 200px" />
+              <input
+                type="text"
+                class="form-input"
+                v-model="ledgerSearchForm.keyword"
+                placeholder="流水号 / UID / 手机号"
+                style="width: 200px"
+              />
             </div>
             <div class="filter-item">
               <label>交易类型</label>
@@ -1982,14 +3056,29 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div class="filter-item">
               <label>商户</label>
               <select class="form-select" v-model="ledgerSearchForm.merchant" style="width: 140px">
-                <option value=''>全部商户</option>
-                <option v-for='m in merchantOptions' :key='m' :value='m'>{{ m }}</option>
+                <option value="">全部商户</option>
+                <option v-for="m in merchantOptions" :key="m" :value="m">{{ m }}</option>
               </select>
             </div>
             <div class="filter-item">
-              <button class="btn btn-primary" @click="">查询</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="ledgerSearchForm.keyword = ''; ledgerSearchForm.type = ''">重置</button>
-              <button class="btn btn-default" style="margin-left: 8px" @click="alert(`已导出 ${filteredLedger.length} 条记录（模拟）`)">导出</button>
+              <button class="btn btn-primary">查询</button>
+              <button
+                class="btn btn-default"
+                style="margin-left: 8px"
+                @click="
+                  ledgerSearchForm.keyword = ''
+                  ledgerSearchForm.type = ''
+                "
+              >
+                重置
+              </button>
+              <button
+                class="btn btn-default"
+                style="margin-left: 8px"
+                @click="alert(`已导出 ${filteredLedger.length} 条记录（模拟）`)"
+              >
+                导出
+              </button>
             </div>
           </div>
 
@@ -2013,17 +3102,25 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <!-- 主流水行 -->
                 <tr>
                   <td>{{ tx.transactionNo }}</td>
-                  <td>{{ tx.uid }}<br/><span class="sub-text">{{ tx.phone }}</span></td>
+                  <td>
+                    {{ tx.uid }}<br /><span class="sub-text">{{ tx.phone }}</span>
+                  </td>
                   <td>{{ tx.merchant }}</td>
-                  <td><span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span></td>
-                  <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+                  <td>
+                    <span class="status-tag" :class="tx.type">{{ txTypeLabel[tx.type] }}</span>
+                  </td>
+                  <td
+                    :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }"
+                  >
+                    {{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}
+                  </td>
                   <td>¥{{ tx.balance.toFixed(2) }}</td>
                   <td>{{ tx.relatedNo || '-' }}</td>
                   <td>{{ tx.relatedRechargeNo || '-' }}</td>
                   <td class="time-text">{{ tx.time }}</td>
                   <td><span class="action-link primary" @click="showTxDetail(tx)">详情</span></td>
                 </tr>
-                </template>
+              </template>
             </tbody>
           </table>
 
@@ -2039,26 +3136,54 @@ const openSettlementFlow = (item: MerchantSign) => {
       </div>
     </div>
 
-        <!-- ==================== 弹窗：充值方案编辑 ==================== -->
+    <!-- ==================== 弹窗：充值方案编辑 ==================== -->
     <div v-if="planEditModal" class="modal-overlay" @click.self="planEditModal = false">
       <div class="modal-content modal-lg">
         <div class="modal-header">
           <h3>{{ planEditMode === 'create' ? '新增充值方案' : '编辑充值方案' }}</h3>
           <span class="modal-close" @click="planEditModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body">
           <!-- ===== 基础信息 ===== -->
           <div class="plan-section">
             <div class="plan-section-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#4F6EF7"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
               <span>基础信息</span>
             </div>
             <div class="plan-section-body">
               <div class="form-item">
                 <label class="form-label required">方案名称</label>
-                <input type="text" class="form-input form-input-lg" v-model="planEditData.name" placeholder="如：默认充值方案" />
+                <input
+                  type="text"
+                  class="form-input form-input-lg"
+                  v-model="planEditData.name"
+                  placeholder="如：默认充值方案"
+                />
               </div>
             </div>
           </div>
@@ -2066,31 +3191,111 @@ const openSettlementFlow = (item: MerchantSign) => {
           <!-- ===== 预选金额 ===== -->
           <div class="plan-section">
             <div class="plan-section-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#4F6EF7"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
               <span>预选金额</span>
               <span class="plan-count-badge">{{ planEditData.presets.length }}</span>
             </div>
             <div class="plan-section-body">
-              <div v-for="(preset, index) in planEditData.presets" :key="preset.id" class="plan-preset-row">
+              <div
+                v-for="(preset, index) in planEditData.presets"
+                :key="preset.id"
+                class="plan-preset-row"
+              >
                 <div class="plan-preset-card">
                   <span class="plan-preset-index">{{ index + 1 }}</span>
                   <span class="plan-preset-yen">¥</span>
-                  <input type="number" class="form-input form-input-sm" v-model.number="preset.amount" placeholder="金额" min="1" />
+                  <input
+                    type="number"
+                    class="form-input form-input-sm"
+                    v-model.number="preset.amount"
+                    placeholder="金额"
+                    min="1"
+                  />
                   <div class="plan-preset-actions">
-                    <button class="plan-icon-btn" @click="movePresetUp(index)" :disabled="index === 0" title="上移">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    <button
+                      class="plan-icon-btn"
+                      @click="movePresetUp(index)"
+                      :disabled="index === 0"
+                      title="上移"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
                     </button>
-                    <button class="plan-icon-btn" @click="movePresetDown(index)" :disabled="index === planEditData.presets.length - 1" title="下移">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <button
+                      class="plan-icon-btn"
+                      @click="movePresetDown(index)"
+                      :disabled="index === planEditData.presets.length - 1"
+                      title="下移"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </button>
-                    <button class="plan-icon-btn plan-icon-btn-danger" @click="removePreset(index)" :disabled="planEditData.presets.length <= 1" title="删除">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <button
+                      class="plan-icon-btn plan-icon-btn-danger"
+                      @click="removePreset(index)"
+                      :disabled="planEditData.presets.length <= 1"
+                      title="删除"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path
+                          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                        />
+                      </svg>
                     </button>
                   </div>
                 </div>
               </div>
               <button class="plan-add-btn" @click="addPreset">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
                 添加预选金额
               </button>
 
@@ -2108,12 +3313,22 @@ const openSettlementFlow = (item: MerchantSign) => {
                   <div class="plan-custom-fields">
                     <div class="plan-custom-field">
                       <span>最低</span>
-                      <input type="number" class="form-input form-input-xs" v-model.number="planEditData.customMin" min="1" />
+                      <input
+                        type="number"
+                        class="form-input form-input-xs"
+                        v-model.number="planEditData.customMin"
+                        min="1"
+                      />
                       <span>元</span>
                     </div>
                     <div class="plan-custom-field">
                       <span>最高</span>
-                      <input type="number" class="form-input form-input-xs" v-model.number="planEditData.customMax" min="1" />
+                      <input
+                        type="number"
+                        class="form-input form-input-xs"
+                        v-model.number="planEditData.customMax"
+                        min="1"
+                      />
                       <span>元</span>
                     </div>
                   </div>
@@ -2125,7 +3340,20 @@ const openSettlementFlow = (item: MerchantSign) => {
           <!-- ===== 充值活动 ===== -->
           <div class="plan-section">
             <div class="plan-section-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#4F6EF7"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
               <span>充值活动</span>
               <span class="plan-count-badge">{{ planEditData.activities.length }}</span>
             </div>
@@ -2146,10 +3374,28 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tbody>
                   <tr v-for="(act, index) in planEditData.activities" :key="act.id">
                     <td>{{ act.name }}</td>
-                    <td><span class="plan-type-tag" :class="act.type === 'bonus' ? 'bonus' : 'discount'">{{ act.type === 'bonus' ? '赠送' : '折扣' }}</span></td>
+                    <td>
+                      <span
+                        class="plan-type-tag"
+                        :class="act.type === 'bonus' ? 'bonus' : 'discount'"
+                        >{{ act.type === 'bonus' ? '赠送' : '折扣' }}</span
+                      >
+                    </td>
                     <td class="plan-mono">≥ ¥{{ act.conditionAmount.toLocaleString() }}</td>
-                    <td class="plan-mono plan-discount-amount">{{ act.type === 'bonus' ? '送 ¥' + act.bonusAmount?.toLocaleString() : (act.discountPercent || 0) / 10 + '折' }}</td>
-                    <td class="plan-mono">{{ act.startTime || act.endTime ? (act.startTime || '—') + ' ~ ' + (act.endTime || '—') : '永久' }}</td>
+                    <td class="plan-mono plan-discount-amount">
+                      {{
+                        act.type === 'bonus'
+                          ? '送 ¥' + act.bonusAmount?.toLocaleString()
+                          : (act.discountPercent || 0) / 10 + '折'
+                      }}
+                    </td>
+                    <td class="plan-mono">
+                      {{
+                        act.startTime || act.endTime
+                          ? (act.startTime || '—') + ' ~ ' + (act.endTime || '—')
+                          : '永久'
+                      }}
+                    </td>
                     <td style="text-align: center">
                       <label class="toggle-switch" style="margin: 0">
                         <input type="checkbox" v-model="act.enabled" />
@@ -2158,12 +3404,23 @@ const openSettlementFlow = (item: MerchantSign) => {
                     </td>
                     <td>
                       <span class="action-link primary" @click="openActivityEdit(index)">编辑</span>
-                      <span class="action-link danger" @click="removeActivity(index)" style="margin-left: 8px">删除</span>
+                      <span
+                        class="action-link danger"
+                        @click="removeActivity(index)"
+                        style="margin-left: 8px"
+                        >删除</span
+                      >
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <button class="btn btn-primary btn-xs" @click="openActivityCreate" style="margin-top: 8px">+ 添加活动</button>
+              <button
+                class="btn btn-primary btn-xs"
+                @click="openActivityCreate"
+                style="margin-top: 8px"
+              >
+                + 添加活动
+              </button>
             </div>
           </div>
         </div>
@@ -2172,13 +3429,24 @@ const openSettlementFlow = (item: MerchantSign) => {
           <button class="btn btn-primary" @click="savePlanEdit">保存方案</button>
         </div>
       </div>
-    </div><!-- ==================== 弹窗：充值活动编辑 ==================== -->
+    </div>
+    <!-- ==================== 弹窗：充值活动编辑 ==================== -->
     <div v-if="activityEditModal" class="modal-overlay" @click.self="activityEditModal = false">
       <div class="modal-content activity-modal-content">
         <div class="modal-header">
           <h3>{{ activityEditIndex === -1 ? '添加充值活动' : '编辑充值活动' }}</h3>
           <span class="modal-close" @click="activityEditModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body activity-form-grid">
@@ -2189,7 +3457,12 @@ const openSettlementFlow = (item: MerchantSign) => {
           <div class="form-item">
             <label class="form-label required">活动名称</label>
             <div class="af-field">
-              <input type="text" class="form-input form-input-xl" v-model="activityEditData.name" placeholder="如：充100送10" />
+              <input
+                type="text"
+                class="form-input form-input-xl"
+                v-model="activityEditData.name"
+                placeholder="如：充100送10"
+              />
             </div>
           </div>
 
@@ -2198,8 +3471,22 @@ const openSettlementFlow = (item: MerchantSign) => {
             <label class="form-label required">活动类型</label>
             <div class="af-field">
               <div class="segmented-control">
-                <button type="button" class="segmented-btn" :class="{ active: activityEditData.type === 'bonus' }" @click="activityEditData.type = 'bonus'">赠送</button>
-                <button type="button" class="segmented-btn" :class="{ active: activityEditData.type === 'discount' }" @click="activityEditData.type = 'discount'">折扣</button>
+                <button
+                  type="button"
+                  class="segmented-btn"
+                  :class="{ active: activityEditData.type === 'bonus' }"
+                  @click="activityEditData.type = 'bonus'"
+                >
+                  赠送
+                </button>
+                <button
+                  type="button"
+                  class="segmented-btn"
+                  :class="{ active: activityEditData.type === 'discount' }"
+                  @click="activityEditData.type = 'discount'"
+                >
+                  折扣
+                </button>
               </div>
             </div>
           </div>
@@ -2210,7 +3497,12 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div class="af-field">
               <div class="af-control-row">
                 <span>充值满</span>
-                <input type="number" class="form-input form-input-xs" v-model.number="activityEditData.conditionAmount" min="1" />
+                <input
+                  type="number"
+                  class="form-input form-input-xs"
+                  v-model.number="activityEditData.conditionAmount"
+                  min="1"
+                />
                 <span>元</span>
               </div>
             </div>
@@ -2226,10 +3518,21 @@ const openSettlementFlow = (item: MerchantSign) => {
             <div class="af-field">
               <div class="af-control-row">
                 <span>赠送</span>
-                <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.bonusAmount" min="1" />
+                <input
+                  type="number"
+                  class="form-input form-input-sm"
+                  v-model.number="activityEditData.bonusAmount"
+                  min="1"
+                />
                 <span>元</span>
               </div>
-              <div class="af-field-hint">自动计算：充值满 ¥{{ activityEditData.conditionAmount }} 得 ¥{{ ((activityEditData.conditionAmount || 0) + (activityEditData.bonusAmount || 0)).toFixed(2) }}</div>
+              <div class="af-field-hint">
+                自动计算：充值满 ¥{{ activityEditData.conditionAmount }} 得 ¥{{
+                  (
+                    (activityEditData.conditionAmount || 0) + (activityEditData.bonusAmount || 0)
+                  ).toFixed(2)
+                }}
+              </div>
             </div>
           </div>
 
@@ -2238,11 +3541,37 @@ const openSettlementFlow = (item: MerchantSign) => {
             <label class="form-label required">折扣比例</label>
             <div class="af-field">
               <div class="af-control-row">
-                <input type="number" class="form-input form-input-sm" v-model.number="activityEditData.discountPercent" min="1" max="99" />
+                <input
+                  type="number"
+                  class="form-input form-input-sm"
+                  v-model.number="activityEditData.discountPercent"
+                  min="1"
+                  max="99"
+                />
                 <span>%</span>
-                <span>即 {{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }} 折</span>
+                <span
+                  >即
+                  {{
+                    activityEditData.discountPercent
+                      ? (activityEditData.discountPercent / 10).toFixed(1)
+                      : '0.0'
+                  }}
+                  折</span
+                >
               </div>
-              <div class="af-field-hint">充值 ¥{{ activityEditData.conditionAmount }}以上，打{{ activityEditData.discountPercent ? (activityEditData.discountPercent / 10).toFixed(1) : '0.0' }}折，如支付¥{{ ((activityEditData.conditionAmount || 0) * (activityEditData.discountPercent || 0) / 100).toFixed(2) }}得¥{{ activityEditData.conditionAmount }}</div>
+              <div class="af-field-hint">
+                充值 ¥{{ activityEditData.conditionAmount }}以上，打{{
+                  activityEditData.discountPercent
+                    ? (activityEditData.discountPercent / 10).toFixed(1)
+                    : '0.0'
+                }}折，如支付¥{{
+                  (
+                    ((activityEditData.conditionAmount || 0) *
+                      (activityEditData.discountPercent || 0)) /
+                    100
+                  ).toFixed(2)
+                }}得¥{{ activityEditData.conditionAmount }}
+              </div>
             </div>
           </div>
 
@@ -2251,17 +3580,23 @@ const openSettlementFlow = (item: MerchantSign) => {
             <label class="form-label">活动时间</label>
             <div class="af-field">
               <div class="af-time-row">
-                <input type="datetime-local" class="form-input form-input-md" v-model="activityEditData.startTime" placeholder="开始时间" />
+                <input
+                  type="datetime-local"
+                  class="form-input form-input-md"
+                  v-model="activityEditData.startTime"
+                  placeholder="开始时间"
+                />
                 <span class="af-sep">至</span>
-                <input type="datetime-local" class="form-input form-input-md" v-model="activityEditData.endTime" placeholder="结束时间" />
+                <input
+                  type="datetime-local"
+                  class="form-input form-input-md"
+                  v-model="activityEditData.endTime"
+                  placeholder="结束时间"
+                />
               </div>
               <div class="af-field-hint">留空表示永久有效</div>
             </div>
           </div>
-
-
-
-
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="activityEditModal = false">取消</button>
@@ -2276,22 +3611,52 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>方案详情</h3>
           <span class="modal-close" @click="planDetailModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body" v-if="planDetailData">
           <div class="detail-grid">
-            <div><label>方案名称</label><span>{{ planDetailData.name }}</span></div>
-            <div><label>状态</label><span class="status-tag" :class="planDetailData.enabled ? 'refunded' : 'closed'">{{ planDetailData.enabled ? '生效中' : '已禁用' }}</span></div>
-            <div><label>生效时间</label><span>{{ planDetailData.activeTime || '-' }}</span></div>
-            <div><label>自定义金额</label><span>{{ planDetailData.allowCustom ? `允许（¥${planDetailData.customMin} ~ ¥${planDetailData.customMax}）` : '不允许' }}</span></div>
+            <div>
+              <label>方案名称</label><span>{{ planDetailData.name }}</span>
+            </div>
+            <div>
+              <label>状态</label
+              ><span class="status-tag" :class="planDetailData.enabled ? 'refunded' : 'closed'">{{
+                planDetailData.enabled ? '生效中' : '已禁用'
+              }}</span>
+            </div>
+            <div>
+              <label>生效时间</label><span>{{ planDetailData.activeTime || '-' }}</span>
+            </div>
+            <div>
+              <label>自定义金额</label
+              ><span>{{
+                planDetailData.allowCustom
+                  ? `允许（¥${planDetailData.customMin} ~ ¥${planDetailData.customMax}）`
+                  : '不允许'
+              }}</span>
+            </div>
           </div>
 
           <div class="detail-section">
             <div class="form-section-title">预选金额</div>
             <div class="preset-list">
-              <span v-for="p in planDetailData.presets" :key="p.id" class="preset-tag">¥{{ p.amount }}</span>
-              <span v-if="planDetailData.allowCustom" class="preset-tag preset-tag-dashed">自定义</span>
+              <span v-for="p in planDetailData.presets" :key="p.id" class="preset-tag"
+                >¥{{ p.amount }}</span
+              >
+              <span v-if="planDetailData.allowCustom" class="preset-tag preset-tag-dashed"
+                >自定义</span
+              >
             </div>
           </div>
 
@@ -2320,10 +3685,14 @@ const openSettlementFlow = (item: MerchantSign) => {
                   </td>
                   <td>
                     <span v-if="!act.startTime && !act.endTime">永久</span>
-                    <span v-else class="sub-text">{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span>
+                    <span v-else class="sub-text"
+                      >{{ act.startTime || '不限' }} ~ {{ act.endTime || '不限' }}</span
+                    >
                   </td>
                   <td>
-                    <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{ act.enabled ? '启用' : '禁用' }}</span>
+                    <span class="status-tag" :class="act.enabled ? 'refunded' : 'closed'">{{
+                      act.enabled ? '启用' : '禁用'
+                    }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -2338,82 +3707,327 @@ const openSettlementFlow = (item: MerchantSign) => {
 
     <!-- ==================== 弹窗：用户流水 ==================== -->
     <div v-if="userFlowModal" class="modal-overlay" @click.self="userFlowModal = false">
-      <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw;">
+      <div class="modal-content" style="width: auto; min-width: 720px; max-width: 90vw">
         <div class="modal-header">
-          <h3>{{ userFlowWallet?.walletId }} 资金流水 <span :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; margin-left: 8px; vertical-align: middle">{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span></h3>
+          <h3>
+            {{ userFlowWallet?.walletId }} 资金流水
+            <span
+              :class="'status-badge ' + (userFlowWallet?.status === 'normal' ? 'on' : 'off')"
+              style="font-size: 12px; margin-left: 8px; vertical-align: middle"
+              >{{ userFlowWallet?.status === 'normal' ? '正常' : '已冻结' }}</span
+            >
+          </h3>
           <span class="modal-close" @click="userFlowModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body">
-          <div style="margin-bottom: 12px;" v-if="userFlowWallet">
+          <div style="margin-bottom: 12px" v-if="userFlowWallet">
             <!-- Row 1: 用户信息 + 状态 -->
-            <div style="display: flex; gap: 16px; margin-bottom: 16px;">
-              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px;">
-                <div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">用户</div>
-                <div style="font-size: 14px; color: #1D2129; font-weight: 500;">{{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}</div>
-              </div>
-              <div style="flex: 1; background: #F7F8FA; border: 1px solid #E5E6EB; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                  <div style="font-size: 12px; color: #86909C; margin-bottom: 4px; letter-spacing: 0.03em;">状态</div>
-                  <span :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')" style="font-size: 12px; padding: 2px 10px; border-radius: 12px;">{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span>
+            <div style="display: flex; gap: 16px; margin-bottom: 16px">
+              <div
+                style="
+                  flex: 1;
+                  background: #f7f8fa;
+                  border: 1px solid #e5e6eb;
+                  border-radius: 8px;
+                  padding: 12px 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 12px;
+                    color: #86909c;
+                    margin-bottom: 4px;
+                    letter-spacing: 0.03em;
+                  "
+                >
+                  用户
                 </div>
-                <label class="toggle-switch" :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'">
-                  <input type="checkbox" :checked="userFlowWallet.status === 'normal'" @click.prevent="userFlowWallet.status === 'normal' ? freezeWallet(userFlowWallet) : unfreezeWallet(userFlowWallet)" />
+                <div style="font-size: 14px; color: #1d2129; font-weight: 500">
+                  {{ userFlowWallet.uid }} / {{ userFlowWallet.phone }}
+                </div>
+              </div>
+              <div
+                style="
+                  flex: 1;
+                  background: #f7f8fa;
+                  border: 1px solid #e5e6eb;
+                  border-radius: 8px;
+                  padding: 12px 16px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: #86909c;
+                      margin-bottom: 4px;
+                      letter-spacing: 0.03em;
+                    "
+                  >
+                    状态
+                  </div>
+                  <span
+                    :class="'status-badge ' + (userFlowWallet.status === 'normal' ? 'on' : 'off')"
+                    style="font-size: 12px; padding: 2px 10px; border-radius: 12px"
+                    >{{ userFlowWallet.status === 'normal' ? '正常' : '已冻结' }}</span
+                  >
+                </div>
+                <label
+                  class="toggle-switch"
+                  :title="userFlowWallet.status === 'normal' ? '冻结钱包' : '解冻钱包'"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="userFlowWallet.status === 'normal'"
+                    @click.prevent="
+                      userFlowWallet.status === 'normal'
+                        ? freezeWallet(userFlowWallet)
+                        : unfreezeWallet(userFlowWallet)
+                    "
+                  />
                   <span class="toggle-slider"></span>
                 </label>
               </div>
             </div>
             <!-- Row 2: 可用余额 + 消费金额 + 冻结金额 -->
-            <div style="display: flex; gap: 16px;">
+            <div style="display: flex; gap: 16px">
               <!-- 可用余额 -->
-              <div style="flex: 1; background: #F0F5FF; border: 1px solid #D6E4FF; border-radius: 8px; padding: 14px 16px;">
-                <div style="font-size: 12px; color: #4F6EF7; margin-bottom: 6px; letter-spacing: 0.03em;">可用余额</div>
-                <div style="font-size: 20px; color: #4F6EF7; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.balance.toFixed(2) }}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #D6E4FF;">
-                  <span style="font-size: 12px; color: #4F6EF7;">本金(可提现)</span>
-                  <span style="font-size: 13px; color: #4F6EF7; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.principalBalance.toFixed(2) }}</span>
+              <div
+                style="
+                  flex: 1;
+                  background: #f0f5ff;
+                  border: 1px solid #d6e4ff;
+                  border-radius: 8px;
+                  padding: 14px 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 12px;
+                    color: #4f6ef7;
+                    margin-bottom: 6px;
+                    letter-spacing: 0.03em;
+                  "
+                >
+                  可用余额
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                  <span style="font-size: 12px; color: #D46B08;">赠送</span>
-                  <span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.bonusBalance.toFixed(2) }}</span>
+                <div
+                  style="
+                    font-size: 20px;
+                    color: #4f6ef7;
+                    font-weight: 700;
+                    font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                  "
+                >
+                  ¥{{ userFlowWallet.balance.toFixed(2) }}
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 8px;
+                    padding-top: 8px;
+                    border-top: 1px solid #d6e4ff;
+                  "
+                >
+                  <span style="font-size: 12px; color: #4f6ef7">本金(可提现)</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #4f6ef7;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.principalBalance.toFixed(2) }}</span
+                  >
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px">
+                  <span style="font-size: 12px; color: #d46b08">赠送</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #d46b08;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.bonusBalance.toFixed(2) }}</span
+                  >
                 </div>
               </div>
               <!-- 消费金额 -->
-              <div style="flex: 1; background: #E8FFE8; border: 1px solid #B7EB8F; border-radius: 8px; padding: 14px 16px;">
-                <div style="font-size: 12px; color: #00A854; margin-bottom: 6px; letter-spacing: 0.03em;">消费金额</div>
-                <div style="font-size: 20px; color: #00A854; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.totalConsume - userFlowWallet.totalRefund).toFixed(2) }}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #B7EB8F;">
-                  <span style="font-size: 12px; color: #00A854;">消费总额</span>
-                  <span style="font-size: 13px; color: #00A854; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalConsume.toFixed(2) }}</span>
+              <div
+                style="
+                  flex: 1;
+                  background: #e8ffe8;
+                  border: 1px solid #b7eb8f;
+                  border-radius: 8px;
+                  padding: 14px 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 12px;
+                    color: #00a854;
+                    margin-bottom: 6px;
+                    letter-spacing: 0.03em;
+                  "
+                >
+                  消费金额
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                  <span style="font-size: 12px; color: #CF1322;">已退款</span>
-                  <span style="font-size: 13px; color: #CF1322; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.totalRefund.toFixed(2) }}</span>
+                <div
+                  style="
+                    font-size: 20px;
+                    color: #00a854;
+                    font-weight: 700;
+                    font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                  "
+                >
+                  ¥{{ (userFlowWallet.totalConsume - userFlowWallet.totalRefund).toFixed(2) }}
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 8px;
+                    padding-top: 8px;
+                    border-top: 1px solid #b7eb8f;
+                  "
+                >
+                  <span style="font-size: 12px; color: #00a854">消费总额</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #00a854;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.totalConsume.toFixed(2) }}</span
+                  >
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px">
+                  <span style="font-size: 12px; color: #cf1322">已退款</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #cf1322;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.totalRefund.toFixed(2) }}</span
+                  >
                 </div>
               </div>
               <!-- 冻结金额 -->
-              <div style="flex: 1; background: #FFF7E6; border: 1px solid #FFE0B2; border-radius: 8px; padding: 14px 16px;">
-                <div style="font-size: 12px; color: #D46B08; margin-bottom: 6px; letter-spacing: 0.03em;">冻结金额</div>
-                <div style="font-size: 20px; color: #D46B08; font-weight: 700; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ (userFlowWallet.frozenAmount + userFlowWallet.withdrawFrozenAmount).toFixed(2) }}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #FFE0B2;">
-                  <span style="font-size: 12px; color: #D46B08;">系统冻结</span>
-                  <span style="font-size: 13px; color: #D46B08; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.frozenAmount.toFixed(2) }}</span>
+              <div
+                style="
+                  flex: 1;
+                  background: #fff7e6;
+                  border: 1px solid #ffe0b2;
+                  border-radius: 8px;
+                  padding: 14px 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 12px;
+                    color: #d46b08;
+                    margin-bottom: 6px;
+                    letter-spacing: 0.03em;
+                  "
+                >
+                  冻结金额
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                  <span style="font-size: 12px; color: #86909C;">提现中</span>
-                  <span style="font-size: 13px; color: #86909C; font-weight: 600; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;">¥{{ userFlowWallet.withdrawFrozenAmount.toFixed(2) }}</span>
+                <div
+                  style="
+                    font-size: 20px;
+                    color: #d46b08;
+                    font-weight: 700;
+                    font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                  "
+                >
+                  ¥{{
+                    (userFlowWallet.frozenAmount + userFlowWallet.withdrawFrozenAmount).toFixed(2)
+                  }}
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 8px;
+                    padding-top: 8px;
+                    border-top: 1px solid #ffe0b2;
+                  "
+                >
+                  <span style="font-size: 12px; color: #d46b08">系统冻结</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #d46b08;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.frozenAmount.toFixed(2) }}</span
+                  >
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px">
+                  <span style="font-size: 12px; color: #86909c">提现中</span>
+                  <span
+                    style="
+                      font-size: 13px;
+                      color: #86909c;
+                      font-weight: 600;
+                      font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+                    "
+                    >¥{{ userFlowWallet.withdrawFrozenAmount.toFixed(2) }}</span
+                  >
                 </div>
               </div>
             </div>
           </div>
           <div class="segmented-control" style="margin-top: 16px">
-            <button class="segmented-btn" :class="{ active: userFlowTab === 'recharge' }" @click="userFlowTab = 'recharge'">充值流水</button>
-            <button class="segmented-btn" :class="{ active: userFlowTab === 'withdraw' }" @click="userFlowTab = 'withdraw'">提现流水</button>
-            <button class="segmented-btn" :class="{ active: userFlowTab === 'transaction' }" @click="userFlowTab = 'transaction'">交易流水</button>
+            <button
+              class="segmented-btn"
+              :class="{ active: userFlowTab === 'recharge' }"
+              @click="userFlowTab = 'recharge'"
+            >
+              充值流水
+            </button>
+            <button
+              class="segmented-btn"
+              :class="{ active: userFlowTab === 'withdraw' }"
+              @click="userFlowTab = 'withdraw'"
+            >
+              提现流水
+            </button>
+            <button
+              class="segmented-btn"
+              :class="{ active: userFlowTab === 'transaction' }"
+              @click="userFlowTab = 'transaction'"
+            >
+              交易流水
+            </button>
           </div>
 
-          <table class="data-table table-nowrap" style="margin-top: 16px" v-if="userFlowTab === 'recharge'">
+          <table
+            class="data-table table-nowrap"
+            style="margin-top: 16px"
+            v-if="userFlowTab === 'recharge'"
+          >
             <thead>
               <tr>
                 <th>充值单号</th>
@@ -2427,17 +4041,40 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid)" :key="r.id">
+              <tr
+                v-for="r in mockRechargeRecords.filter((r) => r.uid === userFlowWallet?.uid)"
+                :key="r.id"
+              >
                 <td>{{ r.rechargeNo }}</td>
                 <td>{{ r.payOrderNo || '-' }}</td>
                 <td class="amount-positive">+¥{{ r.amount.toFixed(2) }}</td>
                 <td class="amount-positive">+¥{{ r.receivedAmount.toFixed(2) }}</td>
-                <td><span class="status-tag" :class="r.paymentStatus">{{ r.paymentStatus === 'paid' ? '已支付' : r.paymentStatus === 'pending' ? '待支付' : r.paymentStatus === 'failed' ? '支付失败' : '已关闭' }}</span></td>
-                <td><span class="status-tag" :class="r.rechargeStatus">{{ r.rechargeStatus === 'success' ? '已入账' : r.rechargeStatus === 'pending' ? '待入账' : '入账失败' }}</span></td>
+                <td>
+                  <span class="status-tag" :class="r.paymentStatus">{{
+                    r.paymentStatus === 'paid'
+                      ? '已支付'
+                      : r.paymentStatus === 'pending'
+                        ? '待支付'
+                        : r.paymentStatus === 'failed'
+                          ? '支付失败'
+                          : '已关闭'
+                  }}</span>
+                </td>
+                <td>
+                  <span class="status-tag" :class="r.rechargeStatus">{{
+                    r.rechargeStatus === 'success'
+                      ? '已入账'
+                      : r.rechargeStatus === 'pending'
+                        ? '待入账'
+                        : '入账失败'
+                  }}</span>
+                </td>
                 <td class="time-text">{{ r.applyTime }}</td>
                 <td class="time-text">{{ r.rechargeTime || '-' }}</td>
               </tr>
-              <tr v-if="mockRechargeRecords.filter(r => r.uid === userFlowWallet?.uid).length === 0">
+              <tr
+                v-if="mockRechargeRecords.filter((r) => r.uid === userFlowWallet?.uid).length === 0"
+              >
                 <td colspan="8" class="empty-text">暂无充值记录</td>
               </tr>
             </tbody>
@@ -2454,20 +4091,30 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="w in mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid)" :key="w.id">
+              <tr
+                v-for="w in mockWithdrawRecords.filter((wr) => wr.uid === userFlowWallet?.uid)"
+                :key="w.id"
+              >
                 <td>{{ w.withdrawNo }}</td>
                 <td class="amount-negative">-¥{{ w.amount.toFixed(2) }}</td>
                 <td>{{ w.relatedOrderNo || '-' }}</td>
                 <td>{{ w.relatedRechargeNo || '-' }}</td>
-                <td><span class="status-tag" :class="w.status">{{ withdrawStatusLabel[w.status] }}</span></td>
+                <td>
+                  <span class="status-tag" :class="w.status">{{
+                    withdrawStatusLabel[w.status]
+                  }}</span>
+                </td>
                 <td class="time-text">{{ w.applyTime }}</td>
               </tr>
-              <tr v-if="mockWithdrawRecords.filter(wr => wr.uid === userFlowWallet?.uid).length === 0">
+              <tr
+                v-if="
+                  mockWithdrawRecords.filter((wr) => wr.uid === userFlowWallet?.uid).length === 0
+                "
+              >
                 <td colspan="6" class="empty-text">暂无提现记录</td>
               </tr>
             </tbody>
           </table>
-
 
           <table class="data-table" style="margin-top: 16px" v-if="userFlowTab === 'transaction'">
             <thead>
@@ -2481,14 +4128,23 @@ const openSettlementFlow = (item: MerchantSign) => {
               </tr>
             </thead>
             <tbody>
-              <template v-for="tx in userFlowTxs.filter(t => t.type !== 'recharge')" :key="tx.id">
+              <template v-for="tx in userFlowTxs.filter((t) => t.type !== 'recharge')" :key="tx.id">
                 <tr>
                   <td>
-                    <span v-if="tx.bucketLogs && tx.bucketLogs.length" class="expand-btn" @click="toggleUserFlowBucket(tx.id)">{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span>
+                    <span
+                      v-if="tx.bucketLogs && tx.bucketLogs.length"
+                      class="expand-btn"
+                      @click="toggleUserFlowBucket(tx.id)"
+                      >{{ userFlowExpandedTxId === tx.id ? '▼' : '▶' }}</span
+                    >
                   </td>
                   <td>{{ tx.transactionNo }}</td>
                   <td>{{ txTypeLabel[tx.type] }}</td>
-                  <td :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }">{{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}</td>
+                  <td
+                    :class="{ 'amount-positive': tx.amount > 0, 'amount-negative': tx.amount < 0 }"
+                  >
+                    {{ tx.amount > 0 ? '+' : '' }}¥{{ Math.abs(tx.amount).toFixed(2) }}
+                  </td>
                   <td>¥{{ tx.balance.toFixed(2) }}</td>
                   <td class="time-text">{{ tx.time }}</td>
                 </tr>
@@ -2496,7 +4152,9 @@ const openSettlementFlow = (item: MerchantSign) => {
                   <td></td>
                   <td colspan="5" style="padding: 0">
                     <div class="bucket-panel">
-                      <div class="bucket-header">{{ tx.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}</div>
+                      <div class="bucket-header">
+                        {{ tx.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}
+                      </div>
                       <table class="bucket-table">
                         <thead>
                           <tr>
@@ -2510,7 +4168,13 @@ const openSettlementFlow = (item: MerchantSign) => {
                           <tr v-for="(bl, idx) in tx.bucketLogs" :key="idx">
                             <td>{{ bl.bucketNo }}</td>
                             <td class="time-text">{{ bl.bucketTime }}</td>
-                            <td :class="tx.type === 'refund' ? 'amount-positive' : 'amount-negative'">{{ tx.type === 'refund' ? '+' : '-' }}¥{{ bl.deductAmount.toFixed(2) }}</td>
+                            <td
+                              :class="tx.type === 'refund' ? 'amount-positive' : 'amount-negative'"
+                            >
+                              {{ tx.type === 'refund' ? '+' : '-' }}¥{{
+                                bl.deductAmount.toFixed(2)
+                              }}
+                            </td>
                             <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
                           </tr>
                         </tbody>
@@ -2519,7 +4183,7 @@ const openSettlementFlow = (item: MerchantSign) => {
                   </td>
                 </tr>
               </template>
-              <tr v-if="userFlowTxs.filter(t => t.type !== 'recharge').length === 0">
+              <tr v-if="userFlowTxs.filter((t) => t.type !== 'recharge').length === 0">
                 <td colspan="4" class="empty-text">暂无交易记录</td>
               </tr>
             </tbody>
@@ -2534,51 +4198,142 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}余额</h3>
           <span class="modal-close" @click="freezeModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body">
           <!-- 用户信息 -->
-          <div class="detail-grid" style="margin-bottom: 16px; padding: 12px; background: #F7F8FA; border-radius: 8px;">
-            <div><label>钱包ID</label><span>{{ freezeWalletTarget?.walletId }}</span></div>
-            <div><label>用户</label><span>{{ freezeWalletTarget?.phone }}（{{ freezeWalletTarget?.uid }}）</span></div>
-            <div><label>当前余额</label><span>¥{{ freezeWalletTarget?.balance.toFixed(2) }}</span></div>
-            <div><label>冻结金额</label><span>¥{{ freezeWalletTarget?.frozenAmount.toFixed(2) }}</span></div>
-            <div><label>可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}金额</label><span style="color: #4F6EF7; font-weight: 600;">¥{{ (freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)).toFixed(2) }}</span></div>
-          </div>
-          
-          <!-- 模式切换 -->
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div class="segmented-control">
-              <button class="segmented-btn" :class="{ active: freezeMode === 'freeze' }" @click="freezeMode = 'freeze'">冻结</button>
-              <button class="segmented-btn" :class="{ active: freezeMode === 'unfreeze' }" @click="freezeMode = 'unfreeze'">解冻</button>
+          <div
+            class="detail-grid"
+            style="margin-bottom: 16px; padding: 12px; background: #f7f8fa; border-radius: 8px"
+          >
+            <div>
+              <label>钱包ID</label><span>{{ freezeWalletTarget?.walletId }}</span>
+            </div>
+            <div>
+              <label>用户</label
+              ><span>{{ freezeWalletTarget?.phone }}（{{ freezeWalletTarget?.uid }}）</span>
+            </div>
+            <div>
+              <label>当前余额</label><span>¥{{ freezeWalletTarget?.balance.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>冻结金额</label><span>¥{{ freezeWalletTarget?.frozenAmount.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}金额</label
+              ><span style="color: #4f6ef7; font-weight: 600"
+                >¥{{
+                  (freezeMode === 'freeze'
+                    ? freezeWalletTarget
+                      ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount
+                      : 0
+                    : freezeWalletTarget?.frozenAmount || 0
+                  ).toFixed(2)
+                }}</span
+              >
             </div>
           </div>
-          
+
+          <!-- 模式切换 -->
+          <div style="text-align: center; margin-bottom: 16px">
+            <div class="segmented-control">
+              <button
+                class="segmented-btn"
+                :class="{ active: freezeMode === 'freeze' }"
+                @click="freezeMode = 'freeze'"
+              >
+                冻结
+              </button>
+              <button
+                class="segmented-btn"
+                :class="{ active: freezeMode === 'unfreeze' }"
+                @click="freezeMode = 'unfreeze'"
+              >
+                解冻
+              </button>
+            </div>
+          </div>
+
           <!-- 金额 -->
           <div class="form-item">
             <label class="form-label required">金额</label>
             <div class="form-control-row">
-              <input type="number" class="form-input" v-model.number="freezeForm.amount" min="0.01" :max="freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)" step="0.01" placeholder="请输入金额" style="width: 200px" />
-              <span class="form-tip">（可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}：¥{{ (freezeMode === 'freeze' ? (freezeWalletTarget ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount : 0) : (freezeWalletTarget?.frozenAmount || 0)).toFixed(2) }}）</span>
+              <input
+                type="number"
+                class="form-input"
+                v-model.number="freezeForm.amount"
+                min="0.01"
+                :max="
+                  freezeMode === 'freeze'
+                    ? freezeWalletTarget
+                      ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount
+                      : 0
+                    : freezeWalletTarget?.frozenAmount || 0
+                "
+                step="0.01"
+                placeholder="请输入金额"
+                style="width: 200px"
+              />
+              <span class="form-tip"
+                >（可{{ freezeMode === 'freeze' ? '冻结' : '解冻' }}：¥{{
+                  (freezeMode === 'freeze'
+                    ? freezeWalletTarget
+                      ? freezeWalletTarget.balance - freezeWalletTarget.frozenAmount
+                      : 0
+                    : freezeWalletTarget?.frozenAmount || 0
+                  ).toFixed(2)
+                }}）</span
+              >
             </div>
           </div>
-          
+
           <!-- 原因 -->
           <div class="form-item">
             <label class="form-label required">原因备注</label>
             <div style="flex: 1">
-              <select class="form-select" v-model="freezeForm.reason" style="width: 100%; margin-bottom: 8px">
+              <select
+                class="form-select"
+                v-model="freezeForm.reason"
+                style="width: 100%; margin-bottom: 8px"
+              >
                 <option value="" disabled>请选择原因</option>
-                <option v-for="opt in (freezeMode === 'freeze' ? freezeReasonOptions : unfreezeReasonOptions)" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                <option
+                  v-for="opt in freezeMode === 'freeze'
+                    ? freezeReasonOptions
+                    : unfreezeReasonOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
               </select>
-              <textarea v-if="freezeForm.reason === 'other'" class="form-textarea" v-model="freezeForm.reasonDetail" rows="2" placeholder="请补充详细描述" style="width: 100%"></textarea>
+              <textarea
+                v-if="freezeForm.reason === 'other'"
+                class="form-textarea"
+                v-model="freezeForm.reasonDetail"
+                rows="2"
+                placeholder="请补充详细描述"
+                style="width: 100%"
+              ></textarea>
             </div>
           </div>
           <!-- 冻结流水 -->
-          <div style="margin-top: 20px; border-top: 1px solid #E5E6EB; padding-top: 16px;">
-            <div style="font-size: 13px; font-weight: 600; color: #1D2129; margin-bottom: 12px;">冻结流水</div>
-            <table class="bucket-table" style="width: 100%;">
+          <div style="margin-top: 20px; border-top: 1px solid #e5e6eb; padding-top: 16px">
+            <div style="font-size: 13px; font-weight: 600; color: #1d2129; margin-bottom: 12px">
+              冻结流水
+            </div>
+            <table class="bucket-table" style="width: 100%">
               <thead>
                 <tr>
                   <th>流水号</th>
@@ -2589,15 +4344,30 @@ const openSettlementFlow = (item: MerchantSign) => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ftx in mockTransactions.filter(t => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid)" :key="ftx.id">
+                <tr
+                  v-for="ftx in mockTransactions.filter(
+                    (t) => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid,
+                  )"
+                  :key="ftx.id"
+                >
                   <td>{{ ftx.transactionNo }}</td>
                   <td>{{ 0 > ftx.amount ? '冻结' : '解冻' }}</td>
-                  <td :class="{ 'amount-negative': 0 > ftx.amount }">¥{{ Math.abs(ftx.amount).toFixed(2) }}</td>
+                  <td :class="{ 'amount-negative': 0 > ftx.amount }">
+                    ¥{{ Math.abs(ftx.amount).toFixed(2) }}
+                  </td>
                   <td>{{ ftx.remark || '-' }}</td>
                   <td class="time-text">{{ ftx.time }}</td>
                 </tr>
-                <tr v-if="mockTransactions.filter(t => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid).length === 0">
-                  <td colspan="5" style="text-align: center; color: #86909C; padding: 20px;">暂无冻结记录</td>
+                <tr
+                  v-if="
+                    mockTransactions.filter(
+                      (t) => t.type === 'freeze' && t.uid === freezeWalletTarget?.uid,
+                    ).length === 0
+                  "
+                >
+                  <td colspan="5" style="text-align: center; color: #86909c; padding: 20px">
+                    暂无冻结记录
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -2605,7 +4375,13 @@ const openSettlementFlow = (item: MerchantSign) => {
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="freezeModal = false">取消</button>
-          <button class="btn btn-primary" @click="confirmFreezeAction" :disabled="!freezeForm.amount || !freezeForm.reason">{{ freezeMode === 'freeze' ? '确认冻结' : '确认解冻' }}</button>
+          <button
+            class="btn btn-primary"
+            @click="confirmFreezeAction"
+            :disabled="!freezeForm.amount || !freezeForm.reason"
+          >
+            {{ freezeMode === 'freeze' ? '确认冻结' : '确认解冻' }}
+          </button>
         </div>
       </div>
     </div>
@@ -2616,28 +4392,80 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>充值详情</h3>
           <span class="modal-close" @click="rechargeDetailModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body" v-if="rechargeDetailItem">
           <div class="detail-grid">
-            <div><label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span></div>
-            <div><label>支付单号</label><span>{{ rechargeDetailItem.payOrderNo || '-' }}</span></div>
-            <div><label>用户</label><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span></div>
-            <div><label>支付金额</label><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span></div>
-            <div><label>到账金额</label><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span></div>
-            <div><label>收款商户</label><span>{{ rechargeDetailItem.receiveMerchantName }}</span></div>
-            <div><label>支付状态</label><span class="status-tag" :class="rechargeDetailItem.paymentStatus">{{ paymentStatusLabel[rechargeDetailItem.paymentStatus] }}</span></div>
-            <div><label>充值状态</label><span class="status-tag" :class="rechargeDetailItem.rechargeStatus">{{ rechargeStatusLabel[rechargeDetailItem.rechargeStatus] }}</span></div>
-            <div><label>申请时间</label><span>{{ rechargeDetailItem.applyTime }}</span></div>
-            <div><label>支付时间</label><span>{{ rechargeDetailItem.paymentTime || '-' }}</span></div>
-            <div><label>入账时间</label><span>{{ rechargeDetailItem.rechargeTime || '-' }}</span></div>
-            <div><label>备注</label><span>{{ rechargeDetailItem.remark || '-' }}</span></div>
+            <div>
+              <label>充值单号</label><span>{{ rechargeDetailItem.rechargeNo }}</span>
+            </div>
+            <div>
+              <label>支付单号</label><span>{{ rechargeDetailItem.payOrderNo || '-' }}</span>
+            </div>
+            <div>
+              <label>用户</label
+              ><span>{{ rechargeDetailItem.uid }} / {{ rechargeDetailItem.phone }}</span>
+            </div>
+            <div>
+              <label>支付金额</label
+              ><span class="price-text">¥{{ rechargeDetailItem.amount.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>到账金额</label
+              ><span class="price-text">¥{{ rechargeDetailItem.receivedAmount.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>收款商户</label><span>{{ rechargeDetailItem.receiveMerchantName }}</span>
+            </div>
+            <div>
+              <label>支付状态</label
+              ><span class="status-tag" :class="rechargeDetailItem.paymentStatus">{{
+                paymentStatusLabel[rechargeDetailItem.paymentStatus]
+              }}</span>
+            </div>
+            <div>
+              <label>充值状态</label
+              ><span class="status-tag" :class="rechargeDetailItem.rechargeStatus">{{
+                rechargeStatusLabel[rechargeDetailItem.rechargeStatus]
+              }}</span>
+            </div>
+            <div>
+              <label>申请时间</label><span>{{ rechargeDetailItem.applyTime }}</span>
+            </div>
+            <div>
+              <label>支付时间</label><span>{{ rechargeDetailItem.paymentTime || '-' }}</span>
+            </div>
+            <div>
+              <label>入账时间</label><span>{{ rechargeDetailItem.rechargeTime || '-' }}</span>
+            </div>
+            <div>
+              <label>备注</label><span>{{ rechargeDetailItem.remark || '-' }}</span>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="rechargeDetailModal = false">关闭</button>
-          <button v-if="rechargeDetailItem?.paymentStatus === 'paid' && rechargeDetailItem?.rechargeStatus === 'failed'" class="btn btn-primary" @click="manualRecharge(rechargeDetailItem!)">手动入账</button>
+          <button
+            v-if="
+              rechargeDetailItem?.paymentStatus === 'paid' &&
+              rechargeDetailItem?.rechargeStatus === 'failed'
+            "
+            class="btn btn-primary"
+            @click="manualRecharge(rechargeDetailItem!)"
+          >
+            手动入账
+          </button>
         </div>
       </div>
     </div>
@@ -2648,52 +4476,150 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>充值流水详情</h3>
           <span class="modal-close" @click="rechargeFlowModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body">
           <!-- 摘要卡片 -->
           <div class="flow-summary" v-if="rechargeFlowItem">
-            <div class="flow-summary-row"><span class="flow-summary-label">用户</span><span class="flow-summary-value">{{ rechargeFlowItem.phone }}</span></div>
-            <div class="flow-summary-row"><span class="flow-summary-label">充值单号</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeNo }}</span></div>
-            <div class="flow-summary-row"><span class="flow-summary-label">支付单号</span><span class="flow-summary-value">{{ rechargeFlowItem.payOrderNo || '-' }}</span></div>
-            <div class="flow-summary-row"><span class="flow-summary-label">充值时间</span><span class="flow-summary-value">{{ rechargeFlowItem.rechargeTime || rechargeFlowItem.applyTime }}</span></div>
+            <div class="flow-summary-row">
+              <span class="flow-summary-label">用户</span
+              ><span class="flow-summary-value">{{ rechargeFlowItem.phone }}</span>
+            </div>
+            <div class="flow-summary-row">
+              <span class="flow-summary-label">充值单号</span
+              ><span class="flow-summary-value">{{ rechargeFlowItem.rechargeNo }}</span>
+            </div>
+            <div class="flow-summary-row">
+              <span class="flow-summary-label">支付单号</span
+              ><span class="flow-summary-value">{{ rechargeFlowItem.payOrderNo || '-' }}</span>
+            </div>
+            <div class="flow-summary-row">
+              <span class="flow-summary-label">充值时间</span
+              ><span class="flow-summary-value">{{
+                rechargeFlowItem.rechargeTime || rechargeFlowItem.applyTime
+              }}</span>
+            </div>
             <div class="flow-summary-divider"></div>
             <div class="flow-summary-amounts">
-              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">支付金额</span><span class="flow-summary-amount-value">¥{{ rechargeFlowItem.amount.toFixed(2) }}</span></div>
-              <div class="flow-summary-amount-item" v-if="(rechargeFlowItem.bonusAmount || 0) > 0"><span class="flow-summary-amount-label">赠送金额</span><span class="flow-summary-amount-value bonus">+¥{{ (rechargeFlowItem.bonusAmount || 0).toFixed(2) }}</span></div>
-              <div class="flow-summary-amount-item"><span class="flow-summary-amount-label">到账金额</span><span class="flow-summary-amount-value">¥{{ (rechargeFlowItem.amount + (rechargeFlowItem.bonusAmount || 0)).toFixed(2) }}</span></div>
-              <div class="flow-summary-amount-item total"><span class="flow-summary-amount-label">流水剩余总额</span><span class="flow-summary-amount-value total">¥{{ rechargeFlowBuckets.reduce((s, b) => s + b.remainingAmount, 0).toFixed(2) }}</span></div>
+              <div class="flow-summary-amount-item">
+                <span class="flow-summary-amount-label">支付金额</span
+                ><span class="flow-summary-amount-value"
+                  >¥{{ rechargeFlowItem.amount.toFixed(2) }}</span
+                >
+              </div>
+              <div class="flow-summary-amount-item" v-if="(rechargeFlowItem.bonusAmount || 0) > 0">
+                <span class="flow-summary-amount-label">赠送金额</span
+                ><span class="flow-summary-amount-value bonus"
+                  >+¥{{ (rechargeFlowItem.bonusAmount || 0).toFixed(2) }}</span
+                >
+              </div>
+              <div class="flow-summary-amount-item">
+                <span class="flow-summary-amount-label">到账金额</span
+                ><span class="flow-summary-amount-value"
+                  >¥{{
+                    (rechargeFlowItem.amount + (rechargeFlowItem.bonusAmount || 0)).toFixed(2)
+                  }}</span
+                >
+              </div>
+              <div class="flow-summary-amount-item total">
+                <span class="flow-summary-amount-label">流水剩余总额</span
+                ><span class="flow-summary-amount-value total"
+                  >¥{{
+                    rechargeFlowBuckets.reduce((s, b) => s + b.remainingAmount, 0).toFixed(2)
+                  }}</span
+                >
+              </div>
             </div>
           </div>
           <!-- 资金桶 -->
           <div class="flow-buckets-row">
             <div class="flow-bucket" v-for="bucket in rechargeFlowBuckets" :key="bucket.type">
               <div class="flow-bucket-header">
-                <span class="flow-bucket-type" :class="bucket.type">{{ bucket.type === 'principal' ? '本金' : '赠送' }}</span>
-                <span class="flow-bucket-status" :class="{ empty: bucket.remainingAmount <= 0 }">{{ bucket.remainingAmount <= 0 ? '已耗尽' : '可用' }}</span>
-                <span class="flow-bucket-withdrawable" :class="{ yes: bucket.withdrawable }">{{ bucket.withdrawable ? '可提现' : '不可提现' }}</span>
+                <span class="flow-bucket-type" :class="bucket.type">{{
+                  bucket.type === 'principal' ? '本金' : '赠送'
+                }}</span>
+                <span class="flow-bucket-status" :class="{ empty: bucket.remainingAmount <= 0 }">{{
+                  bucket.remainingAmount <= 0 ? '已耗尽' : '可用'
+                }}</span>
+                <span class="flow-bucket-withdrawable" :class="{ yes: bucket.withdrawable }">{{
+                  bucket.withdrawable ? '可提现' : '不可提现'
+                }}</span>
               </div>
               <div class="flow-bucket-body">
                 <div class="flow-bucket-bar-area">
-                  <div class="flow-bucket-bar"><div class="flow-bucket-bar-fill" :class="bucket.type" :style="{ width: ((bucket.originalAmount - bucket.remainingAmount) / bucket.originalAmount * 100) + '%' }"></div></div>
-                  <div class="flow-bucket-bar-labels"><span>已用 <strong>¥{{ (bucket.originalAmount - bucket.remainingAmount).toFixed(2) }}</strong></span><span>剩余 <strong>¥{{ bucket.remainingAmount.toFixed(2) }}</strong></span></div>
+                  <div class="flow-bucket-bar">
+                    <div
+                      class="flow-bucket-bar-fill"
+                      :class="bucket.type"
+                      :style="{
+                        width:
+                          ((bucket.originalAmount - bucket.remainingAmount) /
+                            bucket.originalAmount) *
+                            100 +
+                          '%',
+                      }"
+                    ></div>
+                  </div>
+                  <div class="flow-bucket-bar-labels">
+                    <span
+                      >已用
+                      <strong
+                        >¥{{ (bucket.originalAmount - bucket.remainingAmount).toFixed(2) }}</strong
+                      ></span
+                    ><span
+                      >剩余 <strong>¥{{ bucket.remainingAmount.toFixed(2) }}</strong></span
+                    >
+                  </div>
                 </div>
                 <div class="flow-detail-label">消耗明细</div>
                 <div v-if="bucket.consumptions.length">
                   <table class="flow-consumption-table">
-                    <thead><tr><th>类型</th><th>关联单号</th><th>金额</th><th>时间</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>类型</th>
+                        <th>关联单号</th>
+                        <th>金额</th>
+                        <th>时间</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr v-for="(item, ci) in bucket.consumptions" :key="ci">
-                        <td><span class="status-tag consume-type-tag" :class="item.type === 'consume' ? 'consume' : 'withdraw'">{{ item.type === 'consume' ? '消费' : item.type === 'withdraw' ? '提现' : item.type === 'refund' ? '退款' : item.type }}</span></td>
+                        <td>
+                          <span
+                            class="status-tag consume-type-tag"
+                            :class="item.type === 'consume' ? 'consume' : 'withdraw'"
+                            >{{
+                              item.type === 'consume'
+                                ? '消费'
+                                : item.type === 'withdraw'
+                                  ? '提现'
+                                  : item.type === 'refund'
+                                    ? '退款'
+                                    : item.type
+                            }}</span
+                          >
+                        </td>
                         <td class="order-no-cell">{{ item.orderNo }}</td>
-                        <td class="amount-negative" style="text-align:right; white-space:nowrap">-¥{{ item.amount.toFixed(2) }}</td>
+                        <td class="amount-negative" style="text-align: right; white-space: nowrap">
+                          -¥{{ item.amount.toFixed(2) }}
+                        </td>
                         <td class="time-text">{{ item.time }}</td>
                       </tr>
                     </tbody>
                   </table>
-                  </div>
-                  <div v-else class="flow-no-data">暂无消耗记录</div>
+                </div>
+                <div v-else class="flow-no-data">暂无消耗记录</div>
               </div>
             </div>
           </div>
@@ -2706,23 +4632,65 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>提现详情</h3>
           <span class="modal-close" @click="withdrawDetailModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body" v-if="withdrawDetailItem">
           <div class="detail-grid">
-            <div><label>提现单号</label><span>{{ withdrawDetailItem.withdrawNo }}</span></div>
-            <div><label>用户</label><span>{{ withdrawDetailItem.uid }} / {{ withdrawDetailItem.phone }}</span></div>
-            <div><label>提现金额</label><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span></div>
-            <div><label>手续费</label><span>{{ withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免' }}</span></div>
-            <div><label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span></div>
-                        <div><label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span></div>
-                        <div><label>状态</label><span class="status-tag" :class="withdrawDetailItem.status">{{ withdrawStatusLabel[withdrawDetailItem.status] }}</span></div>
-            <div><label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span></div>
-            <div><label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span></div>
-            <div><label>操作人</label><span>{{ withdrawDetailItem.operator || '-' }}</span></div>
-            <div v-if="withdrawDetailItem.rejectReason"><label>拒绝原因</label><span>{{ withdrawDetailItem.rejectReason }}</span></div>
-            <div v-if="withdrawDetailItem.partialRefundReason"><label>部分提现原因</label><span>{{ withdrawDetailItem.partialRefundReason }}</span></div>
+            <div>
+              <label>提现单号</label><span>{{ withdrawDetailItem.withdrawNo }}</span>
+            </div>
+            <div>
+              <label>用户</label
+              ><span>{{ withdrawDetailItem.uid }} / {{ withdrawDetailItem.phone }}</span>
+            </div>
+            <div>
+              <label>提现金额</label
+              ><span class="price-text">¥{{ withdrawDetailItem.amount.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>手续费</label
+              ><span>{{
+                withdrawDetailItem.fee > 0 ? '¥' + withdrawDetailItem.fee.toFixed(2) : '免'
+              }}</span>
+            </div>
+            <div>
+              <label>实际到账</label><span>¥{{ withdrawDetailItem.actualAmount.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>关联订单</label><span>{{ withdrawDetailItem.relatedOrderNo }}</span>
+            </div>
+            <div>
+              <label>状态</label
+              ><span class="status-tag" :class="withdrawDetailItem.status">{{
+                withdrawStatusLabel[withdrawDetailItem.status]
+              }}</span>
+            </div>
+            <div>
+              <label>申请时间</label><span>{{ withdrawDetailItem.applyTime }}</span>
+            </div>
+            <div>
+              <label>完成时间</label><span>{{ withdrawDetailItem.completeTime || '-' }}</span>
+            </div>
+            <div>
+              <label>操作人</label><span>{{ withdrawDetailItem.operator || '-' }}</span>
+            </div>
+            <div v-if="withdrawDetailItem.rejectReason">
+              <label>拒绝原因</label><span>{{ withdrawDetailItem.rejectReason }}</span>
+            </div>
+            <div v-if="withdrawDetailItem.partialRefundReason">
+              <label>部分提现原因</label><span>{{ withdrawDetailItem.partialRefundReason }}</span>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -2737,25 +4705,69 @@ const openSettlementFlow = (item: MerchantSign) => {
         <div class="modal-header">
           <h3>交易详情</h3>
           <span class="modal-close" @click="txDetailModal = false">
-            <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            <svg
+              class="modal-close-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
           </span>
         </div>
         <div class="modal-body" v-if="txDetailItem">
           <div class="detail-grid">
-            <div><label>流水号</label><span>{{ txDetailItem.transactionNo }}</span></div>
-            <div><label>用户</label><span>{{ txDetailItem.uid }} / {{ txDetailItem.phone }}</span></div>
-            <div><label>交易类型</label><span>{{ txTypeLabel[txDetailItem.type] }}</span></div>
-            <div><label>金额</label><span :class="{ 'amount-positive': txDetailItem.amount > 0, 'amount-negative': txDetailItem.amount < 0 }">{{ txDetailItem.amount > 0 ? '+' : '' }}¥{{ Math.abs(txDetailItem.amount).toFixed(2) }}</span></div>
-            <div><label>余额</label><span>¥{{ txDetailItem.balance.toFixed(2) }}</span></div>
-            <div><label>关联单号</label><span>{{ txDetailItem.relatedNo || '-' }}</span></div>
-            <div><label>商户</label><span>{{ txDetailItem.merchant }}</span></div>
-            <div><label>操作人</label><span>{{ txDetailItem.operator }}</span></div>
-            <div><label>时间</label><span>{{ txDetailItem.time }}</span></div>
-            <div><label>备注</label><span>{{ txDetailItem.remark || '-' }}</span></div>
+            <div>
+              <label>流水号</label><span>{{ txDetailItem.transactionNo }}</span>
+            </div>
+            <div>
+              <label>用户</label><span>{{ txDetailItem.uid }} / {{ txDetailItem.phone }}</span>
+            </div>
+            <div>
+              <label>交易类型</label><span>{{ txTypeLabel[txDetailItem.type] }}</span>
+            </div>
+            <div>
+              <label>金额</label
+              ><span
+                :class="{
+                  'amount-positive': txDetailItem.amount > 0,
+                  'amount-negative': txDetailItem.amount < 0,
+                }"
+                >{{ txDetailItem.amount > 0 ? '+' : '' }}¥{{
+                  Math.abs(txDetailItem.amount).toFixed(2)
+                }}</span
+              >
+            </div>
+            <div>
+              <label>余额</label><span>¥{{ txDetailItem.balance.toFixed(2) }}</span>
+            </div>
+            <div>
+              <label>关联单号</label><span>{{ txDetailItem.relatedNo || '-' }}</span>
+            </div>
+            <div>
+              <label>商户</label><span>{{ txDetailItem.merchant }}</span>
+            </div>
+            <div>
+              <label>操作人</label><span>{{ txDetailItem.operator }}</span>
+            </div>
+            <div>
+              <label>时间</label><span>{{ txDetailItem.time }}</span>
+            </div>
+            <div>
+              <label>备注</label><span>{{ txDetailItem.remark || '-' }}</span>
+            </div>
           </div>
           <!-- 子流水详情 -->
-          <div v-if="txDetailItem.bucketLogs && txDetailItem.bucketLogs.length" style="margin-top: 20px">
-            <div class="form-section-title" style="margin-bottom: 12px">{{ txDetailItem.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}</div>
+          <div
+            v-if="txDetailItem.bucketLogs && txDetailItem.bucketLogs.length"
+            style="margin-top: 20px"
+          >
+            <div class="form-section-title" style="margin-bottom: 12px">
+              {{ txDetailItem.type === 'refund' ? '退款回充记录' : '资金来源（先进先出）' }}
+            </div>
             <table class="bucket-table">
               <thead>
                 <tr>
@@ -2769,7 +4781,13 @@ const openSettlementFlow = (item: MerchantSign) => {
                 <tr v-for="(bl, idx) in txDetailItem.bucketLogs" :key="idx">
                   <td>{{ bl.bucketNo }}</td>
                   <td class="time-text">{{ bl.bucketTime }}</td>
-                  <td :class="txDetailItem.type === 'refund' ? 'amount-positive' : 'amount-negative'">{{ txDetailItem.type === 'refund' ? '+' : '-' }}¥{{ bl.deductAmount.toFixed(2) }}</td>
+                  <td
+                    :class="txDetailItem.type === 'refund' ? 'amount-positive' : 'amount-negative'"
+                  >
+                    {{ txDetailItem.type === 'refund' ? '+' : '-' }}¥{{
+                      bl.deductAmount.toFixed(2)
+                    }}
+                  </td>
                   <td>¥{{ bl.remainAmount.toFixed(2) }}</td>
                 </tr>
               </tbody>
@@ -2792,17 +4810,18 @@ const openSettlementFlow = (item: MerchantSign) => {
 .wallet-management {
   display: flex;
   min-height: 100vh;
-  background-color: #F0F2F5;
-  color: #1D2129;
-  font-family: 'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: #f0f2f5;
+  color: #1d2129;
+  font-family:
+    'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.6;
 }
 
 /* ==================== 左侧导航 ==================== */
 .sidebar {
   width: 210px;
-  background-color: #FFFFFF;
-  border-right: 1px solid #E5E6EB;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e6eb;
   padding: 0;
   flex-shrink: 0;
 }
@@ -2812,9 +4831,9 @@ const openSettlementFlow = (item: MerchantSign) => {
   padding: 0 20px;
   font-size: 15px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   letter-spacing: -0.01em;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
 }
 .menu-list {
   padding: 8px 0;
@@ -2822,7 +4841,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 .menu-group-title {
   padding: 10px 20px;
   font-size: 11px;
-  color: #86909C;
+  color: #86909c;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2832,7 +4851,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   text-transform: uppercase;
 }
 .menu-group-title:hover {
-  color: #4E5969;
+  color: #4e5969;
 }
 .expand-icon {
   font-size: 10px;
@@ -2845,17 +4864,17 @@ const openSettlementFlow = (item: MerchantSign) => {
   height: 40px;
   line-height: 40px;
   font-size: 14px;
-  color: #86909C;
+  color: #86909c;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .menu-item:hover {
-  color: #1D2129;
-  background-color: #FAFAFA;
+  color: #1d2129;
+  background-color: #fafafa;
 }
 .menu-item.active {
-  color: #4F6EF7;
-  background-color: #E8F3FF;
+  color: #4f6ef7;
+  background-color: #e8f3ff;
   font-weight: 600;
   position: relative;
 }
@@ -2866,7 +4885,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
   border-radius: 0 3px 3px 0;
 }
 
@@ -2877,13 +4896,13 @@ const openSettlementFlow = (item: MerchantSign) => {
   overflow-y: auto;
 }
 .content-panel {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
 }
 .panel-header {
   padding: 18px 28px;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
   display: flex;
   align-items: baseline;
   gap: 12px;
@@ -2892,12 +4911,12 @@ const openSettlementFlow = (item: MerchantSign) => {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   letter-spacing: -0.01em;
 }
 .panel-subtitle {
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
 }
 .panel-body {
   padding: 24px 28px;
@@ -2910,10 +4929,10 @@ const openSettlementFlow = (item: MerchantSign) => {
 .form-section-title {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   padding: 16px 0 8px;
   margin-top: 4px;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
   margin-bottom: 20px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -2932,7 +4951,10 @@ const openSettlementFlow = (item: MerchantSign) => {
   flex-direction: column;
   padding: 18px 28px;
 }
-.activity-form-grid .form-item { align-items: flex-start; margin-bottom: 14px; }
+.activity-form-grid .form-item {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
 .af-row {
   display: flex;
   gap: 20px;
@@ -2944,7 +4966,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   flex-direction: column;
 }
 .af-hint {
-  color: #86909C;
+  color: #86909c;
   font-size: 12px;
   margin-left: 4px;
   white-space: nowrap;
@@ -2962,7 +4984,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   flex-shrink: 0;
 }
 .af-sep {
-  color: #86909C;
+  color: #86909c;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -2972,12 +4994,12 @@ const openSettlementFlow = (item: MerchantSign) => {
   padding-right: 12px;
   line-height: 32px;
   font-size: 14px;
-  color: #4E5969;
+  color: #4e5969;
   flex-shrink: 0;
 }
 .form-label.required::before {
   content: '*';
-  color: #CF1322;
+  color: #cf1322;
   margin-right: 4px;
 }
 .form-control-row {
@@ -2987,11 +5009,11 @@ const openSettlementFlow = (item: MerchantSign) => {
   flex: 1;
   line-height: 32px;
   font-size: 14px;
-  color: #86909C;
+  color: #86909c;
 }
 .form-input {
   height: 32px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
   padding: 0 12px;
   font-size: 14px;
@@ -3001,16 +5023,16 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-family: inherit;
 }
 .form-input:focus {
-  border-color: #4F6EF7;
+  border-color: #4f6ef7;
 }
 .form-input:disabled {
-  background-color: #F2F3F5;
-  color: #86909C;
+  background-color: #f2f3f5;
+  color: #86909c;
   cursor: not-allowed;
 }
 .form-select {
   height: 32px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
   padding: 0 12px;
   font-size: 14px;
@@ -3020,16 +5042,16 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-family: inherit;
 }
 .form-select:focus {
-  border-color: #4F6EF7;
+  border-color: #4f6ef7;
 }
 .form-select:disabled {
-  background-color: #F2F3F5;
-  color: #86909C;
+  background-color: #f2f3f5;
+  color: #86909c;
   cursor: not-allowed;
 }
 .form-textarea {
   width: 100%;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 14px;
@@ -3039,21 +5061,21 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-family: inherit;
 }
 .form-textarea:focus {
-  border-color: #4F6EF7;
+  border-color: #4f6ef7;
 }
 .form-tip {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
 }
 .form-divider {
   height: 1px;
-  background-color: #E5E6EB;
+  background-color: #e5e6eb;
   margin: 24px 0;
 }
 .form-actions {
   margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid #E5E6EB;
+  border-top: 1px solid #e5e6eb;
   display: flex;
   gap: 8px;
 }
@@ -3069,8 +5091,8 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-size: 14px;
   cursor: pointer;
 }
-.radio-label input[type="radio"] {
-  accent-color: #4F6EF7;
+.radio-label input[type='radio'] {
+  accent-color: #4f6ef7;
 }
 
 /* ==================== 开关组件 ==================== */
@@ -3093,7 +5115,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #E5E6EB;
+  background-color: #e5e6eb;
   transition: 0.25s ease;
   border-radius: 22px;
 }
@@ -3109,7 +5131,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   border-radius: 50%;
 }
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
 }
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(22px);
@@ -3135,11 +5157,11 @@ const openSettlementFlow = (item: MerchantSign) => {
   transform: scale(0.98);
 }
 .btn-primary {
-  background-color: #4F6EF7;
-  color: #FFFFFF;
+  background-color: #4f6ef7;
+  color: #ffffff;
 }
 .btn-primary:hover {
-  background-color: #6B8BF5;
+  background-color: #6b8bf5;
 }
 .btn-primary:disabled {
   opacity: 0.4;
@@ -3147,13 +5169,14 @@ const openSettlementFlow = (item: MerchantSign) => {
   transform: none;
 }
 .btn-default {
-  background-color: #FFFFFF;
-  color: #4E5969;
-  border: 1px solid #E5E6EB;
+  background-color: #ffffff;
+  color: #4e5969;
+  border: 1px solid #e5e6eb;
 }
 .btn-default:hover {
-  border-color: #4E5969;
-  color: #1D2129;}
+  border-color: #4e5969;
+  color: #1d2129;
+}
 
 /* ==================== 筛选栏 ==================== */
 .filter-bar {
@@ -3162,7 +5185,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   gap: 16px;
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
 }
 .filter-item {
   display: flex;
@@ -3171,7 +5194,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .filter-item label {
   font-size: 14px;
-  color: #86909C;
+  color: #86909c;
   white-space: nowrap;
 }
 
@@ -3183,13 +5206,13 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .data-table th,
 .data-table td {
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
   padding: 14px 10px;
   text-align: left;
 }
 .data-table th {
-  background-color: #FAFAFA;
-  color: #86909C;
+  background-color: #fafafa;
+  color: #86909c;
   font-weight: 600;
   font-size: 12px;
   white-space: nowrap;
@@ -3206,26 +5229,26 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 
 .data-table tbody tr:hover {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
 }
 .time-text {
-  color: #86909C;
+  color: #86909c;
   font-size: 13px;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .sub-text {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
 }
 .price-text {
-  color: #CF1322;
+  color: #cf1322;
   font-weight: 600;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .empty-text {
   text-align: center;
   padding: 64px 0;
-  color: #86909C;
+  color: #86909c;
   font-size: 14px;
 }
 
@@ -3237,19 +5260,19 @@ const openSettlementFlow = (item: MerchantSign) => {
   width: 22px;
   height: 22px;
   cursor: pointer;
-  color: #86909C;
+  color: #86909c;
   font-size: 10px;
   border-radius: 4px;
   transition: all 0.15s ease;
 }
 .expand-btn:hover {
-  color: #4F6EF7;
-  background-color: #E8F3FF;
+  color: #4f6ef7;
+  background-color: #e8f3ff;
 }
 
 /* ==================== 子流水面板 ==================== */
 .bucket-row td {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
 }
 .bucket-panel {
   padding: 12px 16px 16px 24px;
@@ -3257,7 +5280,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 .bucket-header {
   font-size: 12px;
   font-weight: 600;
-  color: #86909C;
+  color: #86909c;
   margin-bottom: 8px;
   letter-spacing: 0.03em;
 }
@@ -3267,18 +5290,18 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-size: 13px;
 }
 .bucket-table th {
-  background-color: #F2F3F5;
-  color: #86909C;
+  background-color: #f2f3f5;
+  color: #86909c;
   font-weight: 500;
   font-size: 12px;
   padding: 8px 10px;
   text-align: left;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
 }
 .bucket-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #E5E6EB;
-  color: #4E5969;
+  border-bottom: 1px solid #e5e6eb;
+  color: #4e5969;
 }
 
 /* ==================== 状态标签 ==================== */
@@ -3292,101 +5315,107 @@ const openSettlementFlow = (item: MerchantSign) => {
   border: none;
 }
 /* 正常/启用/完成/成功 → Pale Blue */
-.status-tag.normal, .status-tag.on, .status-tag.completed, .status-tag.success {
-  background-color: #E8F3FF;
-  color: #4F6EF7;
+.status-tag.normal,
+.status-tag.on,
+.status-tag.completed,
+.status-tag.success {
+  background-color: #e8f3ff;
+  color: #4f6ef7;
 }
 /* 冻结/停用/失败 → Pale Red */
-.status-tag.frozen, .status-tag.off, .status-tag.failed {
-  background-color: #FFF1F0;
-  color: #CF1322;
+.status-tag.frozen,
+.status-tag.off,
+.status-tag.failed {
+  background-color: #fff1f0;
+  color: #cf1322;
 }
 /* 待处理/草稿 → Pale Yellow */
-.status-tag.pending, .status-tag.draft {
-  background-color: #FFF7E6;
-  color: #D46B08;
+.status-tag.pending,
+.status-tag.draft {
+  background-color: #fff7e6;
+  color: #d46b08;
 }
 /* 已支付 → Pale Green */
 .status-tag.paid {
-  background-color: #E8F8EE;
-  color: #0E7B3A;
+  background-color: #e8f8ee;
+  color: #0e7b3a;
 }
 /* 已关闭 → Neutral */
 .status-tag.closed {
-  background-color: #F2F3F5;
-  color: #86909C;
+  background-color: #f2f3f5;
+  color: #86909c;
 }
 /* 已审核 → Pale Blue */
 .status-tag.approved {
-  background-color: #E8F3FF;
-  color: #4F6EF7;
+  background-color: #e8f3ff;
+  color: #4f6ef7;
 }
 /* 已退款 → Pale Green */
 .status-tag.refunded {
-  background-color: #E8F8EE;
-  color: #0E7B3A;
+  background-color: #e8f8ee;
+  color: #0e7b3a;
 }
 /* 已拒绝 → Pale Red */
 .status-tag.rejected {
-  background-color: #FFF1F0;
-  color: #CF1322;
+  background-color: #fff1f0;
+  color: #cf1322;
 }
 /* 全额 → Pale Blue */
 .status-tag.full {
-  background-color: #E8F3FF;
-  color: #4F6EF7;
+  background-color: #e8f3ff;
+  color: #4f6ef7;
 }
 /* 部分 → Pale Yellow */
 .status-tag.partial {
-  background-color: #FFF7E6;
-  color: #D46B08;
+  background-color: #fff7e6;
+  color: #d46b08;
 }
 /* 交易类型标签 */
 .status-tag.recharge {
-  background-color: #E8F3FF;
-  color: #4F6EF7;
+  background-color: #e8f3ff;
+  color: #4f6ef7;
 }
 .status-tag.consume {
-  background-color: #FFF7E6;
-  color: #D46B08;
+  background-color: #fff7e6;
+  color: #d46b08;
 }
 .status-tag.refund {
-  background-color: #E8F8EE;
-  color: #0E7B3A;
+  background-color: #e8f8ee;
+  color: #0e7b3a;
 }
 .status-tag.withdraw {
-  background-color: #FFF1F0;
-  color: #CF1322;
+  background-color: #fff1f0;
+  color: #cf1322;
 }
 
 /* ==================== 金额颜色 ==================== */
 .amount-positive {
-  color: #CF1322;
+  color: #cf1322;
   font-weight: 600;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .amount-negative {
-  color: #0E7B3A;
+  color: #0e7b3a;
   font-weight: 600;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 
 /* ==================== 操作链接 ==================== */
 .action-link {
-  color: #4F6EF7;
+  color: #4f6ef7;
   cursor: pointer;
   font-size: 13px;
   transition: color 0.15s ease;
 }
 .action-link:hover {
-  color: #4F6EF7;
+  color: #4f6ef7;
   text-decoration: underline;
 }
 .action-link.primary {
-  color: #4F6EF7;
+  color: #4f6ef7;
 }
 .action-link.danger {
-  color: #CF1322;
+  color: #cf1322;
 }
 
 /* ==================== 分页 ==================== */
@@ -3396,7 +5425,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   align-items: center;
   margin-top: 24px;
   font-size: 14px;
-  color: #86909C;
+  color: #86909c;
 }
 .page-btns {
   display: flex;
@@ -3405,30 +5434,30 @@ const openSettlementFlow = (item: MerchantSign) => {
 .page-btn {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #E5E6EB;
-  background-color: #FFFFFF;
+  border: 1px solid #e5e6eb;
+  background-color: #ffffff;
   border-radius: 6px;
   cursor: pointer;
-  color: #4E5969;
+  color: #4e5969;
   font-size: 13px;
   transition: all 0.15s ease;
   font-family: inherit;
 }
 .page-btn:hover:not(.disabled) {
-  border-color: #4F6EF7;
-  color: #4F6EF7;
+  border-color: #4f6ef7;
+  color: #4f6ef7;
 }
 .page-btn:active:not(.disabled) {
   transform: scale(0.97);
 }
 .page-btn.active {
-  background-color: #4F6EF7;
-  color: #FFFFFF;
-  border-color: #4F6EF7;
+  background-color: #4f6ef7;
+  color: #ffffff;
+  border-color: #4f6ef7;
 }
 .page-btn.disabled {
-  color: #E5E6EB;
-  background-color: #F2F3F5;
+  color: #e5e6eb;
+  background-color: #f2f3f5;
   cursor: not-allowed;
 }
 
@@ -3440,10 +5469,10 @@ const openSettlementFlow = (item: MerchantSign) => {
   margin-bottom: 28px;
 }
 .overview-card {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 24px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   transition: box-shadow 0.2s ease;
 }
 .overview-card:hover {
@@ -3451,7 +5480,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .stat-label {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   margin-bottom: 10px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -3459,7 +5488,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin-bottom: 4px;
   letter-spacing: -0.02em;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
@@ -3469,10 +5498,10 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .stat-change.up {
-  color: #CF1322;
+  color: #cf1322;
 }
 .stat-change.down {
-  color: #0E7B3A;
+  color: #0e7b3a;
 }
 
 /* ==================== 趋势图 ==================== */
@@ -3482,23 +5511,23 @@ const openSettlementFlow = (item: MerchantSign) => {
 .trend-section h3 {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin: 0 0 16px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .trend-chart {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 24px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
 }
 .trend-legend {
   display: flex;
   gap: 24px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
 }
 .legend-item {
   display: flex;
@@ -3536,18 +5565,18 @@ const openSettlementFlow = (item: MerchantSign) => {
   transition: height 0.3s ease;
 }
 .bar-recharge {
-  background-color: #4F6EF7;
+  background-color: #4f6ef7;
 }
 .bar-consume {
-  background-color: #D46B08;
+  background-color: #d46b08;
 }
 .bar-refund {
-  background-color: #0E7B3A;
+  background-color: #0e7b3a;
 }
 .trend-label {
   margin-top: 8px;
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 
@@ -3555,7 +5584,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 .recent-section h3 {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   margin: 0 0 16px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -3564,7 +5593,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 /* ==================== 修改记录 ==================== */
 .history-section {
   margin-top: 36px;
-  border-top: 1px solid #E5E6EB;
+  border-top: 1px solid #e5e6eb;
   padding-top: 20px;
 }
 .history-header {
@@ -3577,24 +5606,24 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .history-toggle {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
 }
 .history-title {
   font-size: 13px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   letter-spacing: 0.02em;
 }
 .history-count {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .history-body {
   margin-top: 8px;
 }
 .snapshot-row td {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
 }
 .snapshot-detail {
   padding: 16px;
@@ -3602,7 +5631,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 .snapshot-header {
   font-size: 12px;
   font-weight: 600;
-  color: #86909C;
+  color: #86909c;
   margin-bottom: 12px;
   letter-spacing: 0.03em;
 }
@@ -3618,11 +5647,11 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .snapshot-label {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
 }
 .snapshot-value {
   font-size: 14px;
-  color: #4E5969;
+  color: #4e5969;
 }
 
 /* ==================== 弹窗 ==================== */
@@ -3640,13 +5669,17 @@ const openSettlementFlow = (item: MerchantSign) => {
   animation: fadeIn 0.2s ease;
 }
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .modal-content {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 10px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
   max-height: 80vh;
   display: flex;
@@ -3654,24 +5687,37 @@ const openSettlementFlow = (item: MerchantSign) => {
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.modal-sm { width: 440px; }
-.modal-md { width: 560px; }
-.modal-lg { width: 720px; max-height: 85vh; }
+.modal-sm {
+  width: 440px;
+}
+.modal-md {
+  width: 560px;
+}
+.modal-lg {
+  width: 720px;
+  max-height: 85vh;
+}
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 28px;
-  border-bottom: 1px solid #E5E6EB;
+  border-bottom: 1px solid #e5e6eb;
 }
 .modal-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1D2129;
+  color: #1d2129;
   letter-spacing: -0.01em;
 }
 .modal-close {
@@ -3684,11 +5730,11 @@ const openSettlementFlow = (item: MerchantSign) => {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  color: #86909C;
+  color: #86909c;
 }
 .modal-close:hover {
-  color: #1D2129;
-  background-color: #F2F3F5;
+  color: #1d2129;
+  background-color: #f2f3f5;
 }
 .modal-close-icon {
   width: 16px;
@@ -3701,7 +5747,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .modal-footer {
   padding: 14px 28px;
-  border-top: 1px solid #E5E6EB;
+  border-top: 1px solid #e5e6eb;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -3726,21 +5772,21 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .detail-grid label {
   font-size: 11px;
-  color: #86909C;
+  color: #86909c;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 .detail-grid span {
   font-size: 14px;
-  color: #4E5969;
+  color: #4e5969;
 }
 
 /* ==================== 空态占位 ==================== */
 .empty-block {
   text-align: center;
-  color: #86909C;
+  color: #86909c;
   padding: 24px 0;
-  background-color: #F2F3F5;
+  background-color: #f2f3f5;
   border-radius: 6px;
   margin-top: 8px;
   font-size: 13px;
@@ -3755,16 +5801,16 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .preset-tag {
   padding: 6px 16px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
   font-size: 14px;
-  background-color: #F2F3F5;
-  color: #1D2129;
+  background-color: #f2f3f5;
+  color: #1d2129;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .preset-tag-dashed {
   border-style: dashed;
-  color: #86909C;
+  color: #86909c;
   font-family: inherit;
 }
 .preset-row {
@@ -3774,14 +5820,14 @@ const openSettlementFlow = (item: MerchantSign) => {
   margin-bottom: 8px;
 }
 .preset-index {
-  color: #86909C;
+  color: #86909c;
   width: 20px;
   text-align: center;
   font-size: 13px;
   flex-shrink: 0;
 }
 .preset-yen {
-  color: #86909C;
+  color: #86909c;
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -3794,15 +5840,26 @@ const openSettlementFlow = (item: MerchantSign) => {
   border-radius: 4px;
 }
 .btn-text-danger {
-  color: #CF1322;
+  color: #cf1322;
 }
 
 /* ==================== 表单输入尺寸 ==================== */
-.form-input-xs { width: 80px; }
-.form-input-sm { width: 120px; }
-.form-input-md { width: 190px; flex-shrink: 0; }
-.form-input-lg { width: 320px; }
-.form-input-xl { width: 420px; }
+.form-input-xs {
+  width: 80px;
+}
+.form-input-sm {
+  width: 120px;
+}
+.form-input-md {
+  width: 190px;
+  flex-shrink: 0;
+}
+.form-input-lg {
+  width: 320px;
+}
+.form-input-xl {
+  width: 420px;
+}
 
 /* ==================== 活动表单辅助 ==================== */
 .af-control-row {
@@ -3816,21 +5873,21 @@ const openSettlementFlow = (item: MerchantSign) => {
 .af-group-title {
   font-size: 13px;
   font-weight: 600;
-  color: #1D2129;
+  color: #1d2129;
   padding: 0;
   margin-bottom: 14px;
   letter-spacing: 0.01em;
 }
 .af-group-divider {
   height: 1px;
-  background-color: #E5E6EB;
+  background-color: #e5e6eb;
   margin: 18px 0 14px;
 }
 
 /* ==================== Segmented Control ==================== */
 .segmented-control {
   display: inline-flex;
-  background-color: #F2F3F5;
+  background-color: #f2f3f5;
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
@@ -3841,7 +5898,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #4E5969;
+  color: #4e5969;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -3849,11 +5906,11 @@ const openSettlementFlow = (item: MerchantSign) => {
   line-height: 30px;
 }
 .segmented-btn:hover {
-  color: #1D2129;
+  color: #1d2129;
 }
 .segmented-btn.active {
-  background-color: #FFFFFF;
-  color: #4F6EF7;
+  background-color: #ffffff;
+  color: #4f6ef7;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -3866,7 +5923,7 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .af-field-hint {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   margin-top: 6px;
   line-height: 1.5;
 }
@@ -3882,21 +5939,21 @@ const openSettlementFlow = (item: MerchantSign) => {
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  color: #4E5969;
+  color: #4e5969;
 }
 
 /* ==================== 开关文字标签 ==================== */
 .af-toggle-label {
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
   margin-left: 10px;
   line-height: 22px;
 }
 
 /* ==================== 钱包设置卡片 ==================== */
 .wcfg-card {
-  background: #F7F8FA;
-  border: 1px solid #E5E6EB;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
   border-radius: 8px;
   margin-bottom: 16px;
   overflow: hidden;
@@ -3908,9 +5965,9 @@ const openSettlementFlow = (item: MerchantSign) => {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #1D2129;
-  background: #FFFFFF;
-  border-bottom: 1px solid #E5E6EB;
+  color: #1d2129;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e6eb;
 }
 .wcfg-card-body {
   padding: 16px;
@@ -3932,11 +5989,11 @@ const openSettlementFlow = (item: MerchantSign) => {
 .wcfg-label {
   font-size: 13px;
   font-weight: 500;
-  color: #4E5969;
+  color: #4e5969;
 }
 .wcfg-label.required::after {
-  content: " *";
-  color: #CF1322;
+  content: ' *';
+  color: #cf1322;
 }
 .wcfg-input-group {
   display: flex;
@@ -3945,17 +6002,17 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .wcfg-unit {
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
   white-space: nowrap;
 }
 .wcfg-hint {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   margin-top: 4px;
 }
 .wcfg-divider {
   height: 1px;
-  background: #E5E6EB;
+  background: #e5e6eb;
   margin: 12px 0;
 }
 
@@ -3966,10 +6023,10 @@ const openSettlementFlow = (item: MerchantSign) => {
   gap: 16px;
 }
 .wcfg-view-card {
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 8px;
   overflow: hidden;
-  background: #FFFFFF;
+  background: #ffffff;
 }
 .wcfg-view-card-header {
   display: flex;
@@ -3978,9 +6035,9 @@ const openSettlementFlow = (item: MerchantSign) => {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #1D2129;
-  background: #FAFAFA;
-  border-bottom: 1px solid #E5E6EB;
+  color: #1d2129;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e6eb;
 }
 .wcfg-view-card-body {
   padding: 12px 16px;
@@ -3990,18 +6047,18 @@ const openSettlementFlow = (item: MerchantSign) => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #F2F3F5;
+  border-bottom: 1px solid #f2f3f5;
 }
 .wcfg-view-field:last-child {
   border-bottom: none;
 }
 .wcfg-view-label {
   font-size: 13px;
-  color: #86909C;
+  color: #86909c;
 }
 .wcfg-view-value {
   font-size: 14px;
-  color: #1D2129;
+  color: #1d2129;
   font-weight: 500;
 }
 .wcfg-status-badge {
@@ -4012,19 +6069,18 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-weight: 500;
 }
 .wcfg-status-badge.on {
-  background: #E8FFE8;
-  color: #00A854;
+  background: #e8ffe8;
+  color: #00a854;
 }
 .wcfg-status-badge.off {
-  background: #FFF0F0;
-  color: #CF1322;
+  background: #fff0f0;
+  color: #cf1322;
 }
-
 
 /* ==================== 充值方案弹窗 ==================== */
 .plan-section {
-  background: #F7F8FA;
-  border: 1px solid #E5E6EB;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
   border-radius: 8px;
   margin-bottom: 16px;
   overflow: hidden;
@@ -4036,14 +6092,14 @@ const openSettlementFlow = (item: MerchantSign) => {
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 600;
-  color: #1D2129;
-  background: #FFFFFF;
-  border-bottom: 1px solid #E5E6EB;
+  color: #1d2129;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e6eb;
 }
 .plan-count-badge {
   margin-left: auto;
-  background: #F2F3F5;
-  color: #4E5969;
+  background: #f2f3f5;
+  color: #4e5969;
   font-size: 11px;
   padding: 1px 8px;
   border-radius: 10px;
@@ -4060,24 +6116,26 @@ const openSettlementFlow = (item: MerchantSign) => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #FFFFFF;
-  border: 1px solid #E5E6EB;
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 .plan-preset-card:focus-within {
-  border-color: #4F6EF7;
+  border-color: #4f6ef7;
   box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.1);
 }
 .plan-preset-index {
-  color: #86909C;
+  color: #86909c;
   font-size: 12px;
   width: 18px;
   text-align: center;
   flex-shrink: 0;
 }
 .plan-preset-yen {
-  color: #86909C;
+  color: #86909c;
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -4096,42 +6154,42 @@ const openSettlementFlow = (item: MerchantSign) => {
   background: transparent;
   border-radius: 4px;
   cursor: pointer;
-  color: #86909C;
+  color: #86909c;
   transition: all 0.15s;
 }
 .plan-icon-btn:hover:not(:disabled) {
-  background: #F2F3F5;
-  color: #4E5969;
+  background: #f2f3f5;
+  color: #4e5969;
 }
 .plan-icon-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 .plan-icon-btn-danger:hover:not(:disabled) {
-  color: #CF1322;
-  background: #FFF0F0;
+  color: #cf1322;
+  background: #fff0f0;
 }
 .plan-add-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border: 1px dashed #C9CDD4;
+  border: 1px dashed #c9cdd4;
   background: transparent;
   border-radius: 6px;
-  color: #86909C;
+  color: #86909c;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
 }
 .plan-add-btn:hover {
-  border-color: #4F6EF7;
-  color: #4F6EF7;
+  border-color: #4f6ef7;
+  color: #4f6ef7;
 }
 .plan-divider {
   height: 1px;
-  background: #E5E6EB;
+  background: #e5e6eb;
   margin: 14px 0;
 }
 .plan-custom-row {
@@ -4143,7 +6201,7 @@ const openSettlementFlow = (item: MerchantSign) => {
   display: flex;
   align-items: center;
   font-size: 13px;
-  color: #4E5969;
+  color: #4e5969;
   cursor: pointer;
 }
 .plan-custom-fields {
@@ -4156,11 +6214,11 @@ const openSettlementFlow = (item: MerchantSign) => {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #4E5969;
+  color: #4e5969;
 }
 .plan-empty {
   text-align: center;
-  color: #86909C;
+  color: #86909c;
   padding: 20px 0;
   font-size: 13px;
 }
@@ -4173,13 +6231,13 @@ const openSettlementFlow = (item: MerchantSign) => {
   text-align: left;
   padding: 8px 10px;
   font-weight: 500;
-  color: #86909C;
-  border-bottom: 1px solid #E5E6EB;
+  color: #86909c;
+  border-bottom: 1px solid #e5e6eb;
   white-space: nowrap;
 }
 .plan-activity-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #F2F3F5;
+  border-bottom: 1px solid #f2f3f5;
 }
 .plan-type-tag {
   display: inline-block;
@@ -4189,87 +6247,252 @@ const openSettlementFlow = (item: MerchantSign) => {
   font-weight: 500;
 }
 .plan-type-tag.bonus {
-  background: #E8FFE8;
-  color: #00A854;
+  background: #e8ffe8;
+  color: #00a854;
 }
 .plan-type-tag.discount {
-  background: #FFF7E6;
-  color: #D46B08;
+  background: #fff7e6;
+  color: #d46b08;
 }
 .plan-mono {
-  font-family: "Geist Mono", "SF Mono", "Menlo", monospace;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
   font-size: 12px;
 }
 .plan-discount-amount {
-  color: #CF1322;
+  color: #cf1322;
 }
 .plan-act-status {
   font-size: 12px;
   font-weight: 500;
 }
 .plan-act-status.on {
-  color: #00A854;
+  color: #00a854;
 }
 .plan-act-status.off {
-  color: #86909C;
+  color: #86909c;
 }
-
 
 .plan-preset-tag {
   padding: 4px 14px;
-  border: 1px solid #E5E6EB;
+  border: 1px solid #e5e6eb;
   border-radius: 6px;
   font-size: 13px;
-  background: #F7F8FA;
-  color: #1D2129;
-  font-family: "Geist Mono", "SF Mono", "Menlo", monospace;
+  background: #f7f8fa;
+  color: #1d2129;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
 }
 .plan-preset-tag-dashed {
   border-style: dashed;
-  color: #86909C;
+  color: #86909c;
   font-family: inherit;
 }
 
-
 /* ==================== 充值流水资金桶弹窗 ==================== */
-.recharge-flow-modal { max-width: 1200px !important; }
-.flow-summary { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 8px; padding: 14px 36px; margin-bottom: 24px; }
-.flow-summary-row { display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 2; }
-.flow-summary-label { color: #86909c; width: 72px; flex-shrink: 0; }
-.flow-summary-value { color: #1d2129; font-weight: 500; font-size: 15px; }
-.flow-summary-divider { height: 1px; background: #e5e6eb; margin: 14px 0; }
-.flow-summary-amounts { display: flex; gap: 40px; flex-wrap: wrap; }
-.flow-summary-amount-item { display: flex; flex-direction: column; gap: 6px; }
-.flow-summary-amount-label { font-size: 13px; color: #86909c; white-space: nowrap; }
-.flow-summary-amount-value { font-size: 19px; font-weight: 600; color: #1d2129; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
-.flow-summary-amount-value.bonus { color: #d46b08; }
-.flow-summary-amount-item.total { margin-left: auto; }
-.flow-summary-amount-value.total { color: #1677ff; font-size: 21px; }
-.flow-buckets-row { display: flex; gap: 20px; }
-.flow-bucket { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-.flow-bucket-header { display: flex; align-items: center; gap: 10px; padding: 10px 36px; border-bottom: 1px solid #f2f3f5; font-size: 14px; flex-wrap: wrap; }
-.flow-bucket-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.flow-bucket-type.principal { background: #e8f4ff; color: #1677ff; }
-.flow-bucket-type.bonus { background: #fff7e6; color: #d46b08; }
-.flow-bucket-status { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #e8ffe8; color: #00a854; white-space: nowrap; }
-.flow-bucket-status.empty { background: #fff0f0; color: #cf1322; }
-.flow-bucket-withdrawable { font-size: 12px; padding: 1px 5px; border-radius: 3px; background: #f2f3f5; color: #86909c; margin-left: auto; white-space: nowrap; }
-.flow-bucket-withdrawable.yes { background: #e8ffe8; color: #00a854; }
-.flow-bucket-body { padding: 10px 36px; }
-.flow-bucket-bar-area { margin-bottom: 16px; }
-.flow-bucket-bar { height: 6px; background: #f2f3f5; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
-.flow-bucket-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0%; }
-.flow-bucket-bar-fill.principal { background: linear-gradient(90deg, #1677ff, #4096ff); }
-.flow-bucket-bar-fill.bonus { background: linear-gradient(90deg, #d46b08, #fa8c16); }
-.flow-bucket-bar-labels { display: flex; justify-content: space-between; font-size: 13px; color: #86909c; }
-.flow-bucket-bar-labels strong { color: #1d2129; font-size: 15px; font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; }
-.flow-detail-label { font-size: 14px; color: #86909c; margin-bottom: 10px; font-weight: 500; }
-.flow-consumption-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.flow-consumption-table th { text-align: left; padding: 4px 16px; color: #86909c; font-weight: 500; border-bottom: 1px solid #e5e6eb; white-space: nowrap; font-size: 13px; }
-.flow-consumption-table td { padding: 4px 16px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; }
-.consume-type-tag { font-size: 13px !important; padding: 1px 5px !important; }
-.order-no-cell { font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.flow-no-data { text-align: center; color: #c9cdd4; font-size: 15px; padding: 20px 0; }
+.recharge-flow-modal {
+  max-width: 1200px !important;
+}
+.flow-summary {
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  padding: 14px 36px;
+  margin-bottom: 24px;
+}
+.flow-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 2;
+}
+.flow-summary-label {
+  color: #86909c;
+  width: 72px;
+  flex-shrink: 0;
+}
+.flow-summary-value {
+  color: #1d2129;
+  font-weight: 500;
+  font-size: 15px;
+}
+.flow-summary-divider {
+  height: 1px;
+  background: #e5e6eb;
+  margin: 14px 0;
+}
+.flow-summary-amounts {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.flow-summary-amount-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.flow-summary-amount-label {
+  font-size: 13px;
+  color: #86909c;
+  white-space: nowrap;
+}
+.flow-summary-amount-value {
+  font-size: 19px;
+  font-weight: 600;
+  color: #1d2129;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+}
+.flow-summary-amount-value.bonus {
+  color: #d46b08;
+}
+.flow-summary-amount-item.total {
+  margin-left: auto;
+}
+.flow-summary-amount-value.total {
+  color: #1677ff;
+  font-size: 21px;
+}
+.flow-buckets-row {
+  display: flex;
+  gap: 20px;
+}
+.flow-bucket {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.flow-bucket-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 36px;
+  border-bottom: 1px solid #f2f3f5;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+.flow-bucket-type {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.flow-bucket-type.principal {
+  background: #e8f4ff;
+  color: #1677ff;
+}
+.flow-bucket-type.bonus {
+  background: #fff7e6;
+  color: #d46b08;
+}
+.flow-bucket-status {
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #e8ffe8;
+  color: #00a854;
+  white-space: nowrap;
+}
+.flow-bucket-status.empty {
+  background: #fff0f0;
+  color: #cf1322;
+}
+.flow-bucket-withdrawable {
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #f2f3f5;
+  color: #86909c;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.flow-bucket-withdrawable.yes {
+  background: #e8ffe8;
+  color: #00a854;
+}
+.flow-bucket-body {
+  padding: 10px 36px;
+}
+.flow-bucket-bar-area {
+  margin-bottom: 16px;
+}
+.flow-bucket-bar {
+  height: 6px;
+  background: #f2f3f5;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.flow-bucket-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  min-width: 0%;
+}
+.flow-bucket-bar-fill.principal {
+  background: linear-gradient(90deg, #1677ff, #4096ff);
+}
+.flow-bucket-bar-fill.bonus {
+  background: linear-gradient(90deg, #d46b08, #fa8c16);
+}
+.flow-bucket-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #86909c;
+}
+.flow-bucket-bar-labels strong {
+  color: #1d2129;
+  font-size: 15px;
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+}
+.flow-detail-label {
+  font-size: 14px;
+  color: #86909c;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.flow-consumption-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.flow-consumption-table th {
+  text-align: left;
+  padding: 4px 16px;
+  color: #86909c;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e6eb;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.flow-consumption-table td {
+  padding: 4px 16px;
+  border-bottom: 1px solid #f2f3f5;
+  white-space: nowrap;
+}
+.consume-type-tag {
+  font-size: 13px !important;
+  padding: 1px 5px !important;
+}
+.order-no-cell {
+  font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
+  font-size: 13px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.flow-no-data {
+  text-align: center;
+  color: #c9cdd4;
+  font-size: 15px;
+  padding: 20px 0;
+}
 
 /* ==================== 收款流水统计卡片 ==================== */
 .settle-stats {
@@ -4279,18 +6502,18 @@ const openSettlementFlow = (item: MerchantSign) => {
 }
 .settle-stat-card {
   flex: 1;
-  background: #F7F8FA;
-  border: 1px solid #E5E6EB;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
   border-radius: 8px;
   padding: 16px 20px;
   transition: box-shadow 0.2s ease;
 }
 .settle-stat-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .settle-stat-label {
   font-size: 12px;
-  color: #86909C;
+  color: #86909c;
   margin-bottom: 8px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -4298,47 +6521,36 @@ const openSettlementFlow = (item: MerchantSign) => {
 .settle-stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: #1D2129;
+  color: #1d2129;
   font-family: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
   letter-spacing: -0.02em;
 }
 .settle-stat-card.consume {
-  background: #F0F5FF;
-  border-color: #D6E4FF;
+  background: #f0f5ff;
+  border-color: #d6e4ff;
 }
 .settle-stat-card.consume .settle-stat-value {
-  color: #4F6EF7;
+  color: #4f6ef7;
 }
 .settle-stat-card.refund {
-  background: #FFF7E6;
-  border-color: #FFE0B2;
+  background: #fff7e6;
+  border-color: #ffe0b2;
 }
 .settle-stat-card.refund .settle-stat-value {
-  color: #D46B08;
+  color: #d46b08;
 }
 .settle-stat-card.net-positive {
-  background: #E8FFE8;
-  border-color: #B7EB8F;
+  background: #e8ffe8;
+  border-color: #b7eb8f;
 }
 .settle-stat-card.net-positive .settle-stat-value {
-  color: #00A854;
+  color: #00a854;
 }
 .settle-stat-card.net-negative {
-  background: #FFF0F0;
-  border-color: #FFCCC7;
+  background: #fff0f0;
+  border-color: #ffccc7;
 }
 .settle-stat-card.net-negative .settle-stat-value {
-  color: #CF1322;
+  color: #cf1322;
 }
 </style>
-
-
-
-
-
-
-
-
-
-
-

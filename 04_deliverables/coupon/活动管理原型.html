@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品原型 - 商城后台 · 活动管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F7FA; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+    /* 连线元素高亮 */
+    .proto-element { position: relative; transition: all 0.2s ease; border-radius: 6px; }
+    .proto-element:hover { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.15); background-color: rgba(22,93,255,0.03); }
+    .proto-element.active-highlight { box-shadow: 0 0 0 2px #165DFF, 0 4px 12px rgba(22,93,255,0.2); background-color: rgba(22,93,255,0.05); }
+
+    .proto-desc { transition: all 0.2s ease; border-radius: 6px; border: 1px solid #fde68a; background-color: #fffbeb; }
+    .proto-desc:hover { background-color: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+    .proto-desc.active-highlight { background-color: #fde68a; border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+
+    /* SVG 连线层 */
+    #connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    .connection-line { fill: none; stroke: #165DFF; stroke-width: 2; opacity: 0.6; transition: all 0.2s ease; }
+    .connection-line.active { stroke-width: 3; opacity: 1; }
+    .connection-label { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    .connection-label-bg { fill: #165DFF; }
+
+    /* 侧边菜单 */
+    .sidebar-menu-item { transition: all 0.2s; cursor: pointer; }
+    .sidebar-menu-item:hover { background-color: rgba(22,93,255,0.06); color: #165DFF; }
+    .sidebar-menu-item.active { background-color: rgba(22,93,255,0.10); color: #165DFF; border-right: 3px solid #165DFF; }
+    .sidebar-label { font-size: 11px; color: #86909C; letter-spacing: 0.05em; }
+
+    /* 表格 */
+    .data-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; }
+    .data-table tbody tr { transition: background-color 0.15s; }
+    .data-table tbody tr:hover { background-color: rgba(22,93,255,0.04); }
+
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .tag-blue { background-color: rgba(22,93,255,0.1); color: #165DFF; }
+    .tag-green { background-color: rgba(0,180,42,0.1); color: #00B42A; }
+    .tag-orange { background-color: rgba(212,107,8,0.1); color: #D46B08; }
+    .tag-red { background-color: rgba(207,19,34,0.1); color: #CF1322; }
+    .tag-gray { background-color: #F5F7FA; color: #666; }
+
+    .btn-click:active { transform: scale(0.96); }
+    .form-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .form-label { font-size: 12px; color: #86909C; margin-bottom: 4px; display: block; }
+
+    /* 限额矩阵 */
+    .limit-table th { background-color: #F5F7FA; font-weight: 600; color: #333; font-size: 12px; }
+    .limit-input { width: 72px; height: 30px; border: 1px solid #E5E6EB; border-radius: 4px; text-align: center; font-size: 13px; }
+    .limit-input:focus { border-color: #165DFF; box-shadow: 0 0 0 3px rgba(22,93,255,0.1); outline: none; }
+    .limit-input::placeholder { color: #C9CDD4; font-size: 12px; }
+    .limit-input:disabled { background: #F7F8FA; color: #C9CDD4; cursor: not-allowed; }
+
+    /* 绑定明细行 */
+    .bind-row { transition: all 0.2s; }
+    .bind-row:hover { background-color: rgba(22,93,255,0.03); }
+    .bind-config { background: #FAFBFC; border: 1px dashed #E5E6EB; border-radius: 8px; }
+
+    /* 弹窗 */
+    .modal-overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 640px; max-height: 85vh; overflow-y: auto; margin: 1rem; }
+
+    /* toast */
+    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); z-index: 200; background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transition: all 0.3s; pointer-events: none; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #left-panel { width: 100% !important; height: 60vh; }
+      #divider { display: none; }
+      #right-panel { width: 100% !important; height: 40vh; border-top: 1px solid #e5e7eb; }
+      #connections { display: none; }
+      .mobile-toggle-btn { display: flex !important; }
+    }
+    .mobile-toggle-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: #165DFF; color: white; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(22,93,255,0.3); cursor: pointer; border: none; }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+  <button class="mobile-toggle-btn" id="mobileToggle">
+    <i class="fas fa-info"></i>
+  </button>
+
+  <div id="app" class="flex h-screen relative">
+
+    <!-- ========== 左侧：活动管理界面 ========== -->
+    <div id="left-panel" class="w-[80%] overflow-y-auto bg-gray-50 relative">
+
+      <!-- 顶部导航栏 -->
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-[#165DFF] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+            <i class="fas fa-store"></i>
+          </div>
+          <h1 class="text-lg font-semibold text-gray-800">商城后台管理系统</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-gray-500"><i class="far fa-bell mr-1"></i></span>
+          <span class="text-sm text-gray-600"><i class="fas fa-user-circle mr-1"></i> admin</span>
+        </div>
+      </header>
+
+      <div class="flex">
+        <!-- 侧边菜单 -->
+        <aside class="w-52 bg-white border-r border-gray-200 min-h-[calc(100vh-56px)] flex-shrink-0">
+          <nav class="py-4">
+            <div class="px-4 mb-2 sidebar-label font-semibold uppercase">营销中心</div>
+            <div class="proto-element sidebar-menu-item active px-4 py-2.5 flex items-center gap-3 text-gray-700 text-sm" data-proto-id="1">
+              <i class="fas fa-ticket-alt w-5 text-center"></i><span>活动管理</span>
+            </div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-400 text-sm">
+              <i class="fas fa-edit w-5 text-center"></i><span>券模板（后续）</span>
+            </div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-400 text-sm">
+              <i class="fas fa-history w-5 text-center"></i><span>发放记录（后续）</span>
+            </div>
+            <div class="sidebar-menu-item px-4 py-2.5 flex items-center gap-3 text-gray-400 text-sm">
+              <i class="fas fa-chart-bar w-5 text-center"></i><span>数据统计（后续）</span>
+            </div>
+          </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 p-6 overflow-y-auto" style="max-height: calc(100vh - 56px);">
+
+          <!-- ==================== 视图1：活动列表 ==================== -->
+          <div id="view-list">
+            <!-- 面包屑 -->
+            <div class="flex items-center gap-2 text-sm text-gray-400 mb-3">
+              <span>营销中心</span><i class="fas fa-chevron-right text-xs"></i><span class="text-gray-700 font-medium">活动管理</span>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-800">活动列表</h2>
+              <!-- ★ 连线 3：创建活动入口 -->
+              <div class="proto-element" data-proto-id="3">
+                <button onclick="goCreateActivity()" class="btn-click bg-[#165DFF] hover:bg-[#0e4fd0] text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2">
+                  <i class="fas fa-plus"></i> 创建活动
+                </button>
+              </div>
+            </div>
+
+            <!-- 筛选区 -->
+            <div class="bg-white rounded-xl p-4 mb-4 border border-gray-200 flex flex-wrap items-end gap-3">
+              <div>
+                <label class="form-label">活动名称</label>
+                <input id="searchKeyword" type="text" placeholder="请输入活动名称" class="form-input w-44 h-9 px-3 border border-gray-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="form-label">状态</label>
+                <select id="searchStatus" class="form-input h-9 px-3 border border-gray-300 rounded-lg text-sm bg-white">
+                  <option value="">全部</option>
+                  <option value="not_started">未开始</option>
+                  <option value="ongoing">进行中</option>
+                  <option value="ended">已结束</option>
+                  <option value="stopped">已停用</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">活动时间</label>
+                <div class="flex items-center gap-2">
+                  <input type="date" id="searchDateFrom" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm">
+                  <span class="text-gray-400 text-sm">至</span>
+                  <input type="date" id="searchDateTo" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+              </div>
+              <button onclick="doSearch()" class="btn-click bg-[#165DFF] text-white text-sm px-4 h-9 rounded-lg">查询</button>
+              <button onclick="resetSearch()" class="btn-click bg-white border border-gray-300 text-gray-600 text-sm px-4 h-9 rounded-lg">重置</button>
+            </div>
+
+            <!-- 活动表格 -->
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <table class="data-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th class="text-left px-4 py-3">活动名称</th>
+                    <th class="text-left px-4 py-3">活动时间</th>
+                    <th class="text-left px-4 py-3">状态</th>
+                    <th class="text-center px-4 py-3">绑定券</th>
+                    <th class="text-center px-4 py-3">领取量</th>
+                    <th class="text-center px-4 py-3">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTableBody">
+                  <!-- JS 渲染 -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="flex items-center justify-between mt-4 text-sm text-gray-500">
+              <span>共 <span id="totalCount">6</span> 条</span>
+              <div class="flex items-center gap-1">
+                <button class="btn-click px-3 py-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-40" disabled>上一页</button>
+                <button class="px-3 py-1.5 bg-[#165DFF] text-white rounded-lg">1</button>
+                <button class="btn-click px-3 py-1.5 bg-white border border-gray-300 rounded-lg disabled:opacity-40" disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 视图2：活动配置 ==================== -->
+          <div id="view-form" style="display:none;">
+            <!-- 面包屑 -->
+            <div class="flex items-center gap-2 text-sm text-gray-400 mb-3">
+              <span>营销中心</span><i class="fas fa-chevron-right text-xs"></i>
+              <span onclick="goList()" class="cursor-pointer hover:text-[#165DFF]">活动管理</span><i class="fas fa-chevron-right text-xs"></i>
+              <span class="text-gray-700 font-medium" id="formBreadcrumb">创建活动</span>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+              <h2 class="text-base font-semibold text-gray-800 mb-5" id="formTitle">创建活动</h2>
+
+              <!-- ① 基础信息 -->
+              <div class="border-b border-gray-100 pb-5 mb-5">
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">1</span> 基础信息
+                </div>
+                <div class="grid grid-cols-2 gap-4 max-w-2xl">
+                  <div>
+                    <label class="form-label">活动名称 <span class="text-red-500">*</span></label>
+                    <input id="fName" type="text" placeholder="如：五常大米上新特惠" class="form-input w-full h-9 px-3 border border-gray-300 rounded-lg text-sm">
+                  </div>
+                  <div>
+                    <label class="form-label">活动状态</label>
+                    <div class="flex items-center gap-2 h-9">
+                      <span class="tag tag-gray">草稿</span>
+                      <span class="text-xs text-gray-400">保存后可在列表上架</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="form-label">活动时间 <span class="text-red-500">*</span></label>
+                    <div class="flex items-center gap-2">
+                      <input id="fTimeStart" type="datetime-local" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm flex-1">
+                      <span class="text-gray-400 text-sm">至</span>
+                      <input id="fTimeEnd" type="datetime-local" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm flex-1">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ② 活动价格 -->
+              <div class="border-b border-gray-100 pb-5 mb-5">
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">2</span> 活动价格
+                </div>
+                <div class="grid grid-cols-2 gap-4 max-w-2xl">
+                  <div>
+                    <label class="form-label">活动售价（元） <span class="text-red-500">*</span></label>
+                    <input id="fSalePrice" type="number" placeholder="0.00" class="form-input w-full h-9 px-3 border border-gray-300 rounded-lg text-sm">
+                  </div>
+                  <div>
+                    <label class="form-label">入账商户 Sn <span class="text-red-500">*</span></label>
+                    <input id="fDeviceSn" type="text" placeholder="商户设备序列号" class="form-input w-full h-9 px-3 border border-gray-300 rounded-lg text-sm">
+                  </div>
+                </div>
+              </div>
+
+              <!-- ③ 库存与回收 -->
+              <div class="border-b border-gray-100 pb-5 mb-5">
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">3</span> 库存与回收
+                </div>
+                <div class="flex items-center gap-3 max-w-2xl">
+                  <span class="text-sm text-gray-600">活动过期是否回收库存</span>
+                  <button id="fRecycleToggle" onclick="toggleRecycle()" class="relative w-10 h-5 rounded-full transition-colors" style="background:#165DFF;">
+                    <span class="absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow"></span>
+                  </button>
+                  <span class="text-xs text-gray-400" id="fRecycleText">是（过期后未领取券回收）</span>
+                </div>
+              </div>
+
+              <!-- ④ 参与限额（矩阵+折叠） -->
+              <div class="border-b border-gray-100 pb-5 mb-5">
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">4</span> 参与限额
+                  <span class="text-xs font-normal text-gray-400">空 = 不限 · 0 = 禁止参与</span>
+                </div>
+                <div class="max-w-2xl">
+                  <table class="limit-table w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
+                    <thead>
+                      <tr>
+                        <th class="text-left px-3 py-2 w-36">限额维度</th>
+                        <th class="text-center px-3 py-2">总限额</th>
+                        <th class="text-center px-3 py-2">日限额</th>
+                        <th class="text-center px-3 py-2">周限额</th>
+                        <th class="text-center px-3 py-2 advanced-col" style="display:none;">月限额</th>
+                        <th class="text-center px-3 py-2 advanced-col" style="display:none;">季限额</th>
+                        <th class="text-center px-3 py-2 advanced-col" style="display:none;">年限额</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-t">
+                        <td class="px-3 py-2 text-gray-600">
+                          活动级
+                          <div class="text-xs text-gray-400">整个活动总参与次数</div>
+                        </td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="activity" data-gran="all" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="activity" data-gran="day" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="activity" data-gran="week" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="activity" data-gran="month" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="activity" data-gran="quarter" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="activity" data-gran="year" placeholder="不限"></td>
+                      </tr>
+                      <tr class="border-t">
+                        <td class="px-3 py-2 text-gray-600">
+                          用户级
+                          <div class="text-xs text-gray-400">单个手机号参与次数</div>
+                        </td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="user" data-gran="all" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="user" data-gran="day" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center"><input class="limit-input" data-dim="user" data-gran="week" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="user" data-gran="month" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="user" data-gran="quarter" placeholder="不限"></td>
+                        <td class="px-3 py-2 text-center advanced-col" style="display:none;"><input class="limit-input" data-dim="user" data-gran="year" placeholder="不限"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button onclick="toggleAdvanced()" class="btn-click mt-3 text-sm text-[#165DFF] flex items-center gap-1">
+                    <i class="fas fa-chevron-down text-xs" id="advancedIcon"></i>
+                    <span id="advancedText">展开高级模式（月/季/年限额）</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ⑤ 活动时段与人群 -->
+              <div class="border-b border-gray-100 pb-5 mb-5">
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">5</span> 活动时段与人群
+                </div>
+                <div class="grid grid-cols-2 gap-4 max-w-2xl">
+                  <div>
+                    <label class="form-label">每日指定时段</label>
+                    <div class="flex items-center gap-2">
+                      <input id="fDayTimeBegin" type="time" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm">
+                      <span class="text-gray-400 text-sm">至</span>
+                      <input id="fDayTimeEnd" type="time" class="form-input h-9 px-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">留空 = 全天可参与</div>
+                  </div>
+                  <div>
+                    <label class="form-label">指定周几</label>
+                    <div class="flex items-center gap-1 h-9" id="weekdayWrap">
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="1" onclick="toggleWeekday(this)">一</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="2" onclick="toggleWeekday(this)">二</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="3" onclick="toggleWeekday(this)">三</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="4" onclick="toggleWeekday(this)">四</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="5" onclick="toggleWeekday(this)">五</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="6" onclick="toggleWeekday(this)">六</button>
+                      <button type="button" class="weekday-btn btn-click w-8 h-8 rounded-md border text-xs" data-w="7" onclick="toggleWeekday(this)">日</button>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">空选 = 每天</div>
+                  </div>
+                  <div>
+                    <label class="form-label">活动人群</label>
+                    <select id="fCrowd" class="form-input h-9 px-3 border border-gray-300 rounded-lg text-sm bg-white w-full">
+                      <option value="all">全部用户</option>
+                      <option value="new">新用户</option>
+                      <option value="member">会员用户</option>
+                      <option value="crowd_001">人群包：高活跃用户</option>
+                      <option value="crowd_002">人群包：复购用户</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ⑥ 活动绑定（新增式明细） -->
+              <div>
+                <div class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 bg-[#165DFF] text-white text-xs rounded flex items-center justify-center">6</span> 活动绑定
+                  <span class="text-xs font-normal text-gray-400">绑定商品（SKU）或优惠券，可多条</span>
+                </div>
+
+                <!-- 绑定明细表头 -->
+                <div class="bg-gray-50 rounded-t-lg border border-gray-200 px-4 py-2.5 flex items-center text-xs font-semibold text-gray-600">
+                  <span class="w-28">绑定类型</span>
+                  <span class="flex-1">绑定对象</span>
+                  <span class="w-56 text-center">商品级属性（展开配置）</span>
+                  <span class="w-16 text-center">操作</span>
+                </div>
+                <div id="bindList" class="border border-t-0 border-gray-200 rounded-b-lg">
+                  <!-- JS 渲染绑定行 -->
+                </div>
+                <button onclick="openBindModal()" class="btn-click mt-3 text-sm text-[#165DFF] flex items-center gap-1">
+                  <i class="fas fa-plus text-xs"></i> 新增绑定
+                </button>
+              </div>
+
+              <!-- 保存区 -->
+              <div class="flex items-center gap-3 mt-8 pt-5 border-t border-gray-100">
+                <button onclick="saveActivity()" class="btn-click bg-[#165DFF] hover:bg-[#0e4fd0] text-white text-sm px-8 py-2.5 rounded-lg">保存</button>
+                <button onclick="goList()" class="btn-click bg-white border border-gray-300 text-gray-600 text-sm px-6 py-2.5 rounded-lg">取消</button>
+              </div>
+            </div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- 分隔条 -->
+    <div id="divider" class="w-1 bg-gray-200 flex-shrink-0"></div>
+
+    <!-- ========== 右侧：功能说明面板 ========== -->
+    <div id="right-panel" class="w-[20%] bg-[#FFFBF0] border-l border-gray-200 overflow-y-auto p-4" style="max-height: 100vh;">
+      <div class="font-semibold text-amber-600 text-sm mb-3 flex items-center gap-2">
+        <i class="fas fa-lightbulb"></i> 功能说明
+      </div>
+      <div class="space-y-3">
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="1">
+          <span class="font-bold text-amber-600">①</span> <b>活动管理</b>：营销中心唯一菜单，活动配置从列表内「创建/编辑」进入，不单独占菜单。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="2">
+          <span class="font-bold text-amber-600">②</span> <b>列表筛选</b>：名称 / 状态 / 时间范围三条件组合查询；状态四态（未开始/进行中/已结束/已停用）。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="3">
+          <span class="font-bold text-amber-600">③</span> <b>创建活动</b>：入口在列表页顶部，点击进入活动配置（独立视图），保存后回列表并刷新。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="4">
+          <span class="font-bold text-amber-600">④</span> <b>状态流转</b>：草稿 → 上架 → 未开始 → 进行中 → 已结束；下架 → 已停用（已发券仍可用，不再发放）。下架/删除需二次确认。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="5">
+          <span class="font-bold text-amber-600">⑤</span> <b>限额矩阵</b>：活动级 + 用户级两维度 × 总/日/周（基础）＋ 月/季/年（高级折叠）。空 = 不限，0 = 禁止。商品级限额在绑定行内配置。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="6">
+          <span class="font-bold text-amber-600">⑥</span> <b>活动绑定（新增式）</b>：点「新增绑定」弹窗选类型（商品/优惠券）→ 多选对象 → 生成明细行；行内展开配置商品级属性（商品售价/商品限额/商品×用户），每行可删除。
+        </div>
+
+        <div class="proto-desc p-3 text-sm" data-proto-id="7">
+          <span class="font-bold text-amber-600">⑦</span> <b>保存校验</b>：名称/时间/售价/入账Sn/至少1条绑定 为必填；成功 toast + 回列表。用户端联动：绑定商品 = 详情页横条展示范围，绑定券 = 可发放券。
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：新增绑定 ==================== -->
+  <div id="modal-bind" class="modal-overlay">
+    <div class="modal-content p-6 w-[560px]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold text-gray-800">新增绑定</h3>
+        <button onclick="closeModal('modal-bind')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+      </div>
+
+      <label class="form-label">绑定类型</label>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button id="bindTypeProduct" onclick="selectBindType('product')" class="btn-click border-2 border-[#165DFF] bg-blue-50 text-[#165DFF] rounded-lg py-3 text-sm font-medium">商品（SKU）</button>
+        <button id="bindTypeCoupon" onclick="selectBindType('coupon')" class="btn-click border-2 border-gray-200 text-gray-500 rounded-lg py-3 text-sm font-medium">优惠券</button>
+      </div>
+
+      <div id="bindProductWrap">
+        <label class="form-label">选择商品（可多选）</label>
+        <div class="border border-gray-200 rounded-lg max-h-48 overflow-y-auto p-2 space-y-1" id="bindProductList"></div>
+      </div>
+      <div id="bindCouponWrap" style="display:none;">
+        <label class="form-label">选择优惠券（可多选）</label>
+        <div class="border border-gray-200 rounded-lg max-h-48 overflow-y-auto p-2 space-y-1" id="bindCouponList"></div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-5">
+        <button onclick="closeModal('modal-bind')" class="btn-click px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600">取消</button>
+        <button onclick="confirmBind()" class="btn-click px-5 py-2 bg-[#165DFF] text-white rounded-lg text-sm">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：活动详情 ==================== -->
+  <div id="modal-detail" class="modal-overlay">
+    <div class="modal-content p-6 w-[600px]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold text-gray-800">活动详情</h3>
+        <button onclick="closeModal('modal-detail')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="detailBody" class="space-y-4 text-sm"></div>
+      <div class="flex justify-end mt-5">
+        <button onclick="closeModal('modal-detail')" class="btn-click px-5 py-2 bg-[#165DFF] text-white rounded-lg text-sm">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：二次确认 ==================== -->
+  <div id="modal-confirm" class="modal-overlay">
+    <div class="modal-content p-6 w-[420px]">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>
+          <h3 class="text-base font-semibold text-gray-800" id="confirmTitle">确认操作</h3>
+          <p class="text-sm text-gray-500 mt-0.5" id="confirmMsg">确定执行该操作吗？</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button onclick="closeModal('modal-confirm')" class="btn-click px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600">取消</button>
+        <button onclick="doConfirmAction()" class="btn-click px-5 py-2 bg-[#165DFF] text-white rounded-lg text-sm" id="confirmBtn">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast"></div>
+
+  <script>
+    // ==================== 数据 ====================
+    var ACTIVITIES = [
+      { id: 1, name: '五常大米上新特惠', timeStart: '2026-08-01 00:00', timeEnd: '2026-08-31 23:59', status: 'ongoing', couponCount: 3, claimed: 500, total: 2000 },
+      { id: 2, name: '五常大米囤货季', timeStart: '2026-08-01 00:00', timeEnd: '2026-08-31 23:59', status: 'ongoing', couponCount: 2, claimed: 236, total: 1000 },
+      { id: 3, name: '大米品类折扣日', timeStart: '2026-08-01 00:00', timeEnd: '2026-08-20 23:59', status: 'ended', couponCount: 1, claimed: 999, total: 1000 },
+      { id: 4, name: '全场大促·满减专区', timeStart: '2026-08-05 00:00', timeEnd: '2026-08-31 23:59', status: 'ongoing', couponCount: 2, claimed: 800, total: 1000 },
+      { id: 5, name: '新人专享·满减券', timeStart: '2026-08-01 00:00', timeEnd: '2026-09-30 23:59', status: 'not_started', couponCount: 1, claimed: 0, total: 2000 },
+      { id: 6, name: '会员日专属活动', timeStart: '2026-08-10 00:00', timeEnd: '2026-08-20 23:59', status: 'stopped', couponCount: 1, claimed: 120, total: 500 },
+    ];
+
+    var PRODUCTS = [
+      { id: 'P001', name: '五常大米 5kg 礼盒装', sku: 'SKU-5KG-RICE' },
+      { id: 'P002', name: '五常大米 10kg 家庭装', sku: 'SKU-10KG-RICE' },
+      { id: 'P003', name: '2026新款时尚休闲T恤', sku: 'SKU-TSHIRT-01' },
+      { id: 'P004', name: '春季新款直筒牛仔裤', sku: 'SKU-JEANS-01' },
+    ];
+
+    var COUPONS = [
+      { id: 'C001', name: '满99减10', desc: '满99元可用' },
+      { id: 'C002', name: '满199减30', desc: '满199元可用' },
+      { id: 'C003', name: '9折券', desc: '无门槛' },
+      { id: 'C004', name: '满299减50', desc: '满299元可用' },
+      { id: 'C005', name: '满59减5', desc: '满59元可用' },
+    ];
+
+    var STATUS_MAP = {
+      not_started: { text: '未开始', cls: 'tag-blue' },
+      ongoing: { text: '进行中', cls: 'tag-green' },
+      ended: { text: '已结束', cls: 'tag-gray' },
+      stopped: { text: '已停用', cls: 'tag-orange' },
+    };
+
+    // 当前绑定列表（编辑态数据）
+    var BINDS = [];
+    var bindIdSeq = 1;
+    var bindType = 'product';
+    var selectedProducts = {};
+    var selectedCoupons = {};
+    var confirmAction = null;
+
+    // ==================== Toast / Modal ====================
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.classList.remove('show'); }, 2000);
+    }
+
+    function openModal(id) {
+      var m = document.getElementById(id);
+      if (m) m.classList.add('active');
+    }
+    function closeModal(id) {
+      var m = document.getElementById(id);
+      if (m) m.classList.remove('active');
+    }
+
+    // ==================== 视图切换 ====================
+    function goList() {
+      document.getElementById('view-list').style.display = 'block';
+      document.getElementById('view-form').style.display = 'none';
+      renderActivities();
+      setTimeout(drawLines, 50);
+    }
+
+    function goCreateActivity() {
+      document.getElementById('formTitle').textContent = '创建活动';
+      document.getElementById('formBreadcrumb').textContent = '创建活动';
+      resetForm();
+      document.getElementById('view-list').style.display = 'none';
+      document.getElementById('view-form').style.display = 'block';
+      setTimeout(drawLines, 50);
+    }
+
+    function goEditActivity(id) {
+      var a = ACTIVITIES.find(function(x) { return x.id === id; });
+      if (!a) return;
+      document.getElementById('formTitle').textContent = '编辑活动';
+      document.getElementById('formBreadcrumb').textContent = '编辑活动：' + a.name;
+      resetForm();
+      document.getElementById('fName').value = a.name;
+      document.getElementById('fSalePrice').value = '68.00';
+      document.getElementById('fDeviceSn').value = 'SN-20260801-001';
+      // 编辑态预置绑定（演示）
+      BINDS = [
+        { id: 1, type: 'product', name: '五常大米 5kg 礼盒装', ref: 'P001', price: '68.00', limits: { all: '500', day: '50', week: '' } },
+        { id: 2, type: 'coupon', name: '满99减10', ref: 'C001', issueLimit: '1000', limits: { all: '500', day: '', week: '' } },
+      ];
+      bindIdSeq = 3;
+      renderBinds();
+      document.getElementById('view-list').style.display = 'none';
+      document.getElementById('view-form').style.display = 'block';
+      setTimeout(drawLines, 50);
+    }
+
+    function resetForm() {
+      document.getElementById('fName').value = '';
+      document.getElementById('fSalePrice').value = '';
+      document.getElementById('fDeviceSn').value = '';
+      document.getElementById('fTimeStart').value = '';
+      document.getElementById('fTimeEnd').value = '';
+      document.getElementById('fDayTimeBegin').value = '';
+      document.getElementById('fDayTimeEnd').value = '';
+      document.getElementById('fCrowd').value = 'all';
+      document.querySelectorAll('.limit-input').forEach(function(i) { i.value = ''; });
+      document.querySelectorAll('.weekday-btn').forEach(function(b) {
+        b.classList.remove('bg-[#165DFF]', 'text-white', 'border-[#165DFF]');
+        b.classList.add('border-gray-300', 'text-gray-600');
+      });
+      BINDS = [];
+      renderBinds();
+    }
+
+    // ==================== 活动列表渲染 ====================
+    function renderActivities(filter) {
+      var body = document.getElementById('activityTableBody');
+      if (!body) return;
+      var rows = ACTIVITIES.filter(function(a) {
+        if (!filter) return true;
+        if (filter.keyword && a.name.indexOf(filter.keyword) === -1) return false;
+        if (filter.status && a.status !== filter.status) return false;
+        return true;
+      });
+      document.getElementById('totalCount').textContent = rows.length;
+      if (rows.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">暂无符合条件的活动</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(function(a) {
+        var st = STATUS_MAP[a.status];
+        var canStop = a.status === 'not_started' || a.status === 'ongoing';
+        var canDelete = a.status === 'not_started';
+        return '<tr class="border-t">' +
+          '<td class="px-4 py-3">' +
+            '<div class="font-medium text-gray-800">' + a.name + '</div>' +
+            '<div class="text-xs text-gray-400 mt-0.5">ID: ACT-' + String(a.id).padStart(4, '0') + '</div>' +
+          '</td>' +
+          '<td class="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">' + a.timeStart + '<br>' + a.timeEnd + '</td>' +
+          '<td class="px-4 py-3"><span class="tag ' + st.cls + '">' + st.text + '</span></td>' +
+          '<td class="px-4 py-3 text-center text-gray-700">' + a.couponCount + ' 张</td>' +
+          '<td class="px-4 py-3 text-center">' +
+            '<span class="text-gray-700">' + a.claimed + '</span>' +
+            '<span class="text-gray-400 text-xs"> / ' + a.total + '</span>' +
+          '</td>' +
+          '<td class="px-4 py-3 text-center whitespace-nowrap">' +
+            '<button onclick="goEditActivity(' + a.id + ')" class="btn-click text-[#165DFF] hover:underline text-xs mr-2">编辑</button>' +
+            '<button onclick="showDetail(' + a.id + ')" class="btn-click text-gray-500 hover:underline text-xs mr-2">详情</button>' +
+            (canStop
+              ? '<button onclick="askStop(' + a.id + ')" class="btn-click text-orange-500 hover:underline text-xs mr-2">下架</button>'
+              : '<button onclick="askRestart(' + a.id + ')" class="btn-click text-green-500 hover:underline text-xs mr-2">上架</button>') +
+            (canDelete
+              ? '<button onclick="askDelete(' + a.id + ')" class="btn-click text-red-500 hover:underline text-xs">删除</button>'
+              : '') +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function doSearch() {
+      var keyword = document.getElementById('searchKeyword').value.trim();
+      var status = document.getElementById('searchStatus').value;
+      renderActivities({ keyword: keyword, status: status });
+      showToast('查询完成');
+    }
+
+    function resetSearch() {
+      document.getElementById('searchKeyword').value = '';
+      document.getElementById('searchStatus').value = '';
+      document.getElementById('searchDateFrom').value = '';
+      document.getElementById('searchDateTo').value = '';
+      renderActivities();
+    }
+
+    // ==================== 列表操作：详情 / 下架 / 删除 ====================
+    function showDetail(id) {
+      var a = ACTIVITIES.find(function(x) { return x.id === id; });
+      if (!a) return;
+      var st = STATUS_MAP[a.status];
+      document.getElementById('detailBody').innerHTML =
+        '<div class="bg-gray-50 rounded-lg p-4">' +
+          '<div class="flex items-center justify-between">' +
+            '<div class="font-medium text-gray-800">' + a.name + '</div>' +
+            '<span class="tag ' + st.cls + '">' + st.text + '</span>' +
+          '</div>' +
+          '<div class="text-xs text-gray-400 mt-1">活动ID: ACT-' + String(a.id).padStart(4, '0') + '</div>' +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-3">' +
+          '<div class="border border-gray-100 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">活动时间</div><div class="text-sm text-gray-700">' + a.timeStart + '<br>' + a.timeEnd + '</div></div>' +
+          '<div class="border border-gray-100 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">绑定券模板</div><div class="text-sm text-gray-700">' + a.couponCount + ' 张</div></div>' +
+          '<div class="border border-gray-100 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">领取量</div><div class="text-sm text-gray-700">' + a.claimed + ' / ' + a.total + '</div></div>' +
+          '<div class="border border-gray-100 rounded-lg p-3"><div class="text-xs text-gray-400 mb-1">活动售价</div><div class="text-sm text-gray-700">¥68.00</div></div>' +
+        '</div>' +
+        '<div class="border border-gray-100 rounded-lg p-3">' +
+          '<div class="text-xs text-gray-400 mb-2">绑定明细</div>' +
+          '<div class="text-sm text-gray-700">· 商品：五常大米 5kg 礼盒装（售价 ¥68.00）</div>' +
+          '<div class="text-sm text-gray-700 mt-1">· 优惠券：满99减10（发放上限 1000）</div>' +
+        '</div>';
+      openModal('modal-detail');
+    }
+
+    function askStop(id) {
+      var a = ACTIVITIES.find(function(x) { return x.id === id; });
+      confirmAction = function() {
+        a.status = 'stopped';
+        renderActivities();
+        showToast('活动已下架，已发放的券仍可使用，不再展示领取入口');
+      };
+      document.getElementById('confirmTitle').textContent = '下架活动';
+      document.getElementById('confirmMsg').textContent = '确定下架「' + a.name + '」吗？已发放的券仍可使用，但不再展示领取入口。';
+      document.getElementById('confirmBtn').className = 'btn-click px-5 py-2 bg-orange-500 text-white rounded-lg text-sm';
+      openModal('modal-confirm');
+    }
+
+    function askRestart(id) {
+      var a = ACTIVITIES.find(function(x) { return x.id === id; });
+      confirmAction = function() {
+        a.status = 'not_started';
+        renderActivities();
+        showToast('活动已重新上架');
+      };
+      document.getElementById('confirmTitle').textContent = '上架活动';
+      document.getElementById('confirmMsg').textContent = '确定重新上架「' + a.name + '」吗？上架后立即生效。';
+      document.getElementById('confirmBtn').className = 'btn-click px-5 py-2 bg-[#165DFF] text-white rounded-lg text-sm';
+      openModal('modal-confirm');
+    }
+
+    function askDelete(id) {
+      var a = ACTIVITIES.find(function(x) { return x.id === id; });
+      confirmAction = function() {
+        ACTIVITIES = ACTIVITIES.filter(function(x) { return x.id !== id; });
+        renderActivities();
+        showToast('活动已删除');
+      };
+      document.getElementById('confirmTitle').textContent = '删除活动';
+      document.getElementById('confirmMsg').textContent = '确定删除「' + a.name + '」吗？删除后不可恢复。';
+      document.getElementById('confirmBtn').className = 'btn-click px-5 py-2 bg-red-500 text-white rounded-lg text-sm';
+      openModal('modal-confirm');
+    }
+
+    function doConfirmAction() {
+      if (confirmAction) confirmAction();
+      confirmAction = null;
+      closeModal('modal-confirm');
+    }
+
+    // ==================== 限额矩阵：高级折叠 ====================
+    var advancedOpen = false;
+    function toggleAdvanced() {
+      advancedOpen = !advancedOpen;
+      var cols = document.querySelectorAll('.advanced-col');
+      cols.forEach(function(c) { c.style.display = advancedOpen ? 'table-cell' : 'none'; });
+      document.getElementById('advancedIcon').className = 'fas ' + (advancedOpen ? 'fa-chevron-up' : 'fa-chevron-down') + ' text-xs';
+      document.getElementById('advancedText').textContent = advancedOpen ? '收起高级模式' : '展开高级模式（月/季/年限额）';
+      setTimeout(drawLines, 50);
+    }
+
+    // ==================== 库存回收开关 ====================
+    var recycleOn = true;
+    function toggleRecycle() {
+      recycleOn = !recycleOn;
+      var btn = document.getElementById('fRecycleToggle');
+      btn.style.background = recycleOn ? '#165DFF' : '#C9CDD4';
+      btn.querySelector('span').style.left = recycleOn ? '' : '2px';
+      btn.querySelector('span').style.right = recycleOn ? '2px' : '';
+      document.getElementById('fRecycleText').textContent = recycleOn ? '是（过期后未领取券回收）' : '否（过期后作废不回收）';
+    }
+
+    // ==================== 周几多选 ====================
+    function toggleWeekday(btn) {
+      var on = btn.classList.toggle('bg-[#165DFF]');
+      btn.classList.toggle('text-white', on);
+      btn.classList.toggle('border-[#165DFF]', on);
+      btn.classList.toggle('border-gray-300', !on);
+      btn.classList.toggle('text-gray-600', !on);
+    }
+
+    // ==================== 绑定明细 ====================
+    function renderBinds() {
+      var wrap = document.getElementById('bindList');
+      if (!wrap) return;
+      if (BINDS.length === 0) {
+        wrap.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">暂无绑定，点击「新增绑定」添加商品或优惠券</div>';
+        return;
+      }
+      wrap.innerHTML = BINDS.map(function(b) {
+        var isProduct = b.type === 'product';
+        var typeTag = isProduct
+          ? '<span class="tag tag-blue">商品</span>'
+          : '<span class="tag tag-green">优惠券</span>';
+        var nameHtml = isProduct
+          ? '<div class="text-sm text-gray-800 font-medium">' + b.name + '</div><div class="text-xs text-gray-400">' + b.sku + '</div>'
+          : '<div class="text-sm text-gray-800 font-medium">' + b.name + '</div><div class="text-xs text-gray-400">' + b.desc + '</div>';
+        var configHtml = isProduct
+          ? '<div class="bind-config p-3 mt-2">' +
+              '<div class="grid grid-cols-4 gap-3 items-end">' +
+                '<div><label class="form-label">活动商品售价</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.price || '') + '"></div>' +
+                '<div><label class="form-label">商品总限额</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.limits.all || '') + '" placeholder="不限"></div>' +
+                '<div><label class="form-label">商品日限额</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.limits.day || '') + '" placeholder="不限"></div>' +
+                '<div><label class="form-label">商品×用户</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.limits.userAll || '') + '" placeholder="不限"></div>' +
+              '</div>' +
+            '</div>'
+          : '<div class="bind-config p-3 mt-2">' +
+              '<div class="grid grid-cols-3 gap-3 items-end">' +
+                '<div><label class="form-label">该券发放上限</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.issueLimit || '') + '"></div>' +
+                '<div><label class="form-label">券总限额</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.limits.all || '') + '" placeholder="不限"></div>' +
+                '<div><label class="form-label">券日限额</label><input class="form-input h-8 w-full px-2 border border-gray-300 rounded text-sm" value="' + (b.limits.day || '') + '" placeholder="不限"></div>' +
+              '</div>' +
+            '</div>';
+        return '<div class="bind-row border-b border-gray-100 px-4 py-3">' +
+          '<div class="flex items-center">' +
+            '<span class="w-28">' + typeTag + '</span>' +
+            '<span class="flex-1">' + nameHtml + '</span>' +
+            '<span class="w-56 text-center"><button onclick="toggleBindConfig(this)" class="btn-click text-xs text-[#165DFF] flex items-center gap-1 mx-auto"><i class="fas fa-chevron-down text-[10px]"></i> 商品级属性</button></span>' +
+            '<span class="w-16 text-center"><button onclick="removeBind(' + b.id + ')" class="btn-click text-red-400 hover:text-red-600 text-xs"><i class="fas fa-trash-alt"></i></button></span>' +
+          '</div>' +
+          '<div style="display:none;">' + configHtml + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function toggleBindConfig(btn) {
+      var cfg = btn.closest('.bind-row').querySelector('div[style]');
+      if (cfg.style.display === 'none') {
+        cfg.style.display = 'block';
+        btn.querySelector('i').className = 'fas fa-chevron-up text-[10px]';
+      } else {
+        cfg.style.display = 'none';
+        btn.querySelector('i').className = 'fas fa-chevron-down text-[10px]';
+      }
+      setTimeout(drawLines, 50);
+    }
+
+    function removeBind(id) {
+      BINDS = BINDS.filter(function(b) { return b.id !== id; });
+      renderBinds();
+      showToast('已移除该绑定');
+    }
+
+    // ==================== 新增绑定弹窗 ====================
+    function openBindModal() {
+      bindType = 'product';
+      selectedProducts = {};
+      selectedCoupons = {};
+      renderBindOptions();
+      selectBindType('product');
+      openModal('modal-bind');
+    }
+
+    function selectBindType(type) {
+      bindType = type;
+      var pBtn = document.getElementById('bindTypeProduct');
+      var cBtn = document.getElementById('bindTypeCoupon');
+      if (type === 'product') {
+        pBtn.className = 'btn-click border-2 border-[#165DFF] bg-blue-50 text-[#165DFF] rounded-lg py-3 text-sm font-medium';
+        cBtn.className = 'btn-click border-2 border-gray-200 text-gray-500 rounded-lg py-3 text-sm font-medium';
+      } else {
+        pBtn.className = 'btn-click border-2 border-gray-200 text-gray-500 rounded-lg py-3 text-sm font-medium';
+        cBtn.className = 'btn-click border-2 border-[#165DFF] bg-blue-50 text-[#165DFF] rounded-lg py-3 text-sm font-medium';
+      }
+      document.getElementById('bindProductWrap').style.display = type === 'product' ? 'block' : 'none';
+      document.getElementById('bindCouponWrap').style.display = type === 'coupon' ? 'block' : 'none';
+    }
+
+    function renderBindOptions() {
+      var pList = document.getElementById('bindProductList');
+      var cList = document.getElementById('bindCouponList');
+      pList.innerHTML = PRODUCTS.map(function(p) {
+        var checked = selectedProducts[p.id] ? 'checked' : '';
+        return '<label class="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">' +
+          '<input type="checkbox" ' + checked + ' onchange="toggleSel(\'product\', \'' + p.id + '\', this.checked)" class="accent-[#165DFF]">' +
+          '<span class="text-sm text-gray-700">' + p.name + '</span>' +
+          '<span class="text-xs text-gray-400">' + p.sku + '</span>' +
+        '</label>';
+      }).join('');
+      cList.innerHTML = COUPONS.map(function(c) {
+        var checked = selectedCoupons[c.id] ? 'checked' : '';
+        return '<label class="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">' +
+          '<input type="checkbox" ' + checked + ' onchange="toggleSel(\'coupon\', \'' + c.id + '\', this.checked)" class="accent-[#165DFF]">' +
+          '<span class="text-sm text-gray-700">' + c.name + '</span>' +
+          '<span class="text-xs text-gray-400">' + c.desc + '</span>' +
+        '</label>';
+      }).join('');
+    }
+
+    function toggleSel(type, id, checked) {
+      if (type === 'product') selectedProducts[id] = checked;
+      else selectedCoupons[id] = checked;
+    }
+
+    function confirmBind() {
+      var picked = [];
+      if (bindType === 'product') {
+        picked = PRODUCTS.filter(function(p) { return selectedProducts[p.id]; });
+        picked.forEach(function(p) {
+          BINDS.push({ id: bindIdSeq++, type: 'product', name: p.name, sku: p.sku, ref: p.id, price: '', limits: {} });
+        });
+      } else {
+        picked = COUPONS.filter(function(c) { return selectedCoupons[c.id]; });
+        picked.forEach(function(c) {
+          BINDS.push({ id: bindIdSeq++, type: 'coupon', name: c.name, desc: c.desc, ref: c.id, issueLimit: '', limits: {} });
+        });
+      }
+      if (picked.length === 0) {
+        showToast('请至少选择一个' + (bindType === 'product' ? '商品' : '优惠券'));
+        return;
+      }
+      renderBinds();
+      closeModal('modal-bind');
+      showToast('已添加 ' + picked.length + ' 条绑定');
+      setTimeout(drawLines, 50);
+    }
+
+    // ==================== 保存 ====================
+    function saveActivity() {
+      var name = document.getElementById('fName').value.trim();
+      var price = document.getElementById('fSalePrice').value.trim();
+      var sn = document.getElementById('fDeviceSn').value.trim();
+      if (!name) { showToast('请填写活动名称'); return; }
+      if (!price) { showToast('请填写活动售价'); return; }
+      if (!sn) { showToast('请填写入账商户Sn'); return; }
+      if (BINDS.length === 0) { showToast('请至少添加一条活动绑定'); return; }
+      showToast('保存成功');
+      setTimeout(function() { goList(); }, 600);
+    }
+
+    // ==================== SVG 连线 ====================
+    function drawLines() {
+      var svg = document.getElementById('connections');
+      if (!svg) return;
+      svg.innerHTML = '';
+      document.querySelectorAll('[data-proto-id]').forEach(function(el) {
+        var id = el.getAttribute('data-proto-id');
+        var left = document.querySelector('#left-panel [data-proto-id="' + id + '"]');
+        var right = document.querySelector('#right-panel [data-proto-id="' + id + '"]');
+        if (!left || !right) return;
+        var lRect = left.getBoundingClientRect();
+        var rRect = right.getBoundingClientRect();
+        if (lRect.width === 0 || rRect.width === 0) return;
+        var x1 = lRect.right, y1 = lRect.top + lRect.height / 2;
+        var x2 = rRect.left, y2 = rRect.top + lRect.height / 2;
+        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + (x1 + 50) + ',' + y1 + ' ' + (x2 - 50) + ',' + y2 + ' ' + x2 + ',' + y2);
+        path.setAttribute('class', 'connection-line');
+        svg.appendChild(path);
+        var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x1); circle.setAttribute('cy', y1); circle.setAttribute('r', '10');
+        circle.setAttribute('fill', '#165DFF');
+        svg.appendChild(circle);
+        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x1); text.setAttribute('y', y1 + 4);
+        text.setAttribute('text-anchor', 'middle'); text.setAttribute('fill', 'white');
+        text.setAttribute('font-size', '12');
+        text.textContent = id;
+        svg.appendChild(text);
+      });
+    }
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      renderActivities();
+      renderBinds();
+      drawLines();
+      window.addEventListener('resize', drawLines);
+      var mt = document.getElementById('mobileToggle');
+      if (mt) mt.addEventListener('click', function() {
+        var rp = document.getElementById('right-panel');
+        if (rp) rp.style.display = rp.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+  </script>
+
+  <!-- SVG 连线层 -->
+  <svg id="connections" class="fixed inset-0 w-full h-full pointer-events-none" style="z-index:50;"></svg>
+</body>
+</html>
