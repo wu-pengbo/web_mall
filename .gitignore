@@ -37,3 +37,7 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Playwright 调试产物（截图 / console 日志 / 快照 yml），可再生
+.playwright-cli/
+output/

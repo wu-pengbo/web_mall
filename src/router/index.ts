@@ -23,6 +23,12 @@ import WalletUser from '../views/wallet/WalletUser.vue'
 import TransactionLedger from '../views/wallet/TransactionLedger.vue'
 import RechargeManage from '../views/wallet/RechargeManage.vue'
 import WithdrawManage from '../views/wallet/WithdrawManage.vue'
+import MemberLayout from '../layout/MemberLayout.vue'
+import MemberList from '../views/member/MemberList.vue'
+import MemberTags from '../views/member/MemberTags.vue'
+import MemberLevels from '../views/member/MemberLevels.vue'
+import MemberBenefits from '../views/member/MemberBenefits.vue'
+import MemberGrants from '../views/member/MemberGrants.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -100,6 +106,18 @@ const router = createRouter({
           path: 'points',
           name: 'points-management',
           component: PointsManagement,
+        },
+        {
+          path: 'member',
+          component: MemberLayout,
+          children: [
+            { path: '', redirect: { name: 'member-list' } },
+            { path: 'members', name: 'member-list', component: MemberList },
+            { path: 'tags', name: 'member-tags', component: MemberTags },
+            { path: 'levels', name: 'member-levels', component: MemberLevels },
+            { path: 'benefits', name: 'member-benefits', component: MemberBenefits },
+            { path: 'grants', name: 'member-grants', component: MemberGrants },
+          ],
         },
         {
           path: 'wallet',
