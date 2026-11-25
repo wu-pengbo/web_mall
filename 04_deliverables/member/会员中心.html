@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f5f9" />
+    <title>会员中心 · Web Mall</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --primary: #4f6ef7;
+        --primary-soft: #edf2ff;
+        --ink: #202633;
+        --muted: #818b9b;
+        --line: #e8ebf1;
+        --canvas: #f3f5f9;
+        --white: #fff;
+        --green: #16845b;
+        --green-soft: #eaf7f1;
+        --gold: #b88732;
+        --gold-soft: #fff6e7;
+        --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        font-family: var(--font);
+        color: var(--ink);
+        background: var(--canvas);
+      }
+      * { box-sizing: border-box; }
+      body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--canvas); }
+      button { font: inherit; }
+      .topbar { height: 68px; background: var(--white); border-bottom: 1px solid var(--line); }
+      .topbar-inner { width: min(1180px, calc(100% - 48px)); height: 100%; margin: auto; display: flex; align-items: center; justify-content: space-between; }
+      .brand { display: flex; align-items: center; gap: 11px; }
+      .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--primary); color: white; font-size: 15px; font-weight: 750; }
+      .brand-name { font-size: 14px; font-weight: 700; letter-spacing: .01em; }
+      .brand-caption { margin-top: 2px; color: var(--muted); font-size: 10px; }
+      .top-link { border: 0; padding: 8px 0; color: #5d687a; background: transparent; font-size: 12px; text-decoration: none; cursor: pointer; }
+      .top-link:hover { color: var(--primary); }
+      .page { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 24px 0 48px; }
+      .breadcrumb { margin: 0 0 15px; color: var(--muted); font-size: 12px; }
+      .breadcrumb span { padding: 0 8px; color: #c5cbd5; }
+      .hero { position: relative; display: grid; grid-template-columns: 1fr 245px; gap: 24px; min-height: 232px; padding: 30px 34px; overflow: hidden; border: 1px solid #e1e6f2; border-radius: 14px; background: #fff; }
+      .hero-main { position: relative; z-index: 1; }
+      .eyebrow { color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .15em; }
+      h1 { margin: 8px 0 4px; font-size: 26px; font-weight: 700; letter-spacing: -.03em; }
+      .hero-desc { margin: 0; color: var(--muted); font-size: 13px; }
+      .member-meta { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+      .avatar { width: 48px; height: 48px; flex: 0 0 auto; display: grid; place-items: center; border: 3px solid #fff; border-radius: 50%; background: #e8edff; box-shadow: 0 0 0 1px #e5e9f1; color: #536690; font-size: 17px; font-weight: 650; }
+      .member-name { font-size: 14px; font-weight: 650; }
+      .member-id { margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .level-label { margin-left: 4px; padding: 5px 10px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 11px; font-weight: 650; }
+      .hero-level { align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: 21px; border: 1px solid #e6eaf4; border-radius: 11px; background: #f8f9fd; }
+      .hero-level-label { color: var(--muted); font-size: 11px; }
+      .hero-level-name { margin: 8px 0 5px; font-size: 23px; font-weight: 700; }
+      .hero-level-date { color: #9099a7; font-size: 11px; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+      .stat { min-height: 91px; padding: 15px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
+      .stat-label { color: var(--muted); font-size: 11px; }
+      .stat-value { margin-top: 9px; font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .stat-value small { margin-left: 4px; color: var(--muted); font-size: 11px; font-weight: 500; }
+      .section { margin-top: 15px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 11px; background: var(--white); }
+      .section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 17px; }
+      .section-title { margin: 0; font-size: 16px; font-weight: 680; }
+      .section-subtitle { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+      .growth-mode { padding: 5px 9px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 10px; font-weight: 650; }
+      .level-line { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .level-step { position: relative; padding: 0 12px 2px; text-align: center; }
+      .level-step::before { position: absolute; top: 9px; right: 50%; left: -50%; height: 2px; background: #e8ebf1; content: ''; }
+      .level-step:first-child::before { display: none; }
+      .level-dot { position: relative; z-index: 1; width: 19px; height: 19px; margin: 0 auto 8px; border: 5px solid #e7eaff; border-radius: 50%; background: var(--primary); }
+      .level-step.done .level-dot { border-color: #e5f4ed; background: var(--green); }
+      .level-step.future .level-dot { border-color: #f0f1f4; background: #c8cdd7; }
+      .level-name { font-size: 12px; font-weight: 650; }
+      .level-threshold { margin-top: 4px; color: var(--muted); font-size: 10px; }
+      .progress-card { margin-top: 19px; padding: 15px 16px; border-radius: 9px; background: #f8f9fc; }
+      .progress-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 11px; }
+      .progress-title { font-weight: 650; }
+      .progress-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+      .progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: #e8ebf1; }
+      .progress-fill { width: 64%; height: 100%; border-radius: inherit; background: var(--primary); }
+      .progress-note { margin-top: 8px; color: var(--muted); font-size: 10px; }
+      .section-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin: 0 0 16px; }
+      .tab { position: relative; padding: 0 0 11px; border: 0; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; }
+      .tab.active { color: var(--primary); font-weight: 650; }
+      .tab.active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--primary); content: ''; }
+      .coupon-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .coupon { display: grid; grid-template-columns: 82px 1fr auto; align-items: center; gap: 13px; min-height: 92px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 9px; }
+      .coupon-value { padding-right: 12px; border-right: 1px dashed #dce1e9; color: var(--primary); text-align: center; }
+      .coupon-value strong { display: block; font-size: 21px; font-weight: 750; font-variant-numeric: tabular-nums; }
+      .coupon-value small { color: var(--muted); font-size: 9px; }
+      .coupon-info { min-width: 0; }
+      .coupon-title { overflow: hidden; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+      .coupon-rule, .coupon-expiry { margin-top: 4px; color: var(--muted); font-size: 10px; }
+      .coupon-status { padding: 4px 8px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 10px; white-space: nowrap; }
+      .empty-benefits { display: flex; min-height: 100px; flex-direction: column; align-items: center; justify-content: center; border-radius: 9px; background: #fafbfd; color: var(--muted); text-align: center; }
+      .empty-mark { width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 8px; border: 1px solid #e4e8f1; border-radius: 50%; color: #9aa3b1; font-size: 13px; }
+      .empty-benefits strong { color: #626e80; font-size: 11px; font-weight: 600; }
+      .empty-benefits p { margin: 4px 0 0; font-size: 10px; }
+      .level-explanation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .level-explanation > div { display: flex; min-height: 68px; flex-direction: column; justify-content: center; gap: 5px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+      .level-explanation strong { font-size: 12px; font-weight: 650; }
+      .level-explanation span { color: var(--muted); font-size: 10px; }
+      .footer { padding: 22px 0 0; color: #a1a8b4; font-size: 10px; text-align: center; }
+      [hidden] { display: none !important; }
+      @media (max-width: 760px) {
+        .topbar-inner, .page { width: calc(100% - 28px); }
+        .hero { grid-template-columns: 1fr; padding: 23px 20px; }
+        .hero-level { min-height: 112px; }
+        .stats { gap: 8px; }
+        .stat { padding: 12px; }
+        .stat-value { font-size: 17px; }
+        .section { padding: 18px 16px; }
+        .coupon-list { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 480px) {
+        .topbar { height: 60px; }
+        .brand-caption { display: none; }
+        .hero { min-height: 0; }
+        .member-meta { flex-wrap: wrap; }
+        .level-line { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; }
+        .level-step:nth-child(3)::before { display: none; }
+        .level-step:nth-child(3)::after { position: absolute; top: -16px; left: 50%; width: 2px; height: 14px; background: #e8ebf1; content: ''; }
+        .stat-value small { display: block; margin: 3px 0 0; }
+        .section-head { align-items: center; }
+        .coupon { grid-template-columns: 68px 1fr auto; gap: 9px; padding: 11px 9px; }
+        .level-explanation { grid-template-columns: 1fr; }
+        .coupon-value strong { font-size: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand"><span class="brand-mark">M</span><div><div class="brand-name">Web Mall</div><div class="brand-caption">会员中心</div></div></div>
+        <a class="top-link" href="#benefits">我的优惠券</a>
+      </div>
+    </header>
+    <main class="page">
+      <p class="breadcrumb">我的商城 <span>/</span> 会员中心</p>
+      <section class="hero">
+        <div class="hero-main">
+          <div class="eyebrow">MEMBER PROFILE</div>
+          <h1>会员中心</h1>
+          <p class="hero-desc">查看会员等级、成长进度和等级权益。</p>
+          <div class="member-meta">
+            <span class="avatar">林</span>
+            <div><div class="member-name">林小满 <span class="level-label">银卡会员</span></div><div class="member-id">会员编号 M2026010081 · 加入于 2026-01-08</div></div>
+          </div>
+        </div>
+        <aside class="hero-level"><span class="hero-level-label">当前会员等级</span><strong class="hero-level-name">银卡会员</strong><span class="hero-level-date">等级获得时间 2026-05-16</span></aside>
+      </section>
+
+      <section class="stats" aria-label="会员数据">
+        <article class="stat"><div class="stat-label">当前成长值</div><div class="stat-value">3,200<small>成长值</small></div></article>
+        <article class="stat"><div class="stat-label">累计有效实付</div><div class="stat-value">¥3,280.50</div></article>
+        <article class="stat"><div class="stat-label">有效订单数</div><div class="stat-value">8<small>笔</small></div></article>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2 class="section-title">等级成长</h2><p class="section-subtitle">消费获得成长值，达到对应门槛后自动升级。</p></div><span class="growth-mode">成长值升级</span></div>
+        <div class="level-line">
+          <article class="level-step done"><span class="level-dot"></span><div class="level-name">普通会员</div><div class="level-threshold">注册即享</div></article>
+          <article class="level-step current"><span class="level-dot"></span><div class="level-name">银卡会员</div><div class="level-threshold">1,000 成长值</div></article>
+          <article class="level-step future"><span class="level-dot"></span><div class="level-name">金卡会员</div><div class="level-threshold">5,000 成长值</div></article>
+          <article class="level-step future"><span class="level-dot"></span><div class="level-name">钻石会员</div><div class="level-threshold">10,000 成长值</div></article>
+        </div>
+        <div class="progress-card"><div class="progress-top"><span class="progress-title">距离金卡会员</span><span class="progress-value">3,200 / 5,000 成长值 · 64%</span></div><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-note">再获得 1,800 成长值即可升级</div></div>
+      </section>
+
+      <section id="benefits" class="section">
+        <div class="section-head"><div><h2 class="section-title">会员权益</h2><p class="section-subtitle">会员等级权益与已领取优惠券。</p></div></div>
+        <nav class="section-tabs" aria-label="会员权益分类"><button class="tab active" type="button" data-tab="available">我的优惠券</button><button class="tab" type="button" data-tab="level-benefits">等级说明</button></nav>
+        <div id="available" class="coupon-list">
+          <article class="coupon"><div class="coupon-value"><strong>¥10</strong><small>优惠券</small></div><div class="coupon-info"><div class="coupon-title">银卡升级礼</div><div class="coupon-rule">满 ¥50 可用 · 银卡会员权益</div><div class="coupon-expiry">有效期至 2026-10-30</div></div><span class="coupon-status">可使用</span></article>
+          <article class="coupon"><div class="coupon-value"><strong>¥5</strong><small>优惠券</small></div><div class="coupon-info"><div class="coupon-title">会员专享无门槛券</div><div class="coupon-rule">无门槛 · 银卡会员权益</div><div class="coupon-expiry">有效期至 2026-11-15</div></div><span class="coupon-status">可使用</span></article>
+        </div>
+        <div id="level-benefits" hidden>
+          <div class="level-explanation"><div><strong>普通会员</strong><span>完成注册后自动获得</span></div><div><strong>银卡会员</strong><span>成长值达到 1,000，可获得银卡升级礼</span></div><div><strong>金卡会员</strong><span>成长值达到 5,000，可获得金卡专属权益</span></div><div><strong>钻石会员</strong><span>成长值达到 10,000，可获得钻石会员权益</span></div></div>
+        </div>
+      </section>
+      <footer class="footer">等级及权益按商城会员规则发放</footer>
+    </main>
+    <script>
+      const tabs = document.querySelectorAll('[data-tab]')
+      const sections = ['available', 'level-benefits']
+      tabs.forEach((tab) => tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.classList.toggle('active', item === tab))
+        sections.forEach((id) => { document.getElementById(id).hidden = id !== tab.dataset.tab })
+      }))
+    </script>
+  </body>
+</html>

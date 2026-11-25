@@ -14,6 +14,7 @@ const menus = [
   { path: '/order', name: '订单管理', icon: '📋' },
   { path: '/points', name: '积分管理', icon: '💰' },
   { path: '/wallet/overview', name: '钱包管理', icon: '💳' },
+  { path: '/member/members', name: '会员管理', icon: '会' },
   { path: '/user', name: '用户管理', icon: '👥' },
   { path: '/setting', name: '系统设置', icon: '⚙️' },
 ]
@@ -28,7 +29,8 @@ const goMenu = (path: string) => {
     path === '/vote' ||
     path === '/order' ||
     path === '/points' ||
-    path.startsWith('/wallet')
+    path.startsWith('/wallet') ||
+    path.startsWith('/member')
   ) {
     router.push(path)
   } else {
@@ -60,7 +62,8 @@ const goMenu = (path: string) => {
                 !route.path.startsWith('/reservation/board')) ||
               (menu.path === '/reservation/board' && route.path.startsWith('/reservation/board')) ||
               (menu.path === '/vote' && route.path.startsWith('/vote')) ||
-              (menu.path === '/order' && route.path.startsWith('/order')),
+              (menu.path === '/order' && route.path.startsWith('/order')) ||
+              (menu.path === '/member/members' && route.path.startsWith('/member')),
           }"
           @click="goMenu(menu.path)"
         >
