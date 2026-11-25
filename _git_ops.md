@@ -123,3 +123,9 @@
 | 2026-09-29 10:14 | push | main | git push origin main（Gitee）+ git push github main（GitHub），双远程同步 | afd57e3 |
 
 | 2026-09-29 10:14 | delete branch | feature/activity-page, dev | 合并后清理所有开发分支：本地 -d + 远程 --delete（Gitee/GitHub） | — |
+
+| 2026-11-25 10:51 | merge | codex/member-system-v1 → main | --no-ff 合并（2 个提交，16 文件 +1696/-2，会员中心模块：布局/列表/等级/权益/发券/标签） | a3d7f0f |
+
+| 2026-11-25 10:53 | push | main | git push origin main（Gitee）+ git push github main（GitHub），双远程同步 | a3d7f0f |
+
+| 2026-11-25 10:53 | delete branch | codex/member-system-v1 | 合并后清理：本地 -d + 远程 --delete（Gitee/GitHub） | — |
