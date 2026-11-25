@@ -9,7 +9,6 @@ import type {
   MemberBenefit,
   MemberLevel,
   MemberState,
-  MemberTag,
   UpgradeMode,
 } from '@/types/member'
 
